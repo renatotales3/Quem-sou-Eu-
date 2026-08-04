@@ -32,6 +32,21 @@ function getInternalRoom(roomCode: string): { usedCharacterIds: Set<string> } | 
   return internalRooms.get(roomCode);
 }
 
+/**
+ * Acesso de teste aos instantes de tempo (T8): `roundStartedAt` e
+ * `solvedAt` ainda não são expostos pelo protocolo nesta task (isso é T9),
+ * então o único jeito de observá-los é o mesmo cast usado por
+ * `getInternalRoom` para `usedCharacterIds`.
+ */
+function getInternalRoomTiming(
+  roomCode: string,
+): { roundStartedAt: number | null; players: Map<string, { solvedAt: number | null }> } | undefined {
+  const internalRooms = (manager as unknown as {
+    rooms: Map<string, { roundStartedAt: number | null; players: Map<string, { solvedAt: number | null }> }>;
+  }).rooms;
+  return internalRooms.get(roomCode);
+}
+
 function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, predicate?: (payload: T) => boolean): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -338,5 +353,113 @@ describe('pool de personagens sem repetição na mesma sala', () => {
     const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
     expect(roundGuest.room.players.find((player) => player.id === created.playerId)?.character).toBeDefined();
     expect(roundHost.room.players.find((player) => player.id === joined.playerId)?.character).toBeDefined();
+  });
+});
+
+describe('instantes de rodada e de acerto (TIME-01, TIME-03, TIME-07, TIME-09)', () => {
+  it('registra roundStartedAt no início da rodada e solvedAt >= intervalo conhecido no acerto, null para quem não acertou', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Fefe');
+    const joined = await joinRoom(guest, created.roomCode, 'Gigi');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const beforeStart = Date.now();
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [, roundGuest] = await Promise.all([startedHost, startedGuest]);
+    const afterStart = Date.now();
+
+    const timingAtStart = getInternalRoomTiming(created.roomCode);
+    expect(timingAtStart).toBeDefined();
+    expect(timingAtStart!.roundStartedAt).not.toBeNull();
+    expect(timingAtStart!.roundStartedAt!).toBeGreaterThanOrEqual(beforeStart);
+    expect(timingAtStart!.roundStartedAt!).toBeLessThanOrEqual(afterStart);
+
+    const hostCharacter = roundGuest.room.players.find((player) => player.id === created.playerId)?.character;
+    expect(hostCharacter).toBeDefined();
+
+    const KNOWN_DELAY_MS = 120;
+    await new Promise((resolve) => setTimeout(resolve, KNOWN_DELAY_MS));
+
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostCharacter!.name });
+    expect((await solveHost).correct).toBe(true);
+
+    const timingAfterSolve = getInternalRoomTiming(created.roomCode);
+    expect(timingAfterSolve).toBeDefined();
+    const hostSolvedAt = timingAfterSolve!.players.get(created.playerId)?.solvedAt;
+    expect(hostSolvedAt).not.toBeNull();
+    expect(hostSolvedAt! - timingAfterSolve!.roundStartedAt!).toBeGreaterThanOrEqual(KNOWN_DELAY_MS);
+
+    const guestSolvedAt = timingAfterSolve!.players.get(joined.playerId)?.solvedAt;
+    expect(guestSolvedAt).toBeNull();
+  });
+
+  it('zera roundStartedAt e solvedAt de todos ao reabrir uma nova rodada com playAgain', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Hiro');
+    const joined = await joinRoom(guest, created.roomCode, 'Ivi');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    await playRoundToFinish(host, guest, created.playerId, joined.playerId);
+
+    const timingBeforePlayAgain = getInternalRoomTiming(created.roomCode);
+    expect(timingBeforePlayAgain).toBeDefined();
+    expect(timingBeforePlayAgain!.roundStartedAt).not.toBeNull();
+    expect(timingBeforePlayAgain!.players.get(created.playerId)?.solvedAt).not.toBeNull();
+    expect(timingBeforePlayAgain!.players.get(joined.playerId)?.solvedAt).not.toBeNull();
+
+    const lobbyHost = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    host.emit('round:playAgain');
+    await lobbyHost;
+
+    const timingAfterPlayAgain = getInternalRoomTiming(created.roomCode);
+    expect(timingAfterPlayAgain).toBeDefined();
+    expect(timingAfterPlayAgain!.roundStartedAt).toBeNull();
+    expect(timingAfterPlayAgain!.players.get(created.playerId)?.solvedAt).toBeNull();
+    expect(timingAfterPlayAgain!.players.get(joined.playerId)?.solvedAt).toBeNull();
+  });
+
+  it('zera roundStartedAt e solvedAt ao abortar a rodada por saída de jogador', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Jade');
+    const joined = await joinRoom(guest, created.roomCode, 'Kiko');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+    const hostCharacter = roundGuest.room.players.find((player) => player.id === created.playerId)?.character;
+    expect(hostCharacter).toBeDefined();
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostCharacter!.name });
+    expect((await solveHost).correct).toBe(true);
+
+    const timingBeforeDeparture = getInternalRoomTiming(created.roomCode);
+    expect(timingBeforeDeparture!.roundStartedAt).not.toBeNull();
+    expect(timingBeforeDeparture!.players.get(created.playerId)?.solvedAt).not.toBeNull();
+
+    const lobbyAfterDeparture = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    guest.emit('room:leave');
+    await lobbyAfterDeparture;
+
+    const timingAfterDeparture = getInternalRoomTiming(created.roomCode);
+    expect(timingAfterDeparture).toBeDefined();
+    expect(timingAfterDeparture!.roundStartedAt).toBeNull();
+    expect(timingAfterDeparture!.players.get(created.playerId)?.solvedAt).toBeNull();
   });
 });

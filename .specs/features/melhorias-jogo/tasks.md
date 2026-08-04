@@ -300,13 +300,13 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `roundStartedAt: number | null` gravado com `Date.now()` no início da rodada, `null` no lobby
-- [ ] `solvedAt: number | null` gravado no acerto, `null` para quem não acertou
-- [ ] `playAgain` e `resetAfterDeparture` zeram ambos
-- [ ] Nenhum timer, `setTimeout` ou limite encerra rodada por tempo (TIME-09)
-- [ ] Teste de integração: acerto após intervalo conhecido registra duração ≥ o intervalo
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 6 testes passando em `tests/game.integration.test.ts`
+- [x] `roundStartedAt: number | null` gravado com `Date.now()` no início da rodada, `null` no lobby
+- [x] `solvedAt: number | null` gravado no acerto, `null` para quem não acertou
+- [x] `playAgain` e `resetAfterDeparture` zeram ambos
+- [x] Nenhum timer, `setTimeout` ou limite encerra rodada por tempo (TIME-09)
+- [x] Teste de integração: acerto após intervalo conhecido registra duração ≥ o intervalo
+- [x] Gate check passa: `npm test`
+- [x] Test count: 9 testes passando em `tests/game.integration.test.ts` (≥ 6)
 
 **Tests**: integration
 **Gate**: full

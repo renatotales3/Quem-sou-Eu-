@@ -39,6 +39,7 @@ interface PlayerState {
   rank: number | null;
   guesses: string[];
   disconnectedAt: number | null;
+  solvedAt: number | null;
 }
 
 interface RoomState {
@@ -50,6 +51,7 @@ interface RoomState {
   createdAt: number;
   updatedAt: number;
   usedCharacterIds: Set<string>;
+  roundStartedAt: number | null;
 }
 
 interface SessionAuth {
@@ -112,6 +114,7 @@ export class GameManager {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       usedCharacterIds: new Set(),
+      roundStartedAt: null,
     };
 
     this.rooms.set(code, room);
@@ -222,6 +225,7 @@ export class GameManager {
     const rank = Array.from(room.players.values()).filter((candidate) => candidate.solved).length + 1;
     player.solved = true;
     player.rank = rank;
+    player.solvedAt = Date.now();
     this.touch(room);
 
     socket.emit('guess:result', {
@@ -258,12 +262,14 @@ export class GameManager {
     }
 
     room.phase = 'lobby';
+    room.roundStartedAt = null;
     for (const candidate of room.players.values()) {
       candidate.ready = false;
       candidate.character = null;
       candidate.solved = false;
       candidate.rank = null;
       candidate.guesses = [];
+      candidate.solvedAt = null;
     }
     this.touch(room);
     this.broadcastRoomState(room);
@@ -273,6 +279,7 @@ export class GameManager {
     if (room.phase !== 'lobby') return;
     room.phase = 'playing';
     room.round += 1;
+    room.roundStartedAt = Date.now();
     const players = Array.from(room.players.values());
 
     const availableCount = characters.length - room.usedCharacterIds.size;
@@ -478,6 +485,7 @@ export class GameManager {
       rank: null,
       guesses: [],
       disconnectedAt: null,
+      solvedAt: null,
     };
   }
 
@@ -526,12 +534,14 @@ export class GameManager {
 
   private resetAfterDeparture(room: RoomState): void {
     room.phase = 'lobby';
+    room.roundStartedAt = null;
     for (const candidate of room.players.values()) {
       candidate.ready = false;
       candidate.character = null;
       candidate.solved = false;
       candidate.rank = null;
       candidate.guesses = [];
+      candidate.solvedAt = null;
     }
     this.touch(room);
   }
