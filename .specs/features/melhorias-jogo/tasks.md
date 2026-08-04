@@ -417,11 +417,11 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Listener de `room:notice` registrado e removido junto com os demais
-- [ ] Mensagem exibida como aviso neutro, sem acionar o fluxo de erro nem limpar a sessão
-- [ ] Aviso não persiste na rodada seguinte
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: suíte inalterada
+- [x] Listener de `room:notice` registrado e removido junto com os demais
+- [x] Mensagem exibida como aviso neutro, sem acionar o fluxo de erro nem limpar a sessão
+- [x] Aviso não persiste na rodada seguinte
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: suíte inalterada (32 testes)
 
 **Tests**: none
 **Gate**: build

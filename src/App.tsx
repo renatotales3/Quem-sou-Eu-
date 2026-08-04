@@ -4,6 +4,7 @@ import type {
   GuessResultPayload,
   PlayerSolvedPayload,
   RoomActionResult,
+  RoomNoticePayload,
   RoomView,
   RoundFinishedPayload,
 } from '../shared/protocol';
@@ -29,6 +30,7 @@ function App(): JSX.Element {
   const [copied, setCopied] = useState(false);
   const [lastSolved, setLastSolved] = useState<PlayerSolvedPayload | null>(null);
   const [finalRanking, setFinalRanking] = useState<RoundFinishedPayload['ranking']>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const session = readSession();
@@ -53,6 +55,7 @@ function App(): JSX.Element {
       if (nextRoom.phase === 'lobby') {
         setFeedback(null);
         setFinalRanking([]);
+        setNotice(null);
       }
     };
     const onRoundStarted = ({ room: nextRoom }: { room: RoomView }): void => {
@@ -75,6 +78,9 @@ function App(): JSX.Element {
       setFinalRanking(payload.ranking);
       setFeedback({ tone: 'success', message: 'Todo mundo descobriu. Agora a sala está revelada.' });
     };
+    const onRoomNotice = (payload: RoomNoticePayload): void => {
+      setNotice(payload.message);
+    };
     const onGameError = (payload: GameErrorPayload): void => {
       setError(payload.message);
       if (payload.code === 'SESSION_EXPIRED') {
@@ -92,6 +98,7 @@ function App(): JSX.Element {
     socket.on('guess:result', onGuessResult);
     socket.on('player:solved', onPlayerSolved);
     socket.on('round:finished', onRoundFinished);
+    socket.on('room:notice', onRoomNotice);
     socket.on('error', onGameError);
 
     if (session) {
@@ -109,6 +116,7 @@ function App(): JSX.Element {
       socket.off('guess:result', onGuessResult);
       socket.off('player:solved', onPlayerSolved);
       socket.off('round:finished', onRoundFinished);
+      socket.off('room:notice', onRoomNotice);
       socket.off('error', onGameError);
     };
   }, [pendingAction]);
@@ -354,6 +362,7 @@ function App(): JSX.Element {
             <div><p className="eyebrow">Rodada {String(room.round).padStart(2, '0')} · olhe para os outros</p><h1 id="game-title">Você vê todo mundo.<br /><span>Menos você.</span></h1></div>
             <div className="solve-meter"><strong>{solvedCount}</strong><span>de {room.players.length}<br />resolvidos</span></div>
           </div>
+          {notice && <InlineNotice tone="neutral">{notice}</InlineNotice>}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
           <div className="identity-board">
             <div className="secret-card" data-testid="secret-card">
