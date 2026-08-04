@@ -1,5 +1,9 @@
 # Melhorias do Jogo — Validation
 
+## Round 1 (2026-08-04) — ❌ FAIL
+
+Kept verbatim below as the historical record. Round 2 (independent re-verification after fix commit `1b229f8`) follows at the end of this document and is the current standing verdict.
+
 ## Result: ❌ FAIL
 
 **Date**: 2026-08-04
@@ -218,3 +222,208 @@ Todas as 304 entradas de `characterSets` foram lidas e conferidas categoria por 
 - All 6 mutations were applied, tested, and reverted with `git checkout -- <file>` inside the worktree only.
 - Worktree removed with `git worktree remove --force` after cleanup.
 - Post-sensor `git status --porcelain` of the real tree: empty — identical to the pre-sensor baseline. `git worktree list` confirms only the real tree remains.
+
+---
+---
+
+# Round 2 (2026-08-04) — ❌ FAIL
+
+**Verifier**: independent sub-agent, second and different session (author of the fix commit ≠ this verifier, and ≠ round-1 verifier)
+**Diff range re-verified**: `699dd12..HEAD` (`HEAD` = `1b229f8`); fix commit under review: `1b229f8` (4 files: `server/wordlist.ts`, `tests/game.integration.test.ts`, `.specs/LESSONS.md`, `.specs/lessons.json`)
+
+**Verdict rationale**: 2 of the 4 round-1 gaps are cleanly closed (POOL-07, Supergirl). The other 2 are **only partially closed** — the fix commit's own sensor claim ("mutante (b) mata o teste") is true and independently reproduced (5/5 kills), but re-deriving the spec-anchored table from scratch surfaced that the fix did not cover every mechanism the original gaps named: POOL-06's specific claim (departure does **not** clear `usedCharacterIds`) still rests on the same statistically-weak comparison as before, and TIME-09's new test only discriminates within its own 1.2s observation window, not against a realistic round-timer duration. Both are demonstrated with reproducible sensor runs below, not speculation. Per evidence-or-zero and the sensor's own rule ("surviving mutants → feature not done"), the verdict stays **FAIL**, though the gap set is narrower and better-characterized than round 1's.
+
+---
+
+## Round 2: Task / Fix Commit Completion
+
+| Item | Status | Notes |
+| ---- | ------ | ----- |
+| T1–T13 | ✅ Done | Unchanged from round 1; re-confirmed against current `tasks.md` checkboxes |
+| Fix commit `1b229f8` | ✅ Present, addresses all 4 named gaps | Not tracked as a numbered task (like `958e9f4` in round 1), consistent with the feature's pattern of unplanned fix commits for verifier follow-up |
+
+---
+
+## Round 2: Spec-Anchored Acceptance Criteria (re-derived from scratch)
+
+Evidence-or-zero re-applied independently; round-1 citations were not trusted and were re-checked line-by-line against the current tree.
+
+| Requirement | Spec-defined outcome | `file:line` + assertion | Result |
+| ----------- | --------------------- | ------------------------ | ------ |
+| WORD-01 | Todo `name` exibido em PT-BR reconhecível, zero inglês | `tests/wordlist.test.ts:26-32`, `:73-82` (spot checks); manual audit re-confirmed the one content flag from round 1 is now resolved (see WORD-content note below) | ✅ PASS |
+| WORD-02 | Nome BR distinto → BR é `name`, original é alias | `tests/wordlist.test.ts:26-32` — `characterMatches(homemAranha, 'Spider-Man')` → `true`, `'Homem-Aranha'` is the exhibited name | ✅ PASS |
+| WORD-03 | Palpite em inglês original é aceito | `tests/wordlist.test.ts:30-31` | ✅ PASS |
+| WORD-04 | Palpite BR sem acento é aceito | `tests/wordlist.test.ts:34-41` (`doutor estranho`, `capitao america`) | ✅ PASS |
+| WORD-05 | ≥250 entradas, `id` único, `name` normalizado único | `tests/wordlist.test.ts:6-10`, guarded by `:12-17` (silent-collision guard against `totalSeedCount`) | ✅ PASS |
+| WORD-06 | Nome do mapa de tradução exibido → suíte falha | `tests/wordlist.test.ts:19-24` — checked against **every** value of `englishOriginals` over the **whole** `characters` array; independently re-run as a standalone script (`Object.values(englishOriginals).includes('Supergirl')` → `false`) since the fix commit removed the `'super moca'` entry (`server/wordlist.ts:120`, diff-confirmed) | ✅ PASS |
+| POOL-01 | Rodada atribui só personagens não usados na sala | `tests/game.integration.test.ts:235-240` (per-round assertion against `usedCharacterIds` membership, inside the 3-round loop) **and** `:254-280` (new dedicated test: pool reduced to exactly 2 available, exclusion must hold or the draw is provably wrong) | ✅ PASS — closed. Sensor mutant (a) killed; mutant (b) killed **5/5** independent runs (was 0/4 in round 1) |
+| POOL-02 | Dois jogadores da mesma rodada não têm o mesmo personagem | `tests/wordlist.test.ts:84-91` (structural, `pickCharacters` slices a shuffled array with no duplicate source ids) | ✅ PASS (unchanged) |
+| POOL-03 | Salas distintas podem sortear os mesmos personagens | `tests/game.integration.test.ts:382-431` — `Math.random` mocked to `0` for both rooms independently | ✅ PASS (unchanged, deterministic) |
+| POOL-04 | Disponíveis < jogadores → libera catálogo antes do sorteio | `tests/game.integration.test.ts:434-465` | ✅ PASS (unchanged) |
+| POOL-05 | `room:notice` com `CATALOG_RECYCLED` e mensagem exata | `tests/game.integration.test.ts:456-460` — exact object match; sensor mutant (f) killed | ✅ PASS (unchanged) |
+| POOL-06 | Personagens de rodada abortada continuam marcados como usados | `tests/game.integration.test.ts:336-380` — **this specific test was not touched by the fix commit.** It still infers correctness by comparing 2 old vs 2 new character ids drawn from a 304-entry catalog (same shape as the round-1 weak pattern), not by asserting `usedCharacterIds` directly | ⚠️ **PARTIAL — gap not fully closed.** See Round 2 Discrimination Sensor, mutant (i): injecting `room.usedCharacterIds.clear()` into `resetAfterDeparture` (which would violate this exact AC) survived 3 of 5 independent runs. The fix commit closed the *startRound-adds-to-set* mechanism (mutant b) but never touched the *departure-does-not-clear* mechanism, which is what POOL-06 actually asserts. |
+| POOL-07 | Sala removida → registro de usados descartado com ela | `tests/game.integration.test.ts:321-334` — creates a room, leaves, asserts `getInternalRoom(code)` (a direct read of the `GameManager.rooms` Map) is `undefined` after `room:leave` | ✅ PASS — closed. Sensor mutant (h): removing the `rooms.delete(room.code)` call on last-player-leave is killed |
+| TIME-01 | Início de rodada registra e envia o instante a todos | `tests/game.integration.test.ts:486-490` (registered, bounded between `beforeStart`/`afterStart`); `:592-594` (both the reconnect test's original and resumed client observe the same non-null `roundStartedAt`, proving it reaches every player) | ✅ PASS (unchanged) |
+| TIME-02 | Interface exibe `mm:ss`, atualizado a cada segundo | UI layer, no test infra (declared limit in `tasks.md`'s Test Coverage Matrix, unchanged) | ⚠️ Declared limit — verified only by code read (`src/App.tsx:397-423`) and build gate |
+| TIME-03 | Acerto registra duração em ms desde o início | `tests/game.integration.test.ts:495-506` — `KNOWN_DELAY_MS = 120`, asserts `hostSolvedAt - roundStartedAt >= 120` | ✅ PASS (unchanged) |
+| TIME-04 | Placar final exibe a duração ao lado do nome | Server data: `tests/game.integration.test.ts:648-652` (ranking carries `solveMs`); UI rendering `src/App.tsx:341` confirmed by code read only (declared limit) | ✅ PASS for data layer (unchanged) |
+| TIME-05 | Toda duração deriva do relógio do servidor, nunca do cliente | Server-authoritative `solveMs`: `tests/game.integration.test.ts:639`, `:650-652` + sensor mutant (c) killed (`deriveSolveMs` returning `0` fails `:650`). Client-side offset (`src/App.tsx:404-406`) still has zero automated test | ⚠️ PARTIAL (unchanged from round 1) — server half solid, client half code-read only; UI-layer, inherits declared limit, flagged because the AC's wording is ubiquitous |
+| TIME-06 | Reconexão retoma o cronômetro sem reiniciar | `tests/game.integration.test.ts:577-606` (reconnect returns identical `roundStartedAt`) for server data; UI `useRoundClock` code-read only | ✅ PASS for server data (unchanged) |
+| TIME-07 | Nova rodada zera início e durações da anterior | `tests/game.integration.test.ts:512-538` | ✅ PASS (unchanged) |
+| TIME-08 | Duração ≥ 1h formatada como `h:mm:ss` | `tests/time.test.ts:21-27` — exact boundary; sensor mutant (e) killed | ✅ PASS (unchanged) |
+| TIME-09 | Nunca encerra rodada por decurso de tempo | `tests/game.integration.test.ts:283-319` — **new test, was zero evidence in round 1.** Starts a round, listens for `round:finished` for 1.2s, asserts it never fires, then confirms the round is still accepting guesses (`guess:result`, not `error:ROUND_NOT_PLAYING`) | ⚠️ **PARTIAL — evidence now exists, but the test's discriminating power is narrow.** See Round 2 Discrimination Sensor, mutant (g): a round-ending timer injected at 300ms is killed, but the **same test structurally cannot catch a timer set to any delay ≥ the 1.2s window** — a 5s auto-finish (a far more realistic "someone added a round time limit" mistake than a 300ms one) survives every run, deterministically, because the test simply stops watching after 1.2s. The AC is an absolute/ubiquitous claim ("nunca"); the test only enforces it up to ~1.2s. |
+
+**Status**: ❌ Gaps present (POOL-06 partial, TIME-09 partial, TIME-05 partial — carried unchanged from round 1 as a declared UI limit, not a new gap)
+
+### WORD-content note (Supergirl)
+
+Re-verified independently, not by trusting the commit message:
+
+- `server/wordlist.ts:19` — displayed name in `characterSets.DC` is now `Supergirl` (was `Super-Moça`).
+- `server/wordlist.ts:47` — `aliasesByName['supergirl'] = ['Kara Zor-El', 'Super-Moça']`; `characterMatches` confirmed live (`npx tsx` script) to accept both `'Super-Moça'` and unaccented `'super moca'` as correct guesses.
+- `server/wordlist.ts:120-160` — the `'super moca': 'Supergirl'` entry was **removed** from `englishOriginals` (diff-confirmed against `1b229f8`). This is the correct move, not just a cosmetic swap: had it stayed, `mergeAliases` would still work, but `Supergirl` would now be a value in `englishOriginals` while also being the displayed `name` — which is exactly the false-positive the design doc warns about (`design.md` Risks table, last row) and would make the WORD-06 test fail on a name that is now correct. Confirmed empirically: `Object.values(englishOriginals).includes('Supergirl')` → `false`.
+- Matches the `Superman`/`Batman` treatment (English form displayed, old PT-BR translation as alias only), closing the round-1 content flag.
+
+---
+
+## Round 2: Discrimination Sensor
+
+Isolated `git worktree` at a fresh path under the session scratchpad (`sensor-worktree`, then `sensor-worktree2` for the supplementary check), created from `HEAD` = `1b229f8`. `git stash` was never used. Baseline `git status --porcelain` of the real tree was empty before any sensor work.
+
+**Same 6 mutants as round 1, re-run against the fix commit:**
+
+| # | Mutation | File:line | Description | Killed? |
+| - | -------- | --------- | ------------ | ------- |
+| a | `pickCharacters` ignores `excludeIds` | `server/wordlist.ts:209` (worktree copy) | `const pool = [...characters];` regardless of `excludeIds` | ✅ Killed — 3 tests fail across `wordlist.test.ts` and `game.integration.test.ts` |
+| b | `startRound` doesn't add picks to `usedCharacterIds` | `server/game.ts:303-306` (worktree copy) | Removed the `room.usedCharacterIds.add(player.character.id)` side effect | ✅ **Killed 5/5 independent runs** (was 0/4 in round 1) — `tests/game.integration.test.ts:237` (`internal!.usedCharacterIds.size`) fails deterministically every time. This is the fix that closes the round-1 headline finding. |
+| c | `solveMs` computed with a fixed instant (`deriveSolveMs` returns `0`) | `server/game.ts:561` (worktree copy) | `return 0;` instead of `player.solvedAt - room.roundStartedAt` | ✅ Killed — `tests/game.integration.test.ts:650` fails (`expected 0 to be greater than or equal to 80`) |
+| d | `viewRoom` reveals the viewer's own character during the round (privacy inversion) | `server/game.ts:435` (worktree copy) | `player.id !== viewerId` → `player.id === viewerId` | ✅ **Killed decisively** — 10 of 35 tests fail |
+| e | `formatDuration` never switches to `h:mm:ss` | `shared/time.ts:15` (worktree copy) | `if (false)` instead of `if (ms >= ONE_HOUR_MS)` | ✅ Killed — `tests/time.test.ts:26` fails |
+| f | Catalog recycling stops emitting `room:notice` | `server/game.ts:289-293` (worktree copy) | Removed the `io.to(room.code).emit('room:notice', ...)` call | ✅ Killed — POOL-04/05 test times out waiting for `room:notice` |
+
+**This verifier's own 2 mutants** (chosen where round-2 re-derivation found the coverage still thinnest):
+
+| # | Mutation | File:line | Description | Killed? |
+| - | -------- | --------- | ------------ | ------- |
+| g | Inject a round-ending timer into `startRound` (violates TIME-09) | `server/game.ts:311` (worktree copy, after `broadcastRoundStarted`) | `setTimeout(() => { if (room.phase === 'playing') this.finishRound(room); }, DELAY)` | **Delay-dependent — see below.** At `DELAY = 300ms`: ✅ Killed (`finished` becomes `true` inside the 1.2s window). At `DELAY = 5000ms`: ❌ **Survived** — deterministically, every run, because the test only watches for 1.2s. This is the realistic case: a round time limit added by mistake is far more likely to be tens of seconds than a fraction of a second. |
+| h | Room not removed from the Map on last-player-leave (violates POOL-07) | `server/game.ts:340-342` (worktree copy) | Commented out `this.rooms.delete(room.code)` inside `leave()`'s `room.players.size === 0` branch | ✅ Killed — `tests/game.integration.test.ts:333` fails (`getInternalRoom` still returns the room object) |
+
+**Supplementary check (not one of the 2 required, run because round-2 re-derivation of POOL-06 looked thin — reported for completeness):**
+
+| # | Mutation | File:line | Description | Killed? |
+| - | -------- | --------- | ------------ | ------- |
+| i | `resetAfterDeparture` clears `usedCharacterIds` (violates POOL-06) | `server/game.ts:541` (worktree copy, `sensor-worktree2`) | Added `room.usedCharacterIds.clear();` at the top of `resetAfterDeparture` | ❌ **Survived 3 of 5 independent runs** (killed in runs 2 and 5 only, by chance collision) — reproduces the exact statistical weakness round 1 flagged for mutant (b), now isolated to the one mechanism the fix commit did not touch |
+
+**Sensor depth**: lightweight-plus (6 required + 2 own + 1 supplementary = 9 mutations run; mutant (b) alone re-run 5×, mutant (i) re-run 5×)
+**Result**: 7/9 distinct mutations killed cleanly; 1 (`g` at realistic delay) structurally cannot be killed by the current test; 1 (`i`) killed only by chance (3/5 survived) → **sensor verdict: FAIL** for TIME-09's discriminating power and for POOL-06's departure-preserves-ids mechanism specifically
+
+**Isolation**: both worktrees created from `HEAD` at scratchpad paths, never `git stash`. All mutations applied and reverted with `git checkout -- <file>` inside the worktrees only. Both worktrees removed with `git worktree remove --force` after use. Post-sensor `git status --porcelain` of the real tree matches the pre-sensor baseline exactly (see confirmation at the end of this section).
+
+---
+
+## Round 2: Code Quality
+
+| Principle | Status |
+| --------- | ------ |
+| Minimum code | ✅ — fix commit touches only `server/wordlist.ts` (2-line swap) and `tests/game.integration.test.ts` (additive) |
+| Surgical changes | ✅ — no unrelated file touched |
+| No scope creep | ✅ |
+| Matches patterns | ✅ — new tests reuse `getInternalRoom`, `waitForEvent`, existing helpers |
+| Spec-anchored outcome check (asserted values match spec-defined outcome) | ⚠️ POOL-06's own test still asserts distinctness, not the mechanism it names; TIME-09's test asserts absence-within-a-window, not absence |
+| Per-layer Coverage Expectation met (domain 1:1 ACs; routes happy+edge+error) | ⚠️ TIME-09 and POOL-07 now have rows/evidence, but TIME-09's is narrow |
+| Every test maps to a spec requirement — no unclaimed tests | ✅ |
+| Documented guidelines followed | `tasks.md` Test Coverage Matrix — unchanged, no `AGENTS.md`/`CONTRIBUTING.md` in repo |
+
+---
+
+## Round 2: Gate Check
+
+- **Gate command**: `npm run build && npm test`
+- **Build result**: clean (0 errors) — re-run once, matches round 1
+- **Test result**: 35 passed, 0 failed, 0 skipped — run twice on the real tree (baseline before sensor work, and again after `git worktree remove`), identical both times; no jitter observed
+- **Test count before this fix commit**: 32 tests, 3 files (round-1 baseline)
+- **Test count after this fix commit**: 35 tests, 3 files
+- **Delta**: +3 new tests (POOL-01 deterministic pool-of-2 test, TIME-09 test, POOL-07 test) + strengthened assertions inside the existing 3-round POOL-01/02 test (no new `it` block for that one)
+- **Skipped tests**: none
+- **Failures**: none
+
+---
+
+## Round 2: Requirement Traceability Update
+
+| Requirement | Round-1 Status | Round-2 Status |
+| ----------- | --------------- | ----------- |
+| WORD-01 | ✅ Verified (1 content flag) | ✅ Verified (content flag resolved) |
+| WORD-02 | ✅ Verified | ✅ Verified |
+| WORD-03 | ✅ Verified | ✅ Verified |
+| WORD-04 | ✅ Verified | ✅ Verified |
+| WORD-05 | ✅ Verified | ✅ Verified |
+| WORD-06 | ✅ Verified | ✅ Verified |
+| POOL-01 | ⚠️ Needs Fix | ✅ Verified |
+| POOL-02 | ✅ Verified | ✅ Verified |
+| POOL-03 | ✅ Verified | ✅ Verified |
+| POOL-04 | ✅ Verified | ✅ Verified |
+| POOL-05 | ✅ Verified | ✅ Verified |
+| POOL-06 | ⚠️ Needs Fix | ⚠️ **Still Needs Fix** (different mechanism than mutant (b); see mutant (i)) |
+| POOL-07 | ❌ Needs Fix | ✅ Verified |
+| TIME-01 | ✅ Verified | ✅ Verified |
+| TIME-02 | ⚠️ Declared limit | ⚠️ Declared limit (unchanged) |
+| TIME-03 | ✅ Verified | ✅ Verified |
+| TIME-04 | ✅ Verified (data layer) | ✅ Verified (data layer) |
+| TIME-05 | ⚠️ Partial | ⚠️ Partial (unchanged) |
+| TIME-06 | ✅ Verified (server data layer) | ✅ Verified (server data layer) |
+| TIME-07 | ✅ Verified | ✅ Verified |
+| TIME-08 | ✅ Verified | ✅ Verified |
+| TIME-09 | ❌ Needs Fix | ⚠️ **Needs Fix (narrower)** — evidence exists now, window too short for realistic threat |
+
+---
+
+## Round 2: Fix Plans
+
+### Fix 1 (carried forward, narrowed): POOL-06's departure-preserves-ids mechanism is still statistically weak
+
+- **Root cause**: The fix commit strengthened the 3-round POOL-01/02 test (added a direct `usedCharacterIds` assertion) and added a brand-new deterministic POOL-01 test, but never touched the POOL-06 test itself (`tests/game.integration.test.ts:336-380`), which still proves its claim only by comparing 2 old vs 2 new character ids out of a 304-entry catalog.
+- **Fix task**: In the POOL-06 test, after the departure and the second round starts, assert directly that the two aborted-round character ids are still members of `getInternalRoom(...).usedCharacterIds` (they should never have left the set), the same pattern already used for POOL-01/02. This makes the assertion deterministic instead of relying on a ~99% collision-avoidance probability.
+- **Priority**: Major — this is the same class of gap the round-1 sensor already flagged; round 2 shows it survives specifically because the fix targeted a different (though related) mechanism.
+
+### Fix 2 (carried forward, narrowed): TIME-09's test window doesn't discriminate against a realistic timer
+
+- **Root cause**: The new test observes for a fixed 1.2s and asserts no `round:finished` arrived. Any timer-based auto-finish set to ≥ 1.2s (i.e., anything a real "round time limit" feature would plausibly use) passes through undetected, every time, not by chance.
+- **Fix task**: Either (a) make the observation window a documented, generous multiple of any plausible round-timer constant the team would ever add (e.g., tie it to a named constant search / lint rule that fails the build if a `setTimeout`/timer literal appears in `startRound`'s call graph), or (b) accept the current test only as a "no *obviously* fast timer" guard and downgrade the AC's coverage claim in the Test Coverage Matrix accordingly, rather than listing it as equivalent coverage to the other server-side ACs.
+- **Priority**: Minor-to-Major — true today by full-file inspection (still zero real timer in `server/game.ts`), but the regression guard is weaker than its own test name implies.
+
+### Fix 3 — CLOSED: POOL-07
+
+- Test now exists and the sensor confirms it discriminates (mutant h killed). No further action.
+
+### Fix 4 — CLOSED: Supergirl
+
+- Displayed name swapped, alias correctly moved, `englishOriginals` entry correctly removed (not just left stale), confirmed live that `Super-Moça` and `super moca` still resolve as correct guesses. No further action.
+
+---
+
+## Round 2: Summary
+
+**Overall**: ❌ Not Ready
+
+**Spec-anchored check**: 19/22 clean PASS, 3 partial (POOL-06, TIME-09 — both narrowed from round 1's "zero evidence"; TIME-05 — unchanged declared UI limit)
+**Sensor**: 7/9 distinct mutations killed cleanly; 1 structural miss (g at realistic delay), 1 chance-dependent survival (i, 3/5)
+**Gate**: 35 passed, 0 failed, re-run twice, no jitter
+
+**What works**: Both mutant-b (POOL-01/02's core exclusion-registration mechanism) and POOL-07 (room disposal) are now deterministically proven and independently reproduced killing their sensor mutants (5/5 and 1/1 respectively). The Supergirl swap is correct and complete, not just cosmetic — verified live, not just by diff-reading. The privacy invariant remains the best-protected behavior in the repo (mutant d: 10/35 tests fail).
+
+**Issues found**:
+1. POOL-06 still names a mechanism (departure preserves `usedCharacterIds`) that its own test cannot deterministically prove — confirmed by a supplementary mutant surviving 3/5 runs.
+2. TIME-09's new test has a hard structural ceiling: it cannot catch any auto-finish timer ≥ its own 1.2s observation window, which is the realistic failure mode, not the unrealistic one it does catch.
+
+**Next steps**: Route Fix 1 and Fix 2 above as fix tasks. Both are narrower and more precisely characterized than round 1's findings, but neither is closed — a third round of fix→re-verify is authorized under the skill's 3-iteration bound (round 1 → round 2 is iteration 1 of that bound, having closed 2 of 4 gaps; this would be iteration 2).
+
+---
+
+## Round 2: Sensor Isolation Confirmation
+
+- Baseline `git status --porcelain` of the real tree: empty, captured before any round-2 sensor work.
+- Two scratch worktrees used in sequence (`sensor-worktree` for mutants a/b/c/d/e/f/g/h, `sensor-worktree2` for supplementary mutant i), both created via `git worktree add <scratch> HEAD`, both removed via `git worktree remove --force` after use. `git stash` was never used in either.
+- All mutations were applied via `git checkout -- <file>` reverts inside the worktrees only; the real tree was never edited by sensor work.
+- Post-sensor `git status --porcelain` of the real tree matches the pre-sensor baseline exactly (empty) — confirmed after both worktrees were removed. `git worktree list` shows only the real tree.
+- The only change made to the real tree during this validation round is this file, `validation.md` itself (adding the round-1 marker heading and this round-2 section), plus (if committed) `.specs/LESSONS.md` / `.specs/lessons.json` for any new distilled lessons — never source or test files.

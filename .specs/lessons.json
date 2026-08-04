@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 4,
+  "next_id": 6,
   "lessons": [
     {
       "id": "L-001",
@@ -58,6 +58,42 @@
       ],
       "created": "2026-08-04T23:02:37Z",
       "last_seen": "2026-08-04T23:02:37Z"
+    },
+    {
+      "id": "L-004",
+      "key": "surviving_mutant::when a fix adds a deterministic assertion to one test that shared a statistically weak collision based pattern re run the sensor against every sibling test built on the same pattern before declaring that class of gap closed fixing one instance does not fix the others",
+      "text": "When a fix adds a deterministic assertion to one test that shared a statistically-weak collision-based pattern, re-run the sensor against every sibling test built on the same pattern before declaring that class of gap closed - fixing one instance does not fix the others.",
+      "signal": "surviving_mutant",
+      "scope": "server/game.ts",
+      "status": "candidate",
+      "features": [
+        "melhorias-jogo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "server/game.ts:541 (mutant i, round 2) (server/game.ts)"
+      ],
+      "created": "2026-08-04T23:18:51Z",
+      "last_seen": "2026-08-04T23:18:51Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::a test that proves a never happens timing invariant by waiting a fixed observation window only disproves faults shorter than that window size the window to the longest plausible real world fault duration not an arbitrary short wait",
+      "text": "A test that proves a never-happens timing invariant by waiting a fixed observation window only disproves faults shorter than that window - size the window to the longest plausible real-world fault duration, not an arbitrary short wait.",
+      "signal": "surviving_mutant",
+      "scope": "server/game.ts",
+      "status": "candidate",
+      "features": [
+        "melhorias-jogo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "server/game.ts:311 (mutant g, round 2) (server/game.ts)"
+      ],
+      "created": "2026-08-04T23:18:51Z",
+      "last_seen": "2026-08-04T23:18:51Z"
     }
   ]
 }

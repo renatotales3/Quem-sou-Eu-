@@ -32,6 +32,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: TIME-09 (test-coverage-matrix)
 - last seen: 2026-08-04T23:02:37Z
 
+### L-004 - When a fix adds a deterministic assertion to one test that shared a statistically-weak collision-based pattern, re-run the sensor against every sibling test built on the same pattern before declaring that class of gap closed - fixing one instance does not fix the others.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `server/game.ts` · harmful: 0
+- features: melhorias-jogo
+- evidence: server/game.ts:541 (mutant i, round 2) (server/game.ts)
+- last seen: 2026-08-04T23:18:51Z
+
+### L-005 - A test that proves a never-happens timing invariant by waiting a fixed observation window only disproves faults shorter than that window - size the window to the longest plausible real-world fault duration, not an arbitrary short wait.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `server/game.ts` · harmful: 0
+- features: melhorias-jogo
+- evidence: server/game.ts:311 (mutant g, round 2) (server/game.ts)
+- last seen: 2026-08-04T23:18:51Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
