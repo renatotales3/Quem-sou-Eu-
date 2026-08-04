@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type JSX, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type JSX, type ReactNode } from 'react';
 import type {
   GameErrorPayload,
   GuessResultPayload,
@@ -7,6 +7,7 @@ import type {
   RoomView,
   RoundFinishedPayload,
 } from '../shared/protocol';
+import { formatDuration } from '../shared/time';
 import { clearSession, readSession, saveSession, socket, type SessionData } from './socket';
 
 type HomeMode = 'create' | 'join';
@@ -116,6 +117,7 @@ function App(): JSX.Element {
   const otherPlayers = useMemo(() => room?.players.filter((player) => player.id !== room.you.id) ?? [], [room]);
   const solvedCount = room?.players.filter((player) => player.solved).length ?? 0;
   const isHost = Boolean(room && room.hostId === room.you.id);
+  const elapsedMs = useRoundClock(room);
 
   function emitRoomAction(mode: HomeMode, nextNickname: string, code: string): void {
     const handleResult = (result: RoomActionResult): void => {
@@ -270,7 +272,7 @@ function App(): JSX.Element {
   if (room.phase === 'lobby') {
     return (
       <main className="app-shell room-shell">
-        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} />
+        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} elapsedMs={elapsedMs} />
         <section className="lobby-layout" aria-labelledby="lobby-title">
           <div className="lobby-main">
             <p className="eyebrow">Sala aberta · aguardando todo mundo</p>
@@ -316,7 +318,7 @@ function App(): JSX.Element {
   if (room.phase === 'finished') {
     return (
       <main className="app-shell room-shell finish-shell">
-        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} />
+        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} elapsedMs={elapsedMs} />
         <section className="finish-layout" aria-labelledby="finish-title">
           <div className="finish-hero">
             <p className="eyebrow">Quadro revelado · rodada {String(room.round).padStart(2, '0')}</p>
@@ -345,7 +347,7 @@ function App(): JSX.Element {
 
   return (
     <main className="app-shell room-shell game-shell">
-      <RoomHeader room={room} connection={connection} onLeave={leaveRoom} />
+      <RoomHeader room={room} connection={connection} onLeave={leaveRoom} elapsedMs={elapsedMs} />
       <section className="game-layout" aria-labelledby="game-title">
         <div className="game-main">
           <div className="game-intro-row">
@@ -377,6 +379,41 @@ function App(): JSX.Element {
   );
 }
 
+/**
+ * Cronômetro da rodada (AD-003): o servidor é a única fonte da verdade.
+ * `offset = serverNow - Date.now()` é recalculado a cada RoomView recebido
+ * e o tick de 1s só existe enquanto `phase === 'playing'` — nada de relógio
+ * do cliente, nada de contagem fora de rodada.
+ */
+function useRoundClock(room: RoomView | null): number | null {
+  const offsetRef = useRef(0);
+  const phase = room?.phase ?? null;
+  const roundStartedAt = room?.roundStartedAt ?? null;
+  const serverNow = room?.serverNow ?? null;
+
+  useEffect(() => {
+    if (serverNow === null) return;
+    offsetRef.current = serverNow - Date.now();
+  }, [serverNow]);
+
+  const [elapsedMs, setElapsedMs] = useState<number | null>(() =>
+    phase === 'playing' && roundStartedAt !== null ? Date.now() + offsetRef.current - roundStartedAt : null,
+  );
+
+  useEffect(() => {
+    if (phase !== 'playing' || roundStartedAt === null) {
+      setElapsedMs(null);
+      return;
+    }
+    const tick = (): void => setElapsedMs(Date.now() + offsetRef.current - roundStartedAt);
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+  }, [phase, roundStartedAt]);
+
+  return elapsedMs;
+}
+
 function Logo(): JSX.Element {
   return <div className="logo" aria-label="Quem Sou Eu"><span className="logo-mark">Q?</span><span className="logo-word">QUEM<br /><b>SOU EU</b></span></div>;
 }
@@ -386,8 +423,8 @@ function ConnectionPill({ state }: { state: ConnectionState }): JSX.Element {
   return <span className={`connection-pill connection-${state}`}><span className="connection-dot" aria-hidden="true" />{labels[state]}</span>;
 }
 
-function RoomHeader({ room, connection, onLeave }: { room: RoomView; connection: ConnectionState; onLeave: () => void }): JSX.Element {
-  return <header className="topbar room-topbar"><Logo /><div className="room-meta"><span className="room-meta-label">sala</span><strong>{room.code}</strong><span className="room-round">R{String(room.round).padStart(2, '0')}</span></div><div className="topbar-actions"><ConnectionPill state={connection} /><button className="text-button" type="button" onClick={onLeave}>Sair</button></div></header>;
+function RoomHeader({ room, connection, onLeave, elapsedMs }: { room: RoomView; connection: ConnectionState; onLeave: () => void; elapsedMs: number | null }): JSX.Element {
+  return <header className="topbar room-topbar"><Logo /><div className="room-meta"><span className="room-meta-label">sala</span><strong>{room.code}</strong><span className="room-round">R{String(room.round).padStart(2, '0')}</span>{elapsedMs !== null && <span className="round-clock" aria-label="Tempo decorrido da rodada">{formatDuration(elapsedMs)}</span>}</div><div className="topbar-actions"><ConnectionPill state={connection} /><button className="text-button" type="button" onClick={onLeave}>Sair</button></div></header>;
 }
 
 function PlayerRow({ player, you }: { player: RoomView['players'][number]; you: boolean }): JSX.Element {

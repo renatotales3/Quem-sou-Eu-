@@ -360,12 +360,12 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `offset` recalculado a cada `RoomView` recebido (`serverNow - Date.now()`)
-- [ ] Intervalo de 1s ativo **somente** com `phase === 'playing'`, e limpo no unmount
-- [ ] Cronômetro exibido em `mm:ss`, sem exibir nada no lobby
-- [ ] Foco e cursor do campo de palpite preservados durante o tick
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: suíte inalterada (camada sem teste automatizado, ver matriz)
+- [x] `offset` recalculado a cada `RoomView` recebido (`serverNow - Date.now()`)
+- [x] Intervalo de 1s ativo **somente** com `phase === 'playing'`, e limpo no unmount
+- [x] Cronômetro exibido em `mm:ss`, sem exibir nada no lobby
+- [x] Foco e cursor do campo de palpite preservados durante o tick
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: suíte inalterada (32 testes; camada sem teste automatizado, ver matriz)
 
 **Tests**: none
 **Gate**: build
