@@ -152,12 +152,12 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Nomes dessas 5 categorias em PT-BR conforme AD-001 (traduz o que tem forma consagrada, mantém o que no Brasil já é o original)
-- [ ] `englishOriginals` exportado, registrando **só** os pares em que a forma brasileira difere do original
-- [ ] Aliases fundem `aliasesByName` + `englishOriginals`, sem duplicata
-- [ ] `tests/wordlist.test.ts` reescrito: nenhum valor de `englishOriginals` aparece como nome exibido; palpite em inglês acerta; palpite sem acento acerta; `seeds.length === characters.length` (guarda contra colisão silenciosa de tradução)
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 6 testes passando em `tests/wordlist.test.ts`
+- [x] Nomes dessas 5 categorias em PT-BR conforme AD-001 (traduz o que tem forma consagrada, mantém o que no Brasil já é o original)
+- [x] `englishOriginals` exportado, registrando **só** os pares em que a forma brasileira difere do original
+- [x] Aliases fundem `aliasesByName` + `englishOriginals`, sem duplicata
+- [x] `tests/wordlist.test.ts` reescrito: nenhum valor de `englishOriginals` aparece como nome exibido; palpite em inglês acerta; palpite sem acento acerta; `seeds.length === characters.length` (guarda contra colisão silenciosa de tradução) — exposto via `totalSeedCount` já que `seeds` não é exportado
+- [x] Gate check passa: `npm test`
+- [x] Test count: 7 testes passando em `tests/wordlist.test.ts` (≥ 6)
 
 **Tests**: unit
 **Gate**: quick

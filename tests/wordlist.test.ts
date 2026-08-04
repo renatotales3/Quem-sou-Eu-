@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { characterMatches, characters } from '../server/wordlist';
+import { characterMatches, characters, englishOriginals, totalSeedCount } from '../server/wordlist';
 import { normalizeText } from '../server/normalization';
 
 describe('wordlist', () => {
@@ -9,11 +9,51 @@ describe('wordlist', () => {
     expect(new Set(characters.map((character) => normalizeText(character.name))).size).toBe(characters.length);
   });
 
+  it('nenhuma colisão silenciosa de tradução encolheu o catálogo (guarda contra WORD-05)', () => {
+    // uniqueSeeds descarta em silêncio qualquer entrada cujo nome normalizado
+    // já apareceu antes. Se duas traduções colidirem (ex.: dois personagens
+    // virando "Fera"), characters.length cai abaixo de totalSeedCount sem erro.
+    expect(characters.length).toBe(totalSeedCount);
+  });
+
+  it('nenhum valor de englishOriginals aparece como nome exibido no catálogo (WORD-06)', () => {
+    const displayedNames = new Set(characters.map((character) => character.name));
+    for (const originalName of Object.values(englishOriginals)) {
+      expect(displayedNames.has(originalName)).toBe(false);
+    }
+  });
+
+  it('exibe o Homem-Aranha em PT-BR e aceita o nome original em inglês como palpite (WORD-01, WORD-02, WORD-03)', () => {
+    const homemAranha = characters.find((character) => character.name === 'Homem-Aranha');
+    expect(homemAranha).toBeDefined();
+    expect(characters.some((character) => character.name === 'Spider-Man')).toBe(false);
+    expect(characterMatches(homemAranha!, 'Spider-Man')).toBe(true);
+    expect(characterMatches(homemAranha!, 'Peter Parker')).toBe(true);
+  });
+
+  it('aceita o palpite em PT-BR sem acentuação (WORD-04)', () => {
+    const doutorEstranho = characters.find((character) => character.name === 'Doutor Estranho');
+    expect(doutorEstranho).toBeDefined();
+    expect(characterMatches(doutorEstranho!, 'doutor estranho')).toBe(true);
+
+    const capitaoAmerica = characters.find((character) => character.name === 'Capitão América');
+    expect(capitaoAmerica).toBeDefined();
+    expect(characterMatches(capitaoAmerica!, 'capitao america')).toBe(true);
+  });
+
+  it('mantém nomes que já são a forma reconhecida no Brasil (AD-001)', () => {
+    expect(characters.some((character) => character.name === 'Batman')).toBe(true);
+    expect(characters.some((character) => character.name === 'Goku')).toBe(true);
+    const superman = characters.find((character) => character.name === 'Superman');
+    expect(superman).toBeDefined();
+    expect(characterMatches(superman!, 'Super-Homem')).toBe(true);
+  });
+
   it('aceita nomes normalizados e aliases sem correspondência aproximada', () => {
-    const spiderMan = characters.find((character) => character.name === 'Spider-Man');
-    expect(spiderMan).toBeDefined();
-    expect(characterMatches(spiderMan!, '  pÉtEr   pArKeR ')).toBe(true);
-    expect(characterMatches(spiderMan!, 'Spider-Man!')).toBe(true);
-    expect(characterMatches(spiderMan!, 'Spider Manx')).toBe(false);
+    const homemAranha = characters.find((character) => character.name === 'Homem-Aranha');
+    expect(homemAranha).toBeDefined();
+    expect(characterMatches(homemAranha!, '  pÉtEr   pArKeR ')).toBe(true);
+    expect(characterMatches(homemAranha!, 'Homem-Aranha!')).toBe(true);
+    expect(characterMatches(homemAranha!, 'Homem Aranhax')).toBe(false);
   });
 });
