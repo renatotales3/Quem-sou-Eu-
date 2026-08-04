@@ -6,8 +6,10 @@ import { Server } from 'socket.io';
 import type {
   ClientToServerEvents,
   InterServerEvents,
+  PlayerSolvedPayload,
   RoomActionResult,
   RoomView,
+  RoundFinishedPayload,
   ServerToClientEvents,
   SocketData,
 } from '../shared/protocol';
@@ -83,6 +85,19 @@ function createRoom(client: TestSocket, nickname: string): Promise<RoomActionRes
 
 function joinRoom(client: TestSocket, code: string, nickname: string): Promise<RoomActionResult> {
   return new Promise((resolve) => client.emit('room:join', { code, nickname }, resolve));
+}
+
+/**
+ * Cria um cliente para reconectar como um jogador já existente, via o mesmo
+ * handshake de sessão que o cliente real usa. Não conecta sozinho: o
+ * chamador deve registrar os listeners de evento primeiro e só então chamar
+ * `.connect()`, seguindo o mesmo idioma do resto do arquivo (o servidor pode
+ * emitir `round:started` no mesmo instante da confirmação da conexão).
+ */
+function createAuthedClient(auth: { roomCode: string; playerId: string; sessionToken: string }): TestSocket {
+  const client = createClient(address, { autoConnect: false, forceNew: true, auth });
+  managerClients.push(client);
+  return client;
 }
 
 /**
@@ -461,5 +476,85 @@ describe('instantes de rodada e de acerto (TIME-01, TIME-03, TIME-07, TIME-09)',
     expect(timingAfterDeparture).toBeDefined();
     expect(timingAfterDeparture!.roundStartedAt).toBeNull();
     expect(timingAfterDeparture!.players.get(created.playerId)?.solvedAt).toBeNull();
+  });
+});
+
+describe('tempo exposto por socket (TIME-04, TIME-05, TIME-06)', () => {
+  it('reconexão no meio da rodada devolve roundStartedAt igual ao da rodada em curso', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Lia');
+    const joined = await joinRoom(guest, created.roomCode, 'Mel');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost] = await Promise.all([startedHost, startedGuest]);
+
+    expect(roundHost.room.roundStartedAt).not.toBeNull();
+    expect(roundHost.room.serverNow).toBeGreaterThanOrEqual(roundHost.room.roundStartedAt!);
+    const originalRoundStartedAt = roundHost.room.roundStartedAt;
+
+    host.disconnect();
+    const reconnectedHost = createAuthedClient({
+      roomCode: created.roomCode,
+      playerId: created.playerId,
+      sessionToken: created.sessionToken,
+    });
+    const resumed = waitForEvent<{ room: RoomView }>(reconnectedHost, 'round:started');
+    reconnectedHost.connect();
+
+    expect((await resumed).room.roundStartedAt).toBe(originalRoundStartedAt);
+  });
+
+  it('player:solved e o ranking final carregam solveMs derivado do intervalo desde roundStartedAt; null antes do acerto', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Nina');
+    const joined = await joinRoom(guest, created.roomCode, 'Oto');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+    expect(roundHost.room.players.every((player) => player.solveMs === null)).toBe(true);
+
+    const hostCharacter = roundGuest.room.players.find((player) => player.id === created.playerId)?.character;
+    const guestCharacter = roundHost.room.players.find((player) => player.id === joined.playerId)?.character;
+    expect(hostCharacter).toBeDefined();
+    expect(guestCharacter).toBeDefined();
+
+    const KNOWN_DELAY_MS = 80;
+    await new Promise((resolve) => setTimeout(resolve, KNOWN_DELAY_MS));
+
+    const solvedEvent = waitForEvent<PlayerSolvedPayload>(guest, 'player:solved');
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostCharacter!.name });
+    expect((await solveHost).correct).toBe(true);
+    const solvedPayload = await solvedEvent;
+    expect(solvedPayload.playerId).toBe(created.playerId);
+    expect(solvedPayload.solveMs).toBeGreaterThanOrEqual(KNOWN_DELAY_MS);
+
+    const finishHost = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    const finishGuest = waitForEvent<RoundFinishedPayload>(guest, 'round:finished');
+    const solveGuest = waitForEvent<{ correct: boolean }>(guest, 'guess:result');
+    guest.emit('round:guess', { text: guestCharacter!.name });
+    expect((await solveGuest).correct).toBe(true);
+    const [finishedHost] = await Promise.all([finishHost, finishGuest]);
+
+    const hostRankingEntry = finishedHost.ranking.find((entry) => entry.playerId === created.playerId);
+    const guestRankingEntry = finishedHost.ranking.find((entry) => entry.playerId === joined.playerId);
+    expect(hostRankingEntry?.solveMs).toBeGreaterThanOrEqual(KNOWN_DELAY_MS);
+    expect(guestRankingEntry?.solveMs).not.toBeNull();
+    expect(guestRankingEntry?.solveMs).toBeGreaterThanOrEqual(0);
   });
 });

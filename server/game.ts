@@ -239,6 +239,8 @@ export class GameManager {
       playerId: player.id,
       nickname: player.nickname,
       rank,
+      // room.phase === 'playing' aqui garante roundStartedAt não-nulo (setado junto no startRound).
+      solveMs: player.solvedAt - room.roundStartedAt!,
     });
     this.broadcastRoomState(room);
 
@@ -313,7 +315,7 @@ export class GameManager {
     this.touch(room);
     const ranking = Array.from(room.players.values())
       .sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER))
-      .map((player) => ({ playerId: player.id, nickname: player.nickname, rank: player.rank }));
+      .map((player) => ({ playerId: player.id, nickname: player.nickname, rank: player.rank, solveMs: this.deriveSolveMs(room, player) }));
 
     this.broadcastRoomState(room);
     for (const player of room.players.values()) {
@@ -382,7 +384,7 @@ export class GameManager {
     } else if (room.phase === 'finished') {
       const ranking = Array.from(room.players.values())
         .sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER))
-        .map((candidate) => ({ playerId: candidate.id, nickname: candidate.nickname, rank: candidate.rank }));
+        .map((candidate) => ({ playerId: candidate.id, nickname: candidate.nickname, rank: candidate.rank, solveMs: this.deriveSolveMs(room, candidate) }));
       socket.emit('round:finished', { room: this.viewRoom(room, player.id), ranking });
     }
   }
@@ -416,6 +418,8 @@ export class GameManager {
       hostId: room.hostId,
       you: { id: viewer.id, nickname: viewer.nickname },
       guessHistory: [...viewer.guesses],
+      roundStartedAt: room.roundStartedAt,
+      serverNow: Date.now(),
       players: Array.from(room.players.values()).map((player) => {
         const publicPlayer = {
           id: player.id,
@@ -425,6 +429,7 @@ export class GameManager {
           connected: player.connected,
           solved: player.solved,
           rank: player.rank,
+          solveMs: this.deriveSolveMs(room, player),
         };
 
         if (player.character && (room.phase === 'finished' || (room.phase === 'playing' && player.id !== viewerId))) {
@@ -548,6 +553,12 @@ export class GameManager {
 
   private touch(room: RoomState): void {
     room.updatedAt = Date.now();
+  }
+
+  /** AD-003: solveMs é sempre derivado de roundStartedAt/solvedAt, nunca armazenado. */
+  private deriveSolveMs(room: RoomState, player: PlayerState): number | null {
+    if (room.roundStartedAt === null || player.solvedAt === null) return null;
+    return player.solvedAt - room.roundStartedAt;
   }
 
   private cleanupRooms(): void {

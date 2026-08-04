@@ -330,13 +330,13 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `viewRoom` devolve `roundStartedAt`, `serverNow: Date.now()` e `solveMs` por jogador
-- [ ] `solveMs` derivado de `solvedAt - roundStartedAt`, nunca armazenado
-- [ ] `ranking` de `round:finished` e `player:solved` carregam `solveMs`
-- [ ] O privacy check existente continua passando: o personagem do próprio jogador não aparece no payload dele durante a rodada
-- [ ] Teste de integração: reconexão no meio da rodada devolve `roundStartedAt` igual ao da rodada em curso
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: ≥ 7 testes passando em `tests/game.integration.test.ts`
+- [x] `viewRoom` devolve `roundStartedAt`, `serverNow: Date.now()` e `solveMs` por jogador
+- [x] `solveMs` derivado de `solvedAt - roundStartedAt`, nunca armazenado
+- [x] `ranking` de `round:finished` e `player:solved` carregam `solveMs`
+- [x] O privacy check existente continua passando: o personagem do próprio jogador não aparece no payload dele durante a rodada
+- [x] Teste de integração: reconexão no meio da rodada devolve `roundStartedAt` igual ao da rodada em curso
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: 11 testes passando em `tests/game.integration.test.ts` (≥ 7)
 
 **Tests**: integration
 **Gate**: build
