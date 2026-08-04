@@ -28,7 +28,7 @@ const characterSets: Record<string, string> = {
   Música: `Michael Jackson|Elvis Presley|Madonna|Beyoncé|Rihanna|Lady Gaga|Taylor Swift|Britney Spears|Bruno Mars|Adele|Amy Winehouse|Bob Marley|John Lennon|Paul McCartney|Freddie Mercury|David Bowie|Elton John|Whitney Houston|Anitta|Roberto Carlos`,
   Esportes: `Pelé|Marta|Neymar|Ronaldo Nazário|Ronaldinho Gaúcho|Romário|Ayrton Senna|Rebeca Andrade|Michael Jordan|LeBron James|Kobe Bryant|Serena Williams|Simone Biles|Usain Bolt|Muhammad Ali|Mike Tyson|Rafael Nadal|Cristiano Ronaldo|Lionel Messi|Diego Maradona`,
   'História, ciência e cultura': `Albert Einstein|Marie Curie|Isaac Newton|Leonardo da Vinci|Mahatma Gandhi|Nelson Mandela|Martin Luther King Jr.|Abraham Lincoln|Napoleão Bonaparte|Cleópatra|Steve Jobs|Bill Gates|Elon Musk|Oprah Winfrey|Walt Disney|Stan Lee|George Lucas|Steven Spielberg|Frida Kahlo|Vincent van Gogh`,
-  'Literatura e mitologia': `Alice|Chapeleiro Louco|Tom Sawyer|Jay Gatsby|Atticus Finch|Dom Quixote|Sancho Panza|Dorian Gray|Oliver Twist|Ebenezer Scrooge|Jane Eyre|Elizabeth Bennet|Mr Darcy|Frankenstein|Drácula|Aslan|Matilda Wormwood|Zeus|Hades|Medusa`,
+  'Literatura e mitologia': `Alice|Chapeleiro Louco|Tom Sawyer|Jay Gatsby|Atticus Finch|Dom Quixote|Sancho Pança|Dorian Gray|Oliver Twist|Ebenezer Scrooge|Jane Eyre|Elizabeth Bennet|Sr. Darcy|Frankenstein|Drácula|Aslan|Matilda Wormwood|Zeus|Hades|Medusa`,
 };
 
 const aliasesByName: Record<string, string[]> = {
@@ -157,6 +157,8 @@ export const englishOriginals: Record<string, string> = {
   'napoleao bonaparte': 'Napoleon Bonaparte',
   'chapeleiro louco': 'Mad Hatter',
   'dom quixote': 'Don Quixote',
+  'sancho panca': 'Sancho Panza',
+  'sr darcy': 'Mr Darcy',
 };
 
 function mergeAliases(name: string): string[] {
