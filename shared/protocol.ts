@@ -15,6 +15,7 @@ export interface PlayerView {
   solved: boolean;
   rank: number | null;
   character?: CharacterPublic;
+  solveMs: number | null;
 }
 
 export interface RoomView {
@@ -28,6 +29,8 @@ export interface RoomView {
     nickname: string;
   };
   guessHistory: string[];
+  roundStartedAt: number | null;
+  serverNow: number;
 }
 
 export interface CreateRoomInput {
@@ -75,6 +78,7 @@ export interface PlayerSolvedPayload {
   playerId: string;
   nickname: string;
   rank: number;
+  solveMs: number;
 }
 
 export interface RoundStartedPayload {
@@ -87,10 +91,16 @@ export interface RoundFinishedPayload {
     playerId: string;
     nickname: string;
     rank: number | null;
+    solveMs: number | null;
   }>;
 }
 
 export interface GameErrorPayload {
+  code: string;
+  message: string;
+}
+
+export interface RoomNoticePayload {
   code: string;
   message: string;
 }
@@ -110,6 +120,7 @@ export interface ServerToClientEvents {
   'guess:result': (payload: GuessResultPayload) => void;
   'player:solved': (payload: PlayerSolvedPayload) => void;
   'round:finished': (payload: RoundFinishedPayload) => void;
+  'room:notice': (payload: RoomNoticePayload) => void;
   error: (payload: GameErrorPayload) => void;
 }
 

@@ -124,10 +124,10 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Campos novos declarados exatamente como no design (`Data Models`)
-- [ ] `'room:notice'` adicionado a `ServerToClientEvents`
-- [ ] Gate check passa: `npm run build && npm test` (o build falha de propósito até T8/T9 preencherem os campos — nesta task o critério é o `tsc` apontar **somente** os pontos de preenchimento previstos em `server/game.ts`, e nenhum outro)
-- [ ] Test count: suíte existente inalterada
+- [x] Campos novos declarados exatamente como no design (`Data Models`)
+- [x] `'room:notice'` adicionado a `ServerToClientEvents`
+- [x] Gate check passa: `npm run build && npm test` (o build falha de propósito até T8/T9 preencherem os campos — nesta task o critério é o `tsc` apontar **somente** os pontos de preenchimento previstos em `server/game.ts`, e nenhum outro) — confirmado: 4 erros, todos em `server/game.ts` (linhas 232, 302, 364, 397), `tsconfig.app.json` limpo
+- [x] Test count: suíte existente inalterada (13 testes, 3 arquivos)
 
 **Tests**: none
 **Gate**: build
