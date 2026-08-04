@@ -144,6 +144,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .room-round { padding-left: 10px; border-left: 1px solid var(--line); }
 
+.round-clock { padding-left: 10px; border-left: 1px solid var(--line); color: var(--acid); font: 13px var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
 .topbar-actions { display: flex; align-items: center; gap: 18px; }
 
 .lobby-layout { width: min(1120px, 100%); margin: clamp(70px, 12vh, 140px) auto 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 390px); align-items: start; gap: clamp(48px, 9vw, 130px); }
@@ -329,17 +331,19 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .ranking-list, .reveal-list { display: grid; margin-top: 10px; }
 
-.ranking-row { display: grid; grid-template-columns: 31px 1fr auto; align-items: center; gap: 9px; border-bottom: 1px solid var(--paper-line); padding: 13px 0; }
+.ranking-row { display: grid; grid-template-columns: 31px minmax(0, 1fr) auto auto; align-items: center; gap: 9px; border-bottom: 1px solid var(--paper-line); padding: 13px 0; }
 
 .rank-number { color: var(--muted-dark); font: 18px var(--mono); }
 
 .rank-1 { color: var(--coral); }
 
-.ranking-name { font-size: 13px; font-weight: 800; }
+.ranking-name { overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 
 .ranking-name small { color: var(--muted-dark); font: 10px var(--mono); }
 
-.rank-label { color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; }
+.rank-time { color: var(--muted-dark); font: 11px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.rank-label { color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; white-space: nowrap; }
 
 .reveal-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--paper-line); padding: 11px 0; }
 
@@ -368,8 +372,11 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 @media (max-width: 620px) {
   .home-shell, .room-shell { padding-right: 17px; padding-left: 17px; }
   .topbar { gap: 12px; }
-  .room-meta { margin-right: 0; }
+  .room-meta { margin-right: 0; gap: 8px; }
+  .round-clock { padding-left: 8px; font-size: 11px; }
   .topbar-actions .connection-pill, .home-topbar .connection-pill { display: none; }
+  .ranking-row { grid-template-columns: 24px minmax(0, 1fr) auto auto; gap: 6px; }
+  .rank-time, .rank-label { font-size: 8px; }
   .home-layout { width: calc(100vw - 34px); }
   .home-intro, .home-card, .lobby-main, .players-panel, .game-main, .guess-panel { width: 100%; min-width: 0; max-width: 100%; }
   .home-intro h1, .lobby-main h1, .finish-hero h1 { width: 100%; max-width: 100%; font-size: clamp(38px, 10.5vw, 58px); overflow-wrap: anywhere; }

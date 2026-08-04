@@ -445,11 +445,11 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Cronômetro legível no cabeçalho, com largura estável para não "pular" a cada segundo (fonte tabular)
-- [ ] Coluna de tempo alinhada no placar, sem quebrar o layout em tela estreita
-- [ ] Nenhuma classe existente redefinida com efeito colateral fora do escopo
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: suíte inalterada
+- [x] Cronômetro legível no cabeçalho, com largura estável para não "pular" a cada segundo (fonte tabular)
+- [x] Coluna de tempo alinhada no placar, sem quebrar o layout em tela estreita
+- [x] Nenhuma classe existente redefinida com efeito colateral fora do escopo
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: suíte inalterada (32 testes)
 
 **Tests**: none
 **Gate**: build
