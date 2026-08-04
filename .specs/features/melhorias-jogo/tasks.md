@@ -211,12 +211,12 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `pickCharacters(amount: number, excludeIds?: ReadonlySet<string>): Character[]`
-- [ ] Chamada sem o segundo argumento mantém o comportamento atual
-- [ ] Nenhum id excluído aparece no resultado
-- [ ] `amount` maior que o disponível retorna o disponível inteiro, sem repetir entrada
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 9 testes passando em `tests/wordlist.test.ts`
+- [x] `pickCharacters(amount: number, excludeIds?: ReadonlySet<string>): Character[]`
+- [x] Chamada sem o segundo argumento mantém o comportamento atual
+- [x] Nenhum id excluído aparece no resultado
+- [x] `amount` maior que o disponível retorna o disponível inteiro, sem repetir entrada
+- [x] Gate check passa: `npm test`
+- [x] Test count: 12 testes passando em `tests/wordlist.test.ts` (≥ 9)
 
 **Tests**: unit
 **Gate**: quick

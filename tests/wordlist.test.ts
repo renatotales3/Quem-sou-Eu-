@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { characterMatches, characters, englishOriginals, totalSeedCount } from '../server/wordlist';
+import { characterMatches, characters, englishOriginals, pickCharacters, totalSeedCount } from '../server/wordlist';
 import { normalizeText } from '../server/normalization';
 
 describe('wordlist', () => {
@@ -79,5 +79,30 @@ describe('wordlist', () => {
     const dumbledore = characters.find((character) => character.name === 'Alvo Dumbledore');
     expect(dumbledore).toBeDefined();
     expect(characterMatches(dumbledore!, 'Albus Dumbledore')).toBe(true);
+  });
+
+  it('pickCharacters sem excludeIds mantém o comportamento atual (POOL-01)', () => {
+    const picked = pickCharacters(5);
+    expect(picked.length).toBe(5);
+    expect(new Set(picked.map((character) => character.id)).size).toBe(5);
+    for (const character of picked) {
+      expect(characters.some((candidate) => candidate.id === character.id)).toBe(true);
+    }
+  });
+
+  it('pickCharacters nunca retorna um id excluído (POOL-01)', () => {
+    const excludeIds = new Set(characters.slice(0, 10).map((character) => character.id));
+    const picked = pickCharacters(20, excludeIds);
+    expect(picked.length).toBe(20);
+    for (const character of picked) {
+      expect(excludeIds.has(character.id)).toBe(false);
+    }
+  });
+
+  it('pickCharacters com amount maior que o disponível retorna só o disponível, sem repetir', () => {
+    const excludeIds = new Set(characters.slice(3).map((character) => character.id));
+    const picked = pickCharacters(characters.length, excludeIds);
+    expect(picked.length).toBe(3);
+    expect(new Set(picked.map((character) => character.id)).size).toBe(3);
   });
 });

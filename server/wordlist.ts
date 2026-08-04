@@ -203,8 +203,8 @@ if (characters.length < MIN_CURATED_CHARACTERS) {
   );
 }
 
-export function pickCharacters(amount: number): Character[] {
-  const pool = [...characters];
+export function pickCharacters(amount: number, excludeIds?: ReadonlySet<string>): Character[] {
+  const pool = excludeIds ? characters.filter((character) => !excludeIds.has(character.id)) : [...characters];
   for (let index = pool.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
     const current = pool[index];
