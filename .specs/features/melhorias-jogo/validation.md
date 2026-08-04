@@ -427,3 +427,207 @@ Isolated `git worktree` at a fresh path under the session scratchpad (`sensor-wo
 - All mutations were applied via `git checkout -- <file>` reverts inside the worktrees only; the real tree was never edited by sensor work.
 - Post-sensor `git status --porcelain` of the real tree matches the pre-sensor baseline exactly (empty) — confirmed after both worktrees were removed. `git worktree list` shows only the real tree.
 - The only change made to the real tree during this validation round is this file, `validation.md` itself (adding the round-1 marker heading and this round-2 section), plus (if committed) `.specs/LESSONS.md` / `.specs/lessons.json` for any new distilled lessons — never source or test files.
+
+---
+---
+
+# Round 3 (2026-08-04) — ✅ PASS
+
+**Verifier**: independent sub-agent, third and final session (author of fix commit `8c3dabd` ≠ this verifier, and ≠ round-1/round-2 verifiers)
+**Diff range re-verified**: `699dd12..HEAD` (`HEAD` = `8c3dabd`); fix commit under review: `8c3dabd` (1 file: `tests/game.integration.test.ts`, +29/-0)
+
+**Verdict rationale**: Round 2 left exactly two named gaps open — POOL-06's statistically-weak departure assertion, and TIME-09's 1.2s observation window that structurally cannot detect a realistic timer. Commit `8c3dabd` closes both. Re-deriving the full 22-requirement spec-anchored table from scratch (not trusting round 1/2 citations) finds 21/22 clean PASS and 1 unchanged, previously-accepted declared limit (TIME-02, UI layer with no test infra — not a new gap, not counted against the verdict). The discrimination sensor re-ran all 9 mutants from rounds 1–2 plus 2 new ones of this verifier's own choosing: **11/11 killed**, with the two previously-fragile mutants re-run at the rigor this round's brief demanded — mutant (i) 5/5 kills (was 3/5 survived in round 2), mutant (g) killed at all three tested durations (300ms, 5s, 300s — was survived at 5s in round 2). No survivors. Gate is clean (36/36 tests, build passes, 2 stable runs). Verdict is **PASS**.
+
+---
+
+## Round 3: Task / Fix Commit Completion
+
+| Item | Status | Notes |
+| ---- | ------ | ----- |
+| T1–T13 | ✅ Done | Unchanged; re-confirmed against current `tasks.md` checkboxes |
+| Fix commit `1b229f8` (round-2 subject) | ✅ Present | Unchanged from round 2 |
+| Fix commit `8c3dabd` (round-3 subject) | ✅ Present, addresses both named round-2 gaps | Test-only change: `tests/game.integration.test.ts` +29 lines, 0 source files touched |
+
+---
+
+## Round 3: Spec-Anchored Acceptance Criteria (re-derived from scratch)
+
+Evidence-or-zero re-applied independently against current `HEAD` (`8c3dabd`); round-1/round-2 citations were not trusted and every line number below was re-read from the current tree.
+
+| Requirement | Spec-defined outcome | `file:line` + assertion | Result |
+| ----------- | --------------------- | ------------------------ | ------ |
+| WORD-01 | Todo `name` exibido em PT-BR reconhecível, zero inglês | `tests/wordlist.test.ts:26-32`, `:34-42` (spot checks); `server/wordlist.ts:19,47` confirms Supergirl swap still holds (no regression since round 2) | ✅ PASS |
+| WORD-02 | Nome BR distinto → BR é `name`, original é alias | `tests/wordlist.test.ts:26-32` — `characterMatches(homemAranha, 'Spider-Man')` → `true`, `'Homem-Aranha'` is the exhibited name | ✅ PASS |
+| WORD-03 | Palpite em inglês original é aceito | `tests/wordlist.test.ts:30-31` | ✅ PASS |
+| WORD-04 | Palpite BR sem acento é aceito | `tests/wordlist.test.ts:34-42` (`doutor estranho`, `capitao america`) | ✅ PASS |
+| WORD-05 | ≥250 entradas, `id` único, `name` normalizado único | `tests/wordlist.test.ts:6-10`, guarded against silent collision by `:12-17` (`characters.length === totalSeedCount`) | ✅ PASS |
+| WORD-06 | Nome do mapa de tradução exibido → suíte falha | `tests/wordlist.test.ts:19-24` — checked against every value of `englishOriginals` over the whole `characters` array; sensor mutant (j) on a related function (`characterMatches`) killed cleanly, confirming the oracle's discriminating power on this module is still solid | ✅ PASS |
+| POOL-01 | Rodada atribui só personagens não usados na sala | `tests/game.integration.test.ts:236-241` (per-round `usedCharacterIds` membership assertion inside the 3-round loop) and `:255-282` (deterministic pool-of-2 test) | ✅ PASS — sensor mutant (b) killed 5/5 (re-confirmed this round, see Sensor) |
+| POOL-02 | Dois jogadores da mesma rodada não têm o mesmo personagem | `tests/wordlist.test.ts:84-91` (`pickCharacters` returns structurally distinct ids — slices a shuffled array with no duplicate source ids) | ✅ PASS |
+| POOL-03 | Salas distintas podem sortear os mesmos personagens | `tests/game.integration.test.ts:411-461` — `Math.random` mocked to `0` independently for room A and room B, `charactersB` deterministically equals `charactersA` | ✅ PASS |
+| POOL-04 | Disponíveis < jogadores → libera catálogo antes do sorteio | `tests/game.integration.test.ts:463-494` — `usedCharacterIds` pre-loaded to leave 1 available for 2 players; round starts, both get a character | ✅ PASS |
+| POOL-05 | `room:notice` com `CATALOG_RECYCLED` e mensagem exata | `tests/game.integration.test.ts:485-489` — exact object match (`{ code: 'CATALOG_RECYCLED', message: 'Os personagens deram a volta: o catálogo foi liberado de novo.' }`) | ✅ PASS — sensor mutant (f) killed |
+| POOL-06 | Personagens de rodada abortada continuam marcados como usados | `tests/game.integration.test.ts:383-387` — **the exact fix from `8c3dabd`.** Direct assertion against `getInternalRoom(...).usedCharacterIds` immediately after the departure: both aborted-round character ids are members, and `size === 2`. This is a deterministic assertion against the mechanism itself, not an inference from the next round's draw | ✅ PASS — **closed.** Sensor mutant (i), `resetAfterDeparture` clearing the set, killed **5/5** independent runs this round (was 3/5 survived in round 2) |
+| POOL-07 | Sala removida → registro de usados descartado com ela | `tests/game.integration.test.ts:339-352` — creates a room, leaves, asserts `getInternalRoom(code)` is `undefined` afterward | ✅ PASS — sensor mutant (h) killed |
+| TIME-01 | Início de rodada registra e envia o instante a todos | `tests/game.integration.test.ts:507-519` (registered, bounded between `beforeStart`/`afterStart`); `:508-512` (both host and guest clients independently await and receive `round:started`, proving delivery to every player) | ✅ PASS |
+| TIME-02 | Interface exibe `mm:ss`, atualizado a cada segundo | UI layer, no test infra (declared limit, unchanged since round 1) — verified only by code read `src/App.tsx:397-423`, `:435-436` and the build gate | ⚠️ Declared limit (accepted — see Rules; not counted as a gap) |
+| TIME-03 | Acerto registra duração em ms desde o início | `tests/game.integration.test.ts:524-535` — `KNOWN_DELAY_MS = 120`, asserts `hostSolvedAt - roundStartedAt >= 120` | ✅ PASS |
+| TIME-04 | Placar final exibe a duração ao lado do nome | Server data: `tests/game.integration.test.ts:677-681` (ranking carries `solveMs`, both entries checked); UI rendering `src/App.tsx:341` confirmed by code read only (declared limit) | ✅ PASS for data layer |
+| TIME-05 | Toda duração deriva do relógio do servidor, nunca do cliente | Server-authoritative `solveMs`: `tests/game.integration.test.ts:668`, `:677-681` + sensor mutant (c) killed (`deriveSolveMs` forced to `0` fails at line 679). Client-side offset (`src/App.tsx:404-406`, `offsetRef.current = serverNow - Date.now()`) has zero automated test — UI-layer, inherits the declared limit, but the AC's wording is ubiquitous over "the system" so flagged rather than silently passed | ⚠️ PARTIAL (unchanged since round 1 — declared UI limit, not a regression) |
+| TIME-06 | Reconexão retoma o cronômetro sem reiniciar | `tests/game.integration.test.ts:606-634` — reconnect returns identical `roundStartedAt` (`expect((await resumed).room.roundStartedAt).toBe(originalRoundStartedAt)`) for server data; UI `useRoundClock` (`src/App.tsx:397-423`) code-read only | ✅ PASS for server data layer |
+| TIME-07 | Nova rodada zera início e durações da anterior | `tests/game.integration.test.ts:541-567` — `playAgain` zeroes `roundStartedAt` and both players' `solvedAt` | ✅ PASS |
+| TIME-08 | Duração ≥ 1h formatada como `h:mm:ss` | `tests/time.test.ts:21-27` — exact boundary (`3.599.999` → `59:59`, `3.600.000` → `1:00:00`) | ✅ PASS — sensor mutant (e) killed |
+| TIME-09 | Nunca encerra rodada por decurso de tempo | `tests/game.integration.test.ts:284-320` (behavioral, 1.2s observation window, still-alive follow-up guess) **and** `:322-337` (structural guard added by `8c3dabd`: exactly one `setTimeout`/`setInterval` in `server/game.ts`, exactly matching the idle-room cleanup interval, and exactly one call site reaching `finishRound`) | ✅ PASS — **closed.** Sensor mutant (g) re-run at three durations this round (300ms, 5s, 300s): **killed at all three** — the structural test catches the 5s and 300s cases the behavioral test alone cannot (see Round 3 Discrimination Sensor and the critical assessment below) |
+
+**Status**: ✅ All 22 requirements covered; 21 clean PASS, 1 unchanged declared UI limit (TIME-02) not counted as a gap, 1 unchanged partial (TIME-05, client-half UI code-read only, declared limit). No requirement regressed relative to round 2. Both round-2 gaps (POOL-06, TIME-09) are closed with reproducible sensor evidence.
+
+---
+
+## Round 3: Discrimination Sensor
+
+Isolated `git worktree add <scratch> HEAD` at a fresh path under the session scratchpad (`sensor-worktree`), created from `HEAD` = `8c3dabd`, with `node_modules` symlinked in (not copied) so the real tree's install is never touched. `git stash` was never used. Baseline `git status --porcelain` of the real tree was empty before any sensor work, confirmed again identical after full cleanup (see isolation confirmation below).
+
+**The 6 original mutants (rounds 1–2), re-run against `8c3dabd`:**
+
+| # | Mutation | File:line | Description | Killed? |
+| - | -------- | --------- | ------------ | ------- |
+| a | `pickCharacters` ignores `excludeIds` | `server/wordlist.ts:209` (worktree copy) | `const pool = [...characters];` regardless of `excludeIds` | ✅ Killed — 3 tests fail (`wordlist.test.ts` + `game.integration.test.ts`) |
+| b | `startRound` doesn't add picks to `usedCharacterIds` | `server/game.ts:304-306` (worktree copy) | `if (false) { room.usedCharacterIds.add(...) }` | ✅ Killed — 2 tests fail deterministically (`game.integration.test.ts:238`, `:385-387`) |
+| c | `solveMs` computed with a fixed instant | `server/game.ts:561` (worktree copy) | `deriveSolveMs` returns `0` instead of `player.solvedAt - room.roundStartedAt` | ✅ Killed — `tests/game.integration.test.ts:679` fails |
+| d | `viewRoom` reveals the viewer's own character during the round (privacy inversion) | `server/game.ts:435` (worktree copy) | `player.id !== viewerId` → `player.id === viewerId` | ✅ **Killed decisively** — 10 of 15 tests in `game.integration.test.ts` fail, including the explicit privacy assertions |
+| e | `formatDuration` never switches to `h:mm:ss` | `shared/time.ts:15` (worktree copy) | `if (false)` instead of `if (ms >= ONE_HOUR_MS)` | ✅ Killed — `tests/time.test.ts:26` fails |
+| f | Catalog recycling stops emitting `room:notice` | `server/game.ts:288-293` (worktree copy) | Removed the `io.to(room.code).emit('room:notice', ...)` call | ✅ Killed — POOL-04/05 test times out (4s) waiting for `room:notice` |
+
+**The 3 mutants round 2 added, re-run against `8c3dabd` at this round's required rigor:**
+
+| # | Mutation | File:line | Description | Killed? |
+| - | -------- | --------- | ------------ | ------- |
+| g | Round-ending timer injected into `startRound` (violates TIME-09) | `server/game.ts:310` (worktree copy, after `broadcastRoundStarted`) | `setTimeout(() => { if (room.phase === 'playing') this.finishRound(room); }, DELAY)` | **Tested at 3 durations per this round's brief — killed at all 3.** `DELAY = 300`: ✅ killed (both the behavioral test at 1.2s and the structural guard fail). `DELAY = 5000`: ✅ killed — behavioral test now *passes* (correctly, since 5s > 1.2s window — this is expected, not a false negative in the behavioral test's design) but the **structural guard fails** (`schedulers` array gains `'setTimeout('`, callSites stays fine but scheduler-count assertion breaks), so the overall file still fails. `DELAY = 300000` (5 min): ✅ killed — same mechanism as 5s, structural guard fails identically regardless of the delay value, confirming the guard's duration-independence claim from the `8c3dabd` commit message |
+| h | Room not removed from the Map on last-player-leave (violates POOL-07) | `server/game.ts:340-342` (worktree copy) | Removed `this.rooms.delete(room.code)` from `leave()`'s `room.players.size === 0` branch | ✅ Killed — `tests/game.integration.test.ts:351` fails (`getInternalRoom` still returns the room) |
+| i | `resetAfterDeparture` clears `usedCharacterIds` (violates POOL-06) | `server/game.ts:541` (worktree copy) | Added `room.usedCharacterIds.clear();` at the top of `resetAfterDeparture` | **Re-run 5 times per this round's brief — killed 5/5** (was 3/5 survived in round 2). `tests/game.integration.test.ts:385-387` now asserts the `usedCharacterIds` set directly right after the departure, so the mutation fails deterministically every run — no more dependence on a 2-in-304 collision |
+
+**This verifier's own 2 new mutants** (chosen at points judged fragile — the two functions with the widest surface area and the least direct test-of-the-mechanism coverage):
+
+| # | Mutation | File:line | Description | Killed? |
+| - | -------- | --------- | ------------ | ------- |
+| j | `characterMatches` stops checking aliases (only exact `name` match) | `server/wordlist.ts:221` (worktree copy) | `return [character.name].some(...)` instead of `[character.name, ...character.aliases].some(...)` | ✅ Killed — 5 of 36 tests fail across `wordlist.test.ts` (WORD-02/03/04 alias-acceptance assertions) |
+| k | `pickCharacters` ignores its `amount` cap | `server/wordlist.ts:216` (worktree copy) | `return pool;` instead of `return pool.slice(0, amount);` | ✅ Killed — 2 of 36 tests fail (`wordlist.test.ts:96`: expected picked-array length to equal the requested amount, got the full remaining pool instead) |
+
+**Sensor depth**: lightweight-plus — 11 distinct mutations, with the two round-2 survivors re-run at the rigor this round's brief specifically required (mutant `i`: 5 independent runs; mutant `g`: 3 distinct durations spanning 3 orders of magnitude).
+**Result**: **11/11 mutations killed. Zero survivors.** No fix task generated by this round's sensor.
+
+---
+
+## Round 3: Critical Assessment of the TIME-09 Structural Guard
+
+The commit `8c3dabd` added `tests/game.integration.test.ts:322-337`: it reads the raw source text of `server/game.ts` and asserts (a) exactly one `setTimeout`/`setInterval` call exists in the file and it is the idle-room cleanup interval, and (b) exactly one line in the file calls `this.finishRound(`.
+
+**Does it catch the regression at any duration?** Yes, empirically confirmed this round at 300ms, 5s, and 300s (5 min) — the guard's assertions are about the *presence* of a scheduling primitive and a *second call site* to `finishRound`, neither of which depends on the delay value passed to `setTimeout`. This is the correct fix for the specific defect round 2 found: the behavioral test's 1.2s window is a real, un-fixable ceiling for a wall-clock-based test, and a text-presence check has no such ceiling.
+
+**Is it frail in a bad way?** Partially, yes — it is a textual/structural check, not a semantic one, and it will false-positive (fail) on legitimate refactors that do not change TIME-09 behavior at all:
+- Renaming `cleanupTimer`/`cleanupRooms`, or moving idle-room cleanup into a separate class/module, breaks the hardcoded string match `'setInterval(() => this.cleanupRooms(), 60_000)'` (`tests/game.integration.test.ts:332`).
+- Extracting `finishRound`'s single call site into a differently-named wrapper (e.g., a future `maybeAdvanceRound()` helper) breaks the `this.finishRound(` line-count regex even with zero behavior change.
+- Adding a second, legitimate call site to `finishRound` for an unrelated feature (e.g., a future "host ends round early" button) would break this test even though it has nothing to do with a time-based auto-finish — this is arguably *correct* conservatism (any new path to `finishRound` deserves a second look), but it does mean the test's failure message ("guarda estrutural quebrou") will not by itself tell a future engineer whether the change is the regression it's designed to catch or an unrelated legitimate addition; they'd have to read the diff to know.
+- A regression that avoids the literal substrings the regex looks for — e.g. a timer imported from a helper module and invoked as `scheduleFinish(room, this)`, or `this['finishRound'](room)`, or a bound reference stored in a variable and passed to `setTimeout` from a *different* file — would not be caught by this guard at all. This is a real blind spot, not just theoretical: the guard only inspects `server/game.ts`'s own text, so any timer-based regression that lives one function call away (in `server/wordlist.ts`, a new `server/scheduler.ts`, etc.) or that reaches `finishRound` through anything other than the literal string `this.finishRound(` slips through undetected by this specific guard (though a mutation of that shape would very likely also change other observable behavior and get caught by something else in the suite — this was not separately tested this round and should not be assumed).
+
+**Is the trade-off acceptable?** Yes, on balance, given the constraints actually in play here. The integration suite uses a real HTTP server and real `socket.io` sockets (`server/game.ts`'s own dependency), and `socket.io` relies on real timers internally for its own heartbeat/ping-pong mechanics; swapping in `vi.useFakeTimers()` globally for a long-duration behavioral test risks breaking the socket connection lifecycle unless carefully scoped, which nothing else in this test file currently attempts (checked: no existing use of `vi.useFakeTimers` anywhere in `tests/` or `server/`). Given that constraint, a textual guard is a reasonable, low-cost second line of defense specifically for the one behavior (absence of a time-based auto-finish) that a real-clock behavioral test cannot bound. The brittleness is a real, ongoing maintenance cost — not free — but it is a narrow, single-purpose test whose failure is cheap to diagnose (one file, one clearly-commented assertion block) and it does close a genuine, previously-open regression gap.
+
+**Is there a better approach available in this project?** Two, both left as a suggestion, not implemented (out of scope for this Verifier role):
+1. **Fake-timer behavioral test, scoped narrowly.** Vitest's `vi.useFakeTimers({ shouldAdvanceTime: true })` mode advances real time alongside the virtual clock, which is specifically designed to keep I/O (including socket.io's heartbeats) alive while `vi.advanceTimersByTime()` fast-forwards application-level timers. If this mode works with this project's socket.io setup (not verified by this Verifier — would need its own spike), it would let the existing behavioral test (`tests/game.integration.test.ts:284-320`) advance past any plausible duration (e.g. 24h) in test-wall-clock milliseconds, killing mutant (g) at any delay through *behavior*, not text-matching — immune to the renaming/refactoring false-positives above, because it doesn't read source text at all.
+2. **A dedicated static-analysis script**, e.g. `scripts/check-no-round-timer.mjs` under the project root (parallel to how this skill ships its own `scripts/validate_*.py`), run as part of `npm run build` or a new `npm run lint` step, with the intent ("this file must never introduce a call that finishes a round on a timer") stated as a named, documented gate rather than buried inside an integration test's `it()` block. This doesn't fix the brittleness, but it separates "this is an intentional architectural invariant" from "this is a test asserting behavior," which reads more honestly to a future engineer who hits the failure.
+
+Neither is implemented by this Verifier — both are reported as options for whoever owns this codebase next.
+
+---
+
+## Round 3: Code Quality
+
+| Principle | Status |
+| --------- | ------ |
+| Minimum code | ✅ — fix commit touches only `tests/game.integration.test.ts`, +29/-0, no source files |
+| Surgical changes | ✅ — no unrelated file touched |
+| No scope creep | ✅ |
+| Matches patterns | ✅ — reuses `getInternalRoom`, existing `describe`/`it` structure |
+| Spec-anchored outcome check (asserted values match spec-defined outcome) | ✅ — POOL-06 now asserts the named mechanism directly; TIME-09's structural half asserts the named mechanism's absence directly (see critical assessment above for the trade-off this brings) |
+| Per-layer Coverage Expectation met (domain 1:1 ACs; routes happy+edge+error) | ✅ — all server-side ACs (POOL-01..07, TIME-01/03/04/05/07/09) now have deterministic evidence; TIME-02/TIME-05-client remain the same declared UI limit as round 1 |
+| Every test maps to a spec requirement — no unclaimed tests | ✅ |
+| Documented guidelines followed | `tasks.md` Test Coverage Matrix — unchanged, no `AGENTS.md`/`CONTRIBUTING.md` in repo |
+
+---
+
+## Round 3: Gate Check
+
+- **Gate command**: `npm run build && npm test`
+- **Build result**: clean (0 errors), re-run once on the real tree
+- **Test result**: 36 passed, 0 failed, 0 skipped — run twice on the real tree (before and after sensor work), identical both times; no jitter observed
+- **Test count before this fix commit**: 35 tests, 3 files (round-2 baseline)
+- **Test count after this fix commit**: 36 tests, 3 files
+- **Delta**: +1 test (the TIME-09 structural guard); POOL-06's existing test was strengthened in place (assertions added, no new `it` block)
+- **Skipped tests**: none
+- **Failures**: none
+
+---
+
+## Round 3: Requirement Traceability Update
+
+| Requirement | Round-2 Status | Round-3 Status |
+| ----------- | --------------- | ----------- |
+| WORD-01 | ✅ Verified | ✅ Verified |
+| WORD-02 | ✅ Verified | ✅ Verified |
+| WORD-03 | ✅ Verified | ✅ Verified |
+| WORD-04 | ✅ Verified | ✅ Verified |
+| WORD-05 | ✅ Verified | ✅ Verified |
+| WORD-06 | ✅ Verified | ✅ Verified |
+| POOL-01 | ✅ Verified | ✅ Verified |
+| POOL-02 | ✅ Verified | ✅ Verified |
+| POOL-03 | ✅ Verified | ✅ Verified |
+| POOL-04 | ✅ Verified | ✅ Verified |
+| POOL-05 | ✅ Verified | ✅ Verified |
+| POOL-06 | ⚠️ Still Needs Fix | ✅ **Verified (closed)** |
+| POOL-07 | ✅ Verified | ✅ Verified |
+| TIME-01 | ✅ Verified | ✅ Verified |
+| TIME-02 | ⚠️ Declared limit | ⚠️ Declared limit (unchanged) |
+| TIME-03 | ✅ Verified | ✅ Verified |
+| TIME-04 | ✅ Verified (data layer) | ✅ Verified (data layer) |
+| TIME-05 | ⚠️ Partial | ⚠️ Partial (unchanged, declared UI limit) |
+| TIME-06 | ✅ Verified (server data layer) | ✅ Verified (server data layer) |
+| TIME-07 | ✅ Verified | ✅ Verified |
+| TIME-08 | ✅ Verified | ✅ Verified |
+| TIME-09 | ⚠️ Needs Fix (narrower) | ✅ **Verified (closed)** |
+
+---
+
+## Round 3: Remaining Items (not gaps — informational)
+
+Neither item below blocks the PASS verdict; both are pre-existing, declared, and unchanged since round 1.
+
+1. **TIME-02 / TIME-05 client half / TIME-06 UI half / TIME-04 UI half**: React component layer has no test infrastructure in this project (no `jsdom`, no `@testing-library`) — declared and accepted in `tasks.md`'s Test Coverage Matrix as a scope limit, not a task deferral. Verified only by code read and the build gate, per the rules this round operated under.
+2. **TIME-09 structural guard brittleness**: see the critical assessment above — accepted as a reasonable trade-off given the project's real-socket test architecture, with two concrete alternatives suggested for whoever owns this codebase next, neither implemented by this Verifier.
+
+---
+
+## Round 3: Summary
+
+**Overall**: ✅ Ready
+
+**Spec-anchored check**: 21/22 clean PASS, 1 unchanged declared UI limit (TIME-02), 1 unchanged partial declared UI limit (TIME-05 client half) — neither is a new gap, both carried unchanged from round 1
+**Sensor**: 11/11 mutations killed (6 original + 3 from round 2 + 2 new this round); mutant (i) re-run 5/5, mutant (g) re-run at 3 durations (300ms/5s/300s), all killed
+**Gate**: 36 passed, 0 failed, build clean, 2 stable runs
+
+**What works**: Every server-side domain requirement (WORD-01..06, POOL-01..07, TIME-01/03/04/05-server/06-server/07/08/09) now has deterministic, sensor-confirmed test evidence. The privacy invariant remains the most robustly protected behavior in the repo (mutant d: 10/15 integration tests fail). POOL-06's departure-preserves-ids mechanism and TIME-09's timer-absence claim — the two gaps that survived two prior rounds — are both closed with reproducible, non-statistical evidence: POOL-06 via a direct `Set` assertion, TIME-09 via a duration-independent structural guard layered on top of the existing 1.2s behavioral test.
+
+**Issues found**: None that block this verdict. One informational note carried forward: the TIME-09 structural guard is a textual/heuristic check with a documented false-positive risk on legitimate refactors and a documented blind spot for timer mechanisms that avoid its literal string matches (see Critical Assessment above) — accepted as the best available trade-off given the project's real-socket integration-test architecture, with two concrete alternatives on record for future work.
+
+**Next steps**: None required to close this feature. Optional, non-blocking follow-up for a future iteration: evaluate `vi.useFakeTimers({ shouldAdvanceTime: true })` compatibility with this project's socket.io integration tests as a way to replace the textual TIME-09 guard with a behavioral one immune to refactor false-positives.
+
+---
+
+## Round 3: Sensor Isolation Confirmation
+
+- Baseline `git status --porcelain` of the real tree: empty, captured before any round-3 sensor work.
+- One scratch worktree used (`sensor-worktree`), created via `git worktree add <scratch> HEAD` at `8c3dabd`, with `node_modules` symlinked (not copied) into the worktree so dependencies didn't need reinstalling. `git stash` was never used.
+- All 11 mutations were applied directly to files inside the worktree and reverted with `git checkout -- <file>` inside the worktree only; the real tree was never edited by sensor work.
+- Worktree removed with `git worktree remove --force` after all mutations completed.
+- Post-sensor `git worktree list` shows only the real tree (`/home/user/Quem-sou-Eu-`).
+- Post-sensor `git status --porcelain` of the real tree: empty — identical to the pre-sensor baseline.
+- The only changes made to the real tree during this validation round are this file (`validation.md`, this round-3 section) and, if committed, `.specs/LESSONS.md` / `.specs/lessons.json` for any newly distilled lessons — never source or test files.
