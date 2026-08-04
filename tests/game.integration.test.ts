@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { io as createClient, type Socket } from 'socket.io-client';
 import { Server } from 'socket.io';
 import type {
@@ -56,6 +56,41 @@ function createRoom(client: TestSocket, nickname: string): Promise<RoomActionRes
 
 function joinRoom(client: TestSocket, code: string, nickname: string): Promise<RoomActionResult> {
   return new Promise((resolve) => client.emit('room:join', { code, nickname }, resolve));
+}
+
+/**
+ * Toca uma rodada completa (ready -> revela personagem do outro -> ambos
+ * acertam -> round:finished) e devolve os ids dos personagens de cada um,
+ * descobertos via a visão do adversário (o próprio jogador nunca vê o seu).
+ */
+async function playRoundToFinish(
+  hostClient: TestSocket,
+  guestClient: TestSocket,
+  hostId: string,
+  guestId: string,
+): Promise<{ hostCharacterId: string; guestCharacterId: string }> {
+  const startedHost = waitForEvent<{ room: RoomView }>(hostClient, 'round:started');
+  const startedGuest = waitForEvent<{ room: RoomView }>(guestClient, 'round:started');
+  hostClient.emit('player:ready', { ready: true });
+  guestClient.emit('player:ready', { ready: true });
+  const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+  const hostCharacter = roundGuest.room.players.find((player) => player.id === hostId)?.character;
+  const guestCharacter = roundHost.room.players.find((player) => player.id === guestId)?.character;
+  if (!hostCharacter || !guestCharacter) {
+    throw new Error('personagem do adversário não foi revelado');
+  }
+
+  const finishHost = waitForEvent<{ room: RoomView }>(hostClient, 'round:finished');
+  const finishGuest = waitForEvent<{ room: RoomView }>(guestClient, 'round:finished');
+  const solveHost = waitForEvent<{ correct: boolean }>(hostClient, 'guess:result');
+  const solveGuest = waitForEvent<{ correct: boolean }>(guestClient, 'guess:result');
+  hostClient.emit('round:guess', { text: hostCharacter.name });
+  guestClient.emit('round:guess', { text: guestCharacter.name });
+  await Promise.all([solveHost, solveGuest]);
+  await Promise.all([finishHost, finishGuest]);
+
+  return { hostCharacterId: hostCharacter.id, guestCharacterId: guestCharacter.id };
 }
 
 beforeAll(async () => {
@@ -132,5 +167,131 @@ describe('fluxo protegido de uma rodada', () => {
     }
     const tooMany = await joinRoom(clients[MAX_PLAYERS]!, created.roomCode, 'Pessoa extra');
     expect(tooMany).toEqual({ ok: false, code: 'ROOM_FULL', message: 'A sala já chegou ao limite de 12 pessoas.' });
+  });
+});
+
+describe('pool de personagens sem repetição na mesma sala', () => {
+  it('3 rodadas seguidas na mesma sala com 2 jogadores produzem 6 personagens distintos (POOL-01, POOL-02)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Ana');
+    const joined = await joinRoom(guest, created.roomCode, 'Bia');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const usedIds: string[] = [];
+    for (let round = 0; round < 3; round += 1) {
+      const { hostCharacterId, guestCharacterId } = await playRoundToFinish(host, guest, created.playerId, joined.playerId);
+      usedIds.push(hostCharacterId, guestCharacterId);
+
+      if (round < 2) {
+        const lobbyHost = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+        const lobbyGuest = waitForEvent<RoomView>(guest, 'room:state', (room) => room.phase === 'lobby');
+        host.emit('round:playAgain');
+        await Promise.all([lobbyHost, lobbyGuest]);
+      }
+    }
+
+    expect(usedIds.length).toBe(6);
+    expect(new Set(usedIds).size).toBe(6);
+  });
+
+  it('mantém os personagens de uma rodada abortada por saída de jogador como usados (POOL-06)', async () => {
+    const host = await connectClient();
+    const guestB = await connectClient();
+    const created = await createRoom(host, 'Carla');
+    const joinedB = await joinRoom(guestB, created.roomCode, 'Duda');
+    expect(created.ok).toBe(true);
+    expect(joinedB.ok).toBe(true);
+    if (!created.ok || !joinedB.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuestB = waitForEvent<{ room: RoomView }>(guestB, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guestB.emit('player:ready', { ready: true });
+    const [roundHost, roundGuestB] = await Promise.all([startedHost, startedGuestB]);
+
+    const abortedHostCharacterId = roundGuestB.room.players.find((player) => player.id === created.playerId)?.character?.id;
+    const abortedGuestCharacterId = roundHost.room.players.find((player) => player.id === joinedB.playerId)?.character?.id;
+    expect(abortedHostCharacterId).toBeDefined();
+    expect(abortedGuestCharacterId).toBeDefined();
+
+    const lobbyAfterDeparture = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    guestB.emit('room:leave');
+    await lobbyAfterDeparture;
+
+    const guestC = await connectClient();
+    const joinedC = await joinRoom(guestC, created.roomCode, 'Elis');
+    expect(joinedC.ok).toBe(true);
+    if (!joinedC.ok) return;
+
+    const startedHost2 = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuestC = waitForEvent<{ room: RoomView }>(guestC, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guestC.emit('player:ready', { ready: true });
+    const [roundHost2, roundGuestC] = await Promise.all([startedHost2, startedGuestC]);
+
+    const newHostCharacterId = roundGuestC.room.players.find((player) => player.id === created.playerId)?.character?.id;
+    const newGuestCharacterId = roundHost2.room.players.find((player) => player.id === joinedC.playerId)?.character?.id;
+    expect(newHostCharacterId).toBeDefined();
+    expect(newGuestCharacterId).toBeDefined();
+
+    expect(newHostCharacterId).not.toBe(abortedHostCharacterId);
+    expect(newHostCharacterId).not.toBe(abortedGuestCharacterId);
+    expect(newGuestCharacterId).not.toBe(abortedHostCharacterId);
+    expect(newGuestCharacterId).not.toBe(abortedGuestCharacterId);
+  });
+
+  it('salas distintas podem sortear os mesmos personagens (POOL-03)', async () => {
+    // usedCharacterIds é um Set por sala (não global): duas salas novas, cada
+    // uma com o pool inteiro disponível e o mesmo algoritmo de sorteio, devem
+    // poder chegar aos mesmos personagens. Fixar Math.random em 0 torna o
+    // shuffle determinístico só durante o start de cada rodada, provando que
+    // o pool da sala B não herdou nenhuma exclusão da sala A.
+    const a1 = await connectClient();
+    const a2 = await connectClient();
+    const createdA = await createRoom(a1, 'Rita');
+    const joinedA = await joinRoom(a2, createdA.roomCode, 'Sara');
+    expect(createdA.ok).toBe(true);
+    expect(joinedA.ok).toBe(true);
+    if (!createdA.ok || !joinedA.ok) return;
+
+    const startedA1 = waitForEvent<{ room: RoomView }>(a1, 'round:started');
+    const startedA2 = waitForEvent<{ room: RoomView }>(a2, 'round:started');
+    const randomSpyA = vi.spyOn(Math, 'random').mockReturnValue(0);
+    a1.emit('player:ready', { ready: true });
+    a2.emit('player:ready', { ready: true });
+    const [roundA1, roundA2] = await Promise.all([startedA1, startedA2]);
+    randomSpyA.mockRestore();
+
+    const charactersA = new Set([
+      roundA2.room.players.find((player) => player.id === createdA.playerId)?.character?.id,
+      roundA1.room.players.find((player) => player.id === joinedA.playerId)?.character?.id,
+    ]);
+
+    const b1 = await connectClient();
+    const b2 = await connectClient();
+    const createdB = await createRoom(b1, 'Tais');
+    const joinedB = await joinRoom(b2, createdB.roomCode, 'Uma');
+    expect(createdB.ok).toBe(true);
+    expect(joinedB.ok).toBe(true);
+    if (!createdB.ok || !joinedB.ok) return;
+
+    const startedB1 = waitForEvent<{ room: RoomView }>(b1, 'round:started');
+    const startedB2 = waitForEvent<{ room: RoomView }>(b2, 'round:started');
+    const randomSpyB = vi.spyOn(Math, 'random').mockReturnValue(0);
+    b1.emit('player:ready', { ready: true });
+    b2.emit('player:ready', { ready: true });
+    const [roundB1, roundB2] = await Promise.all([startedB1, startedB2]);
+    randomSpyB.mockRestore();
+
+    const charactersB = new Set([
+      roundB2.room.players.find((player) => player.id === createdB.playerId)?.character?.id,
+      roundB1.room.players.find((player) => player.id === joinedB.playerId)?.character?.id,
+    ]);
+
+    expect(charactersA.size).toBe(2);
+    expect(charactersB).toEqual(charactersA);
   });
 });

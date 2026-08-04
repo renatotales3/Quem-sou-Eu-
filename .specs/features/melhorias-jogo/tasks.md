@@ -240,14 +240,14 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `usedCharacterIds: Set<string>` inicializado vazio na criação da sala
-- [ ] `startRound` sorteia com `excludeIds` e adiciona os sorteados ao conjunto
-- [ ] `playAgain` e `resetAfterDeparture` **não** limpam o conjunto
-- [ ] Conjunto descartado junto com a sala (`rooms.delete`) sem estado global residual
-- [ ] Teste de integração: 3 rodadas seguidas com 2 jogadores produzem 6 personagens distintos
-- [ ] Teste de integração: duas salas distintas podem receber o mesmo personagem
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 4 testes passando em `tests/game.integration.test.ts`
+- [x] `usedCharacterIds: Set<string>` inicializado vazio na criação da sala
+- [x] `startRound` sorteia com `excludeIds` e adiciona os sorteados ao conjunto
+- [x] `playAgain` e `resetAfterDeparture` **não** limpam o conjunto (nenhuma das duas funções toca no campo; teste de POOL-06 comprova para o caso de saída)
+- [x] Conjunto descartado junto com a sala (`rooms.delete`) sem estado global residual — garantido estruturalmente: o `Set` vive no próprio `RoomState`, não há registro global paralelo (sem teste dedicado; não exigido pelo Done-when)
+- [x] Teste de integração: 3 rodadas seguidas com 2 jogadores produzem 6 personagens distintos
+- [x] Teste de integração: duas salas distintas podem receber o mesmo personagem
+- [x] Gate check passa: `npm test`
+- [x] Test count: 5 testes passando em `tests/game.integration.test.ts` (≥ 4)
 
 **Tests**: integration
 **Gate**: full

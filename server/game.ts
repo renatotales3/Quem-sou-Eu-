@@ -49,6 +49,7 @@ interface RoomState {
   players: Map<string, PlayerState>;
   createdAt: number;
   updatedAt: number;
+  usedCharacterIds: Set<string>;
 }
 
 interface SessionAuth {
@@ -110,6 +111,7 @@ export class GameManager {
       players: new Map([[player.id, player]]),
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      usedCharacterIds: new Set(),
     };
 
     this.rooms.set(code, room);
@@ -272,7 +274,7 @@ export class GameManager {
     room.phase = 'playing';
     room.round += 1;
     const players = Array.from(room.players.values());
-    const assignedCharacters = pickCharacters(players.length);
+    const assignedCharacters = pickCharacters(players.length, room.usedCharacterIds);
 
     players.forEach((player, index) => {
       player.character = assignedCharacters[index] ?? null;
@@ -280,6 +282,9 @@ export class GameManager {
       player.solved = false;
       player.rank = null;
       player.guesses = [];
+      if (player.character) {
+        room.usedCharacterIds.add(player.character.id);
+      }
     });
     this.touch(room);
     this.broadcastRoomState(room);
