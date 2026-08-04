@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      ROOM_TTL_MINUTES: 30
+    expose:
+      - "3001"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3001/healthz').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 8s
+    networks:
+      - whoiam
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${WHOAMI_PORT:-8080}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://127.0.0.1/healthz || exit 1"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+    networks:
+      - whoiam
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://nginx:80
+    depends_on:
+      nginx:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - whoiam
+
+networks:
+  whoiam:
+    driver: bridge
