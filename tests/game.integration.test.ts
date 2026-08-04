@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { createServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -318,6 +319,23 @@ describe('pool de personagens sem repetição na mesma sala', () => {
     expect((await stillAccepting).correct).toBe(false);
   });
 
+  it('nenhum agendador pode encerrar rodada: só o acerto alcança finishRound (TIME-09)', () => {
+    // Guarda estrutural, e não comportamental, de propósito. O teste acima
+    // observa 1,2s, então por construção não detecta um limite de tempo mais
+    // longo que a janela — e um limite realista seria de minutos. Asserir a
+    // AUSÊNCIA do mecanismo pega a regressão em qualquer duração.
+    const source = readFileSync(new URL('../server/game.ts', import.meta.url), 'utf8');
+
+    // O único agendador do módulo é o de limpeza de salas ociosas.
+    const schedulers = source.match(/set(?:Timeout|Interval)\s*\(/g) ?? [];
+    expect(schedulers).toEqual(['setInterval(']);
+    expect(source).toContain('setInterval(() => this.cleanupRooms(), 60_000)');
+
+    // E finishRound é alcançável de um único ponto: o acerto do palpite.
+    const callSites = source.split('\n').filter((line) => /this\.finishRound\(/.test(line));
+    expect(callSites).toHaveLength(1);
+  });
+
   it('descarta o registro de personagens usados junto com a sala (POOL-07)', async () => {
     const host = await connectClient();
     const created = await createRoom(host, 'Zeca');
@@ -356,6 +374,17 @@ describe('pool de personagens sem repetição na mesma sala', () => {
     const lobbyAfterDeparture = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
     guestB.emit('room:leave');
     await lobbyAfterDeparture;
+
+    // Asserção determinística: os dois personagens da rodada abortada
+    // continuam registrados como usados. Comparar apenas os ids da rodada
+    // seguinte (abaixo) é fraco — são 2 sorteios em 304 personagens, então
+    // `resetAfterDeparture` limpando o Set passaria por acaso na maioria das
+    // execuções. Aqui, limpar o Set falha sempre.
+    const abortedRoom = getInternalRoom(created.roomCode);
+    expect(abortedRoom).toBeDefined();
+    expect(abortedRoom!.usedCharacterIds.has(abortedHostCharacterId!)).toBe(true);
+    expect(abortedRoom!.usedCharacterIds.has(abortedGuestCharacterId!)).toBe(true);
+    expect(abortedRoom!.usedCharacterIds.size).toBe(2);
 
     const guestC = await connectClient();
     const joinedC = await joinRoom(guestC, created.roomCode, 'Elis');
