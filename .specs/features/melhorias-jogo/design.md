@@ -1,7 +1,7 @@
 # Melhorias do Jogo — Design
 
 **Spec**: `.specs/features/melhorias-jogo/spec.md`
-**Status**: Draft
+**Status**: Approved
 
 ---
 

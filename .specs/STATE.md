@@ -28,11 +28,11 @@
 
 ## Handoff
 
-- **Feature**: melhorias-jogo (`.specs/features/melhorias-jogo/`)
-- **Phase / Task**: Design concluído, aguardando aprovação para Execute
-- **Completed**: spec.md (validado), design.md, tasks.md
+- **Feature**: melhorias-jogo (`.specs/features/melhorias-jogo/`) — **concluída**
+- **Phase / Task**: todas as 5 fases e 13 tasks concluídas; 3 rodadas de Verifier; veredito final PASS
+- **Completed**: T1..T13, mais 3 commits de correção (grafia PT-BR, lacunas de POOL/TIME rodada 1, lacunas de POOL-06/TIME-09 rodada 2)
 - **In-progress** (file:line): none
-- **Next step**: Obter aprovação do usuário e executar T1 (fundação: `shared/time.ts` + `formatDuration`)
+- **Next step**: nada pendente nesta feature. Follow-up conhecido e fora de escopo: `createGameManager` aceita 1 parâmetro mas o teste passa 2 (`server/game.ts`, `tests/game.integration.test.ts`), e `tests/` não está em nenhum tsconfig — o typecheck nunca cobre os testes.
 - **Blockers**: none
-- **Uncommitted files**: `.specs/`
-- **Branch**: claude/repo-contextualization-yzxld1
+- **Uncommitted files**: none
+- **Branch**: claude/repo-contextualization-yzxld1 (enviada para origin)
