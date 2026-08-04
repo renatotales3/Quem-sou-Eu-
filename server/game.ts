@@ -274,6 +274,16 @@ export class GameManager {
     room.phase = 'playing';
     room.round += 1;
     const players = Array.from(room.players.values());
+
+    const availableCount = characters.length - room.usedCharacterIds.size;
+    if (availableCount < players.length) {
+      room.usedCharacterIds.clear();
+      this.io.to(room.code).emit('room:notice', {
+        code: 'CATALOG_RECYCLED',
+        message: 'Os personagens deram a volta: o catálogo foi liberado de novo.',
+      });
+    }
+
     const assignedCharacters = pickCharacters(players.length, room.usedCharacterIds);
 
     players.forEach((player, index) => {

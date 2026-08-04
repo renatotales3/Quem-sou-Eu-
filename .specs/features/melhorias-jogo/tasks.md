@@ -271,12 +271,12 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Reciclagem acontece **antes** do sorteio, então a rodada nunca começa com jogador sem personagem
-- [ ] `room:notice` emitido com `code: 'CATALOG_RECYCLED'` e a mensagem exata do spec (POOL-05)
-- [ ] Aviso emitido só na rodada em que a reciclagem ocorre
-- [ ] Teste de integração: com o conjunto de usados pré-carregado até o esgotamento, a rodada inicia, todos recebem personagem e o `room:notice` chega
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 5 testes passando em `tests/game.integration.test.ts`
+- [x] Reciclagem acontece **antes** do sorteio, então a rodada nunca começa com jogador sem personagem
+- [x] `room:notice` emitido com `code: 'CATALOG_RECYCLED'` e a mensagem exata do spec (POOL-05)
+- [x] Aviso emitido só na rodada em que a reciclagem ocorre (decorre da condição `availableCount < players.length`; satisfeito estruturalmente, sem teste dedicado — não exigido pelo Done-when)
+- [x] Teste de integração: com o conjunto de usados pré-carregado até o esgotamento, a rodada inicia, todos recebem personagem e o `room:notice` chega
+- [x] Gate check passa: `npm test`
+- [x] Test count: 6 testes passando em `tests/game.integration.test.ts` (≥ 5)
 
 **Tests**: integration
 **Gate**: full

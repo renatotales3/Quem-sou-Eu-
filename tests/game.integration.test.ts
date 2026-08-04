@@ -11,14 +11,26 @@ import type {
   ServerToClientEvents,
   SocketData,
 } from '../shared/protocol';
-import { createGameManager, MAX_PLAYERS } from '../server/game';
+import { createGameManager, MAX_PLAYERS, type GameManager } from '../server/game';
+import { characters } from '../server/wordlist';
 
 type TestSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 let httpServer: HttpServer;
 let ioServer: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
+let manager: GameManager;
 let address = '';
 const managerClients: TestSocket[] = [];
+
+/**
+ * Acesso de teste ao estado privado da sala. `tests/` não está em nenhum
+ * tsconfig (ver design.md Risks), então este cast só é validado pelo
+ * transform do vitest, nunca pelo `tsc` do build.
+ */
+function getInternalRoom(roomCode: string): { usedCharacterIds: Set<string> } | undefined {
+  const internalRooms = (manager as unknown as { rooms: Map<string, { usedCharacterIds: Set<string> }> }).rooms;
+  return internalRooms.get(roomCode);
+}
 
 function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, predicate?: (payload: T) => boolean): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -96,7 +108,7 @@ async function playRoundToFinish(
 beforeAll(async () => {
   httpServer = createServer();
   ioServer = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(httpServer, { cors: { origin: true } });
-  const manager = createGameManager(ioServer, 1);
+  manager = createGameManager(ioServer, 1);
   ioServer.on('connection', (socket) => manager.bindSocket(socket));
   await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
   const serverAddress = httpServer.address() as AddressInfo;
@@ -293,5 +305,38 @@ describe('pool de personagens sem repetição na mesma sala', () => {
 
     expect(charactersA.size).toBe(2);
     expect(charactersB).toEqual(charactersA);
+  });
+
+  it('recicla o catálogo antes do sorteio e avisa a sala quando os disponíveis são menos que os jogadores (POOL-04, POOL-05)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Word1');
+    const joined = await joinRoom(guest, created.roomCode, 'Word2');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    // Simula o esgotamento sem jogar centenas de rodadas: marca todos os
+    // personagens menos um como usados, deixando menos disponíveis que
+    // jogadores na sala.
+    const room = getInternalRoom(created.roomCode);
+    expect(room).toBeDefined();
+    room!.usedCharacterIds = new Set(characters.slice(0, characters.length - 1).map((character) => character.id));
+
+    const notice = waitForEvent<{ code: string; message: string }>(host, 'room:notice');
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+
+    const receivedNotice = await notice;
+    expect(receivedNotice).toEqual({
+      code: 'CATALOG_RECYCLED',
+      message: 'Os personagens deram a volta: o catálogo foi liberado de novo.',
+    });
+
+    const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+    expect(roundGuest.room.players.find((player) => player.id === created.playerId)?.character).toBeDefined();
+    expect(roundHost.room.players.find((player) => player.id === joined.playerId)?.character).toBeDefined();
   });
 });
