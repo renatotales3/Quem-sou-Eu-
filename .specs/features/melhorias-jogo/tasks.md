@@ -95,12 +95,12 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `formatDuration(ms: number): string` exportada, sem dependências
-- [ ] `mm:ss` abaixo de 3.600.000 ms; `h:mm:ss` a partir daí
-- [ ] Negativo, `NaN` e `Infinity` retornam `00:00`
-- [ ] `tests/time.test.ts` cobre: 0, 1s, 59s, 60s, 3.599.999 ms, 3.600.000 ms, negativo, `NaN`
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: 2 arquivos de teste existentes continuam passando + 1 novo arquivo
+- [x] `formatDuration(ms: number): string` exportada, sem dependências
+- [x] `mm:ss` abaixo de 3.600.000 ms; `h:mm:ss` a partir daí
+- [x] Negativo, `NaN` e `Infinity` retornam `00:00`
+- [x] `tests/time.test.ts` cobre: 0, 1s, 59s, 60s, 3.599.999 ms, 3.600.000 ms, negativo, `NaN`
+- [x] Gate check passa: `npm test`
+- [x] Test count: 2 arquivos de teste existentes continuam passando + 1 novo arquivo
 
 **Tests**: unit
 **Gate**: quick
