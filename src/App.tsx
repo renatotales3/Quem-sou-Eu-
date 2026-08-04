@@ -330,7 +330,7 @@ function App(): JSX.Element {
             <div className="ranking-card paper-card">
               <div className="panel-heading"><div><span className="micro-label">Placar da rodada</span><h2>Quem descobriu primeiro</h2></div><span className="panel-mark">RANK</span></div>
               <div className="ranking-list">
-                {finalRanking.map((player, index) => <div className="ranking-row" key={player.playerId}><span className={`rank-number rank-${index + 1}`}>{player.rank ?? '—'}</span><span className="ranking-name">{player.nickname}{player.playerId === room.you.id ? <small> você</small> : null}</span><span className="rank-label">{index === 0 ? 'primeiro' : index === 1 ? 'segundo' : index === 2 ? 'terceiro' : 'resolvido'}</span></div>)}
+                {finalRanking.map((player, index) => <div className="ranking-row" key={player.playerId}><span className={`rank-number rank-${index + 1}`}>{player.rank ?? '—'}</span><span className="ranking-name">{player.nickname}{player.playerId === room.you.id ? <small> você</small> : null}</span><span className="rank-time">{player.solveMs === null ? '—' : formatDuration(player.solveMs)}</span><span className="rank-label">{index === 0 ? 'primeiro' : index === 1 ? 'segundo' : index === 2 ? 'terceiro' : 'resolvido'}</span></div>)}
               </div>
             </div>
             <div className="reveal-card paper-card">

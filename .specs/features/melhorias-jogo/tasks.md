@@ -389,11 +389,11 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Cada linha do placar mostra a duração formatada
-- [ ] `solveMs` nulo exibe `—`
-- [ ] Ordem do placar continua a de resolução (que já é a ordem de tempo)
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: suíte inalterada
+- [x] Cada linha do placar mostra a duração formatada
+- [x] `solveMs` nulo exibe `—`
+- [x] Ordem do placar continua a de resolução (que já é a ordem de tempo)
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: suíte inalterada (32 testes)
 
 **Tests**: none
 **Gate**: build
