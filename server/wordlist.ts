@@ -20,15 +20,15 @@ const characterSets: Record<string, string> = {
   'Disney e Pixar': `Mickey Mouse|Minnie Mouse|Pato Donald|Pateta|Simba|Mufasa|Scar|Ariel|Úrsula|Bela|Fera|Aladdin|Jasmine|Gênio|Mulan|Moana|Elsa|Anna|Olaf|Stitch|Peter Pan|Cinderela|Malévola|Woody|Buzz Lightyear|Relâmpago McQueen|Remy|WALL-E|Alegria|Miguel Rivera`,
   Animação: `Pernalonga|Tom|Jerry|Scooby-Doo|Salsicha|Homer Simpson|Bart Simpson|Lisa Simpson|Peter Griffin|Stewie Griffin|Rick Sanchez|Morty Smith|Aang|Zuko|Bob Esponja|Patrick Estrela|Finn, o Humano|Jake, o Cão|Pica-Pau|Gato de Botas`,
   'Anime e mangá': `Goku|Vegeta|Gohan|Piccolo|Naruto Uzumaki|Sasuke Uchiha|Kakashi Hatake|Luffy|Roronoa Zoro|Nami|Sanji|Eren Yeager|Mikasa Ackerman|Levi Ackerman|Light Yagami|L|Tanjiro Kamado|Nezuko Kamado|Satoru Gojo|Sailor Moon|Ash Ketchum|Pikachu|Totoro`,
-  Videogames: `Mario|Luigi|Princess Peach|Bowser|Yoshi|Link|Zelda|Kirby|Donkey Kong|Sonic the Hedgehog|Tails|Knuckles|Dr. Eggman|Mega Man|Ryu|Chun-Li|Lara Croft|Kratos|Master Chief|Solid Snake|Pac-Man|Steve (Minecraft)`,
-  'Fantasia e ficção científica': `Frodo Baggins|Gandalf|Gollum|Sauron|Harry Potter|Hermione Granger|Ron Weasley|Albus Dumbledore|Severus Snape|Draco Malfoy|Voldemort|Katniss Everdeen|Luke Skywalker|Leia Organa|Han Solo|Chewbacca|Darth Vader|Yoda|Obi-Wan Kenobi|R2-D2|C-3PO|Rey|Neo|Trinity|Godzilla`,
-  Cinema: `Forrest Gump|Indiana Jones|James Bond|Ethan Hunt|John Wick|Rocky Balboa|Rambo|Marty McFly|Doc Brown|Jack Sparrow|Willy Wonka|Mary Poppins|The Grinch|Kevin McCallister|Elle Woods|Vito Corleone|Michael Corleone|Tony Montana|Jules Winnfield|Beatrix Kiddo|Maximus|William Wallace|Shrek|Gru|Jack Skellington`,
-  Séries: `Walter White|Jesse Pinkman|Saul Goodman|Sherlock Holmes|John Watson|Michael Scott|Dwight Schrute|Jim Halpert|Rachel Green|Ross Geller|Monica Geller|Chandler Bing|Joey Tribbiani|Dexter Morgan|Daenerys Targaryen|Jon Snow|Arya Stark|Tyrion Lannister|Eleven|Thomas Shelby|The Doctor`,
+  Videogames: `Mario|Luigi|Princesa Peach|Bowser|Yoshi|Link|Zelda|Kirby|Donkey Kong|Sonic|Tails|Knuckles|Dr. Eggman|Mega Man|Ryu|Chun-Li|Lara Croft|Kratos|Master Chief|Solid Snake|Pac-Man|Steve (Minecraft)`,
+  'Fantasia e ficção científica': `Frodo Bolseiro|Gandalf|Gollum|Sauron|Harry Potter|Hermione Granger|Ron Weasley|Alvo Dumbledore|Severo Snape|Draco Malfoy|Voldemort|Katniss Everdeen|Luke Skywalker|Leia Organa|Han Solo|Chewbacca|Darth Vader|Yoda|Obi-Wan Kenobi|R2-D2|C-3PO|Rey|Neo|Trinity|Godzilla`,
+  Cinema: `Forrest Gump|Indiana Jones|James Bond|Ethan Hunt|John Wick|Rocky Balboa|Rambo|Marty McFly|Doc Brown|Jack Sparrow|Willy Wonka|Mary Poppins|Grinch|Kevin McCallister|Elle Woods|Vito Corleone|Michael Corleone|Tony Montana|Jules Winnfield|Beatrix Kiddo|Maximus|William Wallace|Shrek|Gru|Jack Skellington`,
+  Séries: `Walter White|Jesse Pinkman|Saul Goodman|Sherlock Holmes|John Watson|Michael Scott|Dwight Schrute|Jim Halpert|Rachel Green|Ross Geller|Monica Geller|Chandler Bing|Joey Tribbiani|Dexter Morgan|Daenerys Targaryen|Jon Snow|Arya Stark|Tyrion Lannister|Onze|Thomas Shelby|O Doutor`,
   'Ficção brasileira': `Emília|Narizinho|Dona Benta|Saci-Pererê|Mônica|Cebolinha|Cascão|Magali|Chico Bento|Chaves|Chapolin Colorado|Seu Madruga|Chiquinha|Kiko|Dona Florinda|Carminha|Odete Roitman|Nazaré Tedesco|João Grilo|Chicó`,
   Música: `Michael Jackson|Elvis Presley|Madonna|Beyoncé|Rihanna|Lady Gaga|Taylor Swift|Britney Spears|Bruno Mars|Adele|Amy Winehouse|Bob Marley|John Lennon|Paul McCartney|Freddie Mercury|David Bowie|Elton John|Whitney Houston|Anitta|Roberto Carlos`,
   Esportes: `Pelé|Marta|Neymar|Ronaldo Nazário|Ronaldinho Gaúcho|Romário|Ayrton Senna|Rebeca Andrade|Michael Jordan|LeBron James|Kobe Bryant|Serena Williams|Simone Biles|Usain Bolt|Muhammad Ali|Mike Tyson|Rafael Nadal|Cristiano Ronaldo|Lionel Messi|Diego Maradona`,
-  'História, ciência e cultura': `Albert Einstein|Marie Curie|Isaac Newton|Leonardo da Vinci|Mahatma Gandhi|Nelson Mandela|Martin Luther King Jr.|Abraham Lincoln|Napoleon Bonaparte|Cleopatra|Steve Jobs|Bill Gates|Elon Musk|Oprah Winfrey|Walt Disney|Stan Lee|George Lucas|Steven Spielberg|Frida Kahlo|Vincent van Gogh`,
-  'Literatura e mitologia': `Alice|Mad Hatter|Tom Sawyer|Jay Gatsby|Atticus Finch|Don Quixote|Sancho Panza|Dorian Gray|Oliver Twist|Ebenezer Scrooge|Jane Eyre|Elizabeth Bennet|Mr Darcy|Frankenstein|Dracula|Aslan|Matilda Wormwood|Zeus|Hades|Medusa`,
+  'História, ciência e cultura': `Albert Einstein|Marie Curie|Isaac Newton|Leonardo da Vinci|Mahatma Gandhi|Nelson Mandela|Martin Luther King Jr.|Abraham Lincoln|Napoleão Bonaparte|Cleópatra|Steve Jobs|Bill Gates|Elon Musk|Oprah Winfrey|Walt Disney|Stan Lee|George Lucas|Steven Spielberg|Frida Kahlo|Vincent van Gogh`,
+  'Literatura e mitologia': `Alice|Chapeleiro Louco|Tom Sawyer|Jay Gatsby|Atticus Finch|Dom Quixote|Sancho Panza|Dorian Gray|Oliver Twist|Ebenezer Scrooge|Jane Eyre|Elizabeth Bennet|Mr Darcy|Frankenstein|Drácula|Aslan|Matilda Wormwood|Zeus|Hades|Medusa`,
 };
 
 const aliasesByName: Record<string, string[]> = {
@@ -62,7 +62,6 @@ const aliasesByName: Record<string, string[]> = {
   'ash ketchum': ['Ash'],
   mario: ['Super Mario'],
   zelda: ['Princess Zelda'],
-  'sonic the hedgehog': ['Sonic'],
   'dr eggman': ['Eggman'],
   'steve minecraft': ['Steve'],
   'harry potter': ['Harry'],
@@ -73,11 +72,10 @@ const aliasesByName: Record<string, string[]> = {
   'marty mcfly': ['Marty'],
   'doc brown': ['Emmett Brown', 'Doc'],
   'jack sparrow': ['Captain Jack Sparrow'],
-  'the grinch': ['Grinch'],
   'kevin mccallister': ['Kevin'],
   'walter white': ['Heisenberg'],
   'sherlock holmes': ['Sherlock'],
-  'the doctor': ['Doctor Who'],
+  'o doutor': ['Doctor Who'],
   'chaves': ['El Chavo'],
   'chapolin colorado': ['Chapolin'],
   kiko: ['Quico'],
@@ -100,7 +98,7 @@ const aliasesByName: Record<string, string[]> = {
   'walt disney': ['Disney'],
   'stan lee': ['Stanley Lieber'],
   'vincent van gogh': ['Van Gogh'],
-  'mad hatter': ['Chapeleiro Maluco'],
+  'chapeleiro louco': ['Chapeleiro Maluco'],
   dracula: ['Count Dracula'],
 };
 
@@ -146,6 +144,19 @@ export const englishOriginals: Record<string, string> = {
   'jake o cao': 'Jake the Dog',
   'pica pau': 'Woody Woodpecker',
   'gato de botas': 'Puss in Boots',
+  'princesa peach': 'Princess Peach',
+  sonic: 'Sonic the Hedgehog',
+  'frodo bolseiro': 'Frodo Baggins',
+  'alvo dumbledore': 'Albus Dumbledore',
+  'severo snape': 'Severus Snape',
+  grinch: 'The Grinch',
+  onze: 'Eleven',
+  'o doutor': 'The Doctor',
+  // Diferença real de grafia (não é só acento: "ão" vs "on"), então
+  // normalizeText não faria o palpite em inglês bater sem este par.
+  'napoleao bonaparte': 'Napoleon Bonaparte',
+  'chapeleiro louco': 'Mad Hatter',
+  'dom quixote': 'Don Quixote',
 };
 
 function mergeAliases(name: string): string[] {

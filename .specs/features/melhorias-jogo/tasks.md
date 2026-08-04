@@ -182,12 +182,12 @@ T10 → T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Nomes das 9 categorias restantes em PT-BR conforme AD-001
-- [ ] Pessoas reais mantêm o nome próprio, corrigindo só acentuação quando o PT-BR exige
-- [ ] Catálogo continua com ≥ 250 entradas, `id` único e nome normalizado único
-- [ ] Nenhum valor de `englishOriginals` aparece como nome exibido (teste de T3 cobre o catálogo inteiro)
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 6 testes passando em `tests/wordlist.test.ts`
+- [x] Nomes das 9 categorias restantes em PT-BR conforme AD-001
+- [x] Pessoas reais mantêm o nome próprio, corrigindo só acentuação quando o PT-BR exige (Napoleão Bonaparte, Cleópatra; demais mantidos)
+- [x] Catálogo continua com ≥ 250 entradas, `id` único e nome normalizado único
+- [x] Nenhum valor de `englishOriginals` aparece como nome exibido (teste de T3 cobre o catálogo inteiro)
+- [x] Gate check passa: `npm test`
+- [x] Test count: 9 testes passando em `tests/wordlist.test.ts` (≥ 6)
 
 **Tests**: unit
 **Gate**: quick

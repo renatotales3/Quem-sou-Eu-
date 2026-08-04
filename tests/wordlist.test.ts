@@ -56,4 +56,28 @@ describe('wordlist', () => {
     expect(characterMatches(homemAranha!, 'Homem-Aranha!')).toBe(true);
     expect(characterMatches(homemAranha!, 'Homem Aranhax')).toBe(false);
   });
+
+  it('corrige só a acentuação de pessoas reais e ainda aceita o palpite em inglês quando a grafia difere (WORD-02, WORD-03)', () => {
+    const napoleao = characters.find((character) => character.name === 'Napoleão Bonaparte');
+    expect(napoleao).toBeDefined();
+    expect(characters.some((character) => character.name === 'Napoleon Bonaparte')).toBe(false);
+    // "Napoleão" x "Napoleon" não é só diferença de acento (ão x on), então
+    // sem o alias em englishOriginals o palpite em inglês não bateria.
+    expect(characterMatches(napoleao!, 'Napoleon Bonaparte')).toBe(true);
+
+    const cleopatra = characters.find((character) => character.name === 'Cleópatra');
+    expect(cleopatra).toBeDefined();
+    expect(characterMatches(cleopatra!, 'Cleopatra')).toBe(true);
+  });
+
+  it('traduz nomes de fantasia/ficção com forma consagrada e mantém o catálogo com pelo menos 250 personagens (WORD-01, WORD-05)', () => {
+    expect(characters.length).toBeGreaterThanOrEqual(250);
+    const frodo = characters.find((character) => character.name === 'Frodo Bolseiro');
+    expect(frodo).toBeDefined();
+    expect(characterMatches(frodo!, 'Frodo Baggins')).toBe(true);
+
+    const dumbledore = characters.find((character) => character.name === 'Alvo Dumbledore');
+    expect(dumbledore).toBeDefined();
+    expect(characterMatches(dumbledore!, 'Albus Dumbledore')).toBe(true);
+  });
 });
