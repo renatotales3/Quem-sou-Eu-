@@ -227,6 +227,18 @@ describe('pool de personagens sem repetição na mesma sala', () => {
       const { hostCharacterId, guestCharacterId } = await playRoundToFinish(host, guest, created.playerId, joined.playerId);
       usedIds.push(hostCharacterId, guestCharacterId);
 
+      // Asserção determinística sobre o registro, não sobre o sorteio: com 304
+      // personagens, 6 sorteios só colidem por acaso em ~5% das vezes, então
+      // `new Set(usedIds).size === 6` sozinho passaria mesmo com a exclusão
+      // quebrada. Conferir o próprio `usedCharacterIds` falha sempre que
+      // `startRound` deixa de registrar os sorteados.
+      const internal = getInternalRoom(created.roomCode);
+      expect(internal).toBeDefined();
+      expect(internal!.usedCharacterIds.size).toBe(usedIds.length);
+      for (const id of usedIds) {
+        expect(internal!.usedCharacterIds.has(id)).toBe(true);
+      }
+
       if (round < 2) {
         const lobbyHost = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
         const lobbyGuest = waitForEvent<RoomView>(guest, 'room:state', (room) => room.phase === 'lobby');
@@ -237,6 +249,88 @@ describe('pool de personagens sem repetição na mesma sala', () => {
 
     expect(usedIds.length).toBe(6);
     expect(new Set(usedIds).size).toBe(6);
+  });
+
+  it('sorteia somente entre os disponíveis: pool reduzido a 2 entrega exatamente esses 2 (POOL-01)', async () => {
+    // Contraparte determinística do teste acima. Reduzir o disponível a
+    // exatamente o número de jogadores torna o resultado do sorteio único:
+    // se `excludeIds` for ignorado, os jogadores recebem 2 dos 304 e a
+    // asserção falha praticamente sempre, em vez de depender de colisão.
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Ivo');
+    const joined = await joinRoom(guest, created.roomCode, 'Lia');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const remaining = characters.slice(-2);
+    const room = getInternalRoom(created.roomCode);
+    expect(room).toBeDefined();
+    room!.usedCharacterIds = new Set(characters.slice(0, characters.length - 2).map((character) => character.id));
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+    const hostCharacterId = roundGuest.room.players.find((player) => player.id === created.playerId)?.character?.id;
+    const guestCharacterId = roundHost.room.players.find((player) => player.id === joined.playerId)?.character?.id;
+    expect(new Set([hostCharacterId, guestCharacterId])).toEqual(new Set(remaining.map((character) => character.id)));
+  });
+
+  it('não encerra a rodada por decurso de tempo (TIME-09)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Théo');
+    const joined = await joinRoom(guest, created.roomCode, 'Vera');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    await Promise.all([startedHost, startedGuest]);
+
+    // Observação limitada, que é a forma testável do invariante: ninguém
+    // palpita durante a janela e nenhum `round:finished` pode chegar. Um
+    // limite de tempo implementado por engano encerraria a rodada aqui.
+    let finished = false;
+    const markFinished = (): void => {
+      finished = true;
+    };
+    host.on('round:finished', markFinished);
+    guest.on('round:finished', markFinished);
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    host.off('round:finished', markFinished);
+    guest.off('round:finished', markFinished);
+
+    expect(finished).toBe(false);
+
+    // E a rodada segue viva, não apenas "não terminou": um palpite errado
+    // ainda é aceito e respondido. Se a rodada tivesse encerrado por tempo,
+    // o servidor responderia `error` com ROUND_NOT_PLAYING.
+    const stillAccepting = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: 'palpite depois da espera' });
+    expect((await stillAccepting).correct).toBe(false);
+  });
+
+  it('descarta o registro de personagens usados junto com a sala (POOL-07)', async () => {
+    const host = await connectClient();
+    const created = await createRoom(host, 'Zeca');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    expect(getInternalRoom(created.roomCode)).toBeDefined();
+    host.emit('room:leave');
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    // A sala sai do Map, então o Set de usados sai com ela: não há registro
+    // global de personagens usados que sobreviva ao fim da sala.
+    expect(getInternalRoom(created.roomCode)).toBeUndefined();
   });
 
   it('mantém os personagens de uma rodada abortada por saída de jogador como usados (POOL-06)', async () => {

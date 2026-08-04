@@ -16,7 +16,7 @@ interface CharacterSeed {
 // Núcleo popular: personagens e nomes que a maioria das pessoas reconhece.
 const characterSets: Record<string, string> = {
   Marvel: `Homem-Aranha|Homem de Ferro|Capitão América|Thor|Hulk|Viúva Negra|Pantera Negra|Doutor Estranho|Capitã Marvel|Feiticeira Escarlate|Homem-Formiga|Loki|Thanos|Deadpool|Wolverine|Venom|Demolidor|Nick Fury|Duende Verde|Miles Morales`,
-  DC: `Superman|Batman|Mulher-Maravilha|Aquaman|Flash|Lanterna Verde|Super-Moça|Robin|Ciborgue|Shazam|Coringa|Arlequina|Mulher-Gato|Hera Venenosa|Lex Luthor|Bane|Ravena|Darkseid`,
+  DC: `Superman|Batman|Mulher-Maravilha|Aquaman|Flash|Lanterna Verde|Supergirl|Robin|Ciborgue|Shazam|Coringa|Arlequina|Mulher-Gato|Hera Venenosa|Lex Luthor|Bane|Ravena|Darkseid`,
   'Disney e Pixar': `Mickey Mouse|Minnie Mouse|Pato Donald|Pateta|Simba|Mufasa|Scar|Ariel|Úrsula|Bela|Fera|Aladdin|Jasmine|Gênio|Mulan|Moana|Elsa|Anna|Olaf|Stitch|Peter Pan|Cinderela|Malévola|Woody|Buzz Lightyear|Relâmpago McQueen|Remy|WALL-E|Alegria|Miguel Rivera`,
   Animação: `Pernalonga|Tom|Jerry|Scooby-Doo|Salsicha|Homer Simpson|Bart Simpson|Lisa Simpson|Peter Griffin|Stewie Griffin|Rick Sanchez|Morty Smith|Aang|Zuko|Bob Esponja|Patrick Estrela|Finn, o Humano|Jake, o Cão|Pica-Pau|Gato de Botas`,
   'Anime e mangá': `Goku|Vegeta|Gohan|Piccolo|Naruto Uzumaki|Sasuke Uchiha|Kakashi Hatake|Luffy|Roronoa Zoro|Nami|Sanji|Eren Yeager|Mikasa Ackerman|Levi Ackerman|Light Yagami|L|Tanjiro Kamado|Nezuko Kamado|Satoru Gojo|Sailor Moon|Ash Ketchum|Pikachu|Totoro`,
@@ -44,6 +44,7 @@ const aliasesByName: Record<string, string[]> = {
   deadpool: ['Wade Wilson'],
   wolverine: ['Logan'],
   superman: ['Clark Kent', 'Super-Homem'],
+  supergirl: ['Kara Zor-El', 'Super-Moça'],
   batman: ['Bruce Wayne'],
   'mulher maravilha': ['Diana Prince'],
   flash: ['Barry Allen'],
@@ -120,7 +121,6 @@ export const englishOriginals: Record<string, string> = {
   'duende verde': 'Green Goblin',
   'mulher maravilha': 'Wonder Woman',
   'lanterna verde': 'Green Lantern',
-  'super moca': 'Supergirl',
   ciborgue: 'Cyborg',
   coringa: 'Joker',
   arlequina: 'Harley Quinn',

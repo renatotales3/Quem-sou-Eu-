@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 4,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "surviving_mutant::when a test proves a room scoped exclusion set by drawing from a large catalog mock the rng or assert directly against the internal set instead of relying on collision probability to prove exclusion",
+      "text": "When a test proves a room-scoped exclusion set by drawing from a large catalog, mock the RNG or assert directly against the internal set instead of relying on collision probability to prove exclusion.",
+      "signal": "surviving_mutant",
+      "scope": "server/game.ts",
+      "status": "candidate",
+      "features": [
+        "melhorias-jogo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "server/game.ts:304-306 (mutant b) (server/game.ts)"
+      ],
+      "created": "2026-08-04T23:02:37Z",
+      "last_seen": "2026-08-04T23:02:37Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::a cleanup on deletion acceptance criterion needs a test that observes the side effect e g a lookup fails after deletion not just a structural argument that the field lives inside the deleted object",
+      "text": "A cleanup-on-deletion acceptance criterion needs a test that observes the side effect (e.g. a lookup fails after deletion), not just a structural argument that the field lives inside the deleted object.",
+      "signal": "ac_gap",
+      "scope": "server/game.ts",
+      "status": "candidate",
+      "features": [
+        "melhorias-jogo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "POOL-07 (server/game.ts)"
+      ],
+      "created": "2026-08-04T23:02:37Z",
+      "last_seen": "2026-08-04T23:02:37Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::a never happens acceptance criterion no timer based side effect must get its own row in the test coverage matrix or it silently drops out of every task s scope",
+      "text": "A never-happens acceptance criterion (no timer-based side effect) must get its own row in the test coverage matrix, or it silently drops out of every task's scope.",
+      "signal": "ac_gap",
+      "scope": "test-coverage-matrix",
+      "status": "candidate",
+      "features": [
+        "melhorias-jogo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "TIME-09 (test-coverage-matrix)"
+      ],
+      "created": "2026-08-04T23:02:37Z",
+      "last_seen": "2026-08-04T23:02:37Z"
+    }
+  ]
+}

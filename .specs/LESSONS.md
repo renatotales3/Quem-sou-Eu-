@@ -1,0 +1,39 @@
+# LESSONS - auto-maintained by scripts/lessons.py
+
+> Machine-owned. Do NOT hand-edit. Changes are overwritten on the next `lessons.py` write.
+> Canonical state lives in `.specs/lessons.json`. Edit lessons only via the script.
+> promote_threshold=2 distinct features · window_days=45 · quarantine_threshold=2
+
+## Confirmed (load these at Specify/Design)
+
+Corroborated across multiple features. Safe to apply as guidance.
+
+_none_
+
+## Candidates (under observation - do NOT load as guidance yet)
+
+Seen once or not yet corroborated. Tracked, not trusted.
+
+### L-001 - When a test proves a room-scoped exclusion set by drawing from a large catalog, mock the RNG or assert directly against the internal set instead of relying on collision probability to prove exclusion.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `server/game.ts` · harmful: 0
+- features: melhorias-jogo
+- evidence: server/game.ts:304-306 (mutant b) (server/game.ts)
+- last seen: 2026-08-04T23:02:37Z
+
+### L-002 - A cleanup-on-deletion acceptance criterion needs a test that observes the side effect (e.g. a lookup fails after deletion), not just a structural argument that the field lives inside the deleted object.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `server/game.ts` · harmful: 0
+- features: melhorias-jogo
+- evidence: POOL-07 (server/game.ts)
+- last seen: 2026-08-04T23:02:37Z
+
+### L-003 - A never-happens acceptance criterion (no timer-based side effect) must get its own row in the test coverage matrix, or it silently drops out of every task's scope.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `test-coverage-matrix` · harmful: 0
+- features: melhorias-jogo
+- evidence: TIME-09 (test-coverage-matrix)
+- last seen: 2026-08-04T23:02:37Z
+
+## Quarantined (failed when applied - ignore)
+
+A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
+
+_none_
