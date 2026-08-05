@@ -1,26 +1,30 @@
-# Blueprint do servidor Socket.IO no Render.
+# Blueprint do deploy no Render — um único processo serve tudo.
 #
-# A interface é estática e fica na Vercel (ver vercel.json); aqui roda só o
-# processo Node com os WebSockets.
+# `npm run build` builda a interface e o servidor, e o processo Node entrega
+# `dist/`, o `/healthz` e os WebSockets na mesma origem. É o deploy canônico do
+# projeto: uma URL, um conjunto de salas, nada de CORS entre domínios.
 #
-# O plano free NÃO escala além de uma instância, e isso é exatamente o que este
-# jogo precisa: salas, jogadores e personagens usados vivem num Map em memória
-# (server/game.ts), então duas instâncias quebrariam a entrada por código.
+# O plano free NÃO escala além de uma instância, e isso aqui é vantagem: salas,
+# jogadores e personagens usados vivem num Map em memória (server/game.ts).
+# Duas instâncias quebrariam a entrada por código — quem cria a sala cairia numa
+# e quem digita o código cairia na outra.
 services:
   - name: quem-sou-eu
     type: web
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build:server
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
     envVars:
-      # Preenchido no painel na criação do blueprint: precisa do domínio real da
-      # Vercel, que só existe depois do primeiro deploy da interface.
-      # Formato: https://SEU-APP.vercel.app,https://*.vercel.app
+      # A própria URL pública do serviço, para o Socket.IO recusar conexões
+      # vindas de outros sites. Preenchido no painel porque o domínio só existe
+      # depois do primeiro deploy. Ex.: https://quem-sou-eu-9pgt.onrender.com
       - key: PUBLIC_ORIGIN
         sync: false
       - key: ROOM_TTL_MINUTES
         value: 30
       - key: NODE_ENV
         value: production
+      # VITE_SERVER_URL fica DE FORA de propósito: vazia, o cliente conecta na
+      # própria origem. Defini-la aqui apontaria o navegador para outro host.
