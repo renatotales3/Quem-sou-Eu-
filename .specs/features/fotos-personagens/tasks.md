@@ -300,17 +300,19 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] `object-fit: cover` — recorta sem distorcer
-- [ ] Altura reservada estável, para o card não "pular" quando a imagem carrega
-- [ ] Crédito discreto e legível nos dois temas do card
-- [ ] Layout íntegro em ~375px de largura
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: suíte inalterada
+- [x] `object-fit: cover` — recorta sem distorcer
+- [x] Altura reservada estável, para o card não "pular" quando a imagem carrega
+- [x] Crédito discreto e legível nos dois temas do card
+- [x] Layout íntegro em ~375px de largura
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: suíte inalterada
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `style(ui): style character photo and image credit`
+
+**Execução real**: `.character-photo`/`.reveal-photo` usam `object-fit: cover` com altura fixa em CSS (92px no card, 30px circular na revelação, igual ao avatar que substitui) — o espaço existe antes da imagem decodificar, então não há salto. `.character-credit`/`.reveal-credit` usam tinta escura translúcida sobre os quatro fundos de `character-color-0..3` (mesmo padrão de `.character-info em`), legível nos quatro. `.others-grid` já era 2 colunas em ≤900px; sem gate de teste de componente React nesta suíte (ver Test Coverage Matrix), a verificação de layout em ~375px é manual.
 
 ---
 
