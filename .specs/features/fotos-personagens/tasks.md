@@ -144,17 +144,19 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Toda entrada aprovada tem `url`, `author` e `license` preenchidos
-- [ ] Nenhuma entrada aprovada é cosplay, estátua, grafite ou objeto que não represente o personagem
-- [ ] Rejeitados não entram no arquivo — ausência é o fallback previsto
-- [ ] Relatório de cobertura por categoria registrado no commit
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: suíte permanece em 46
+- [x] Toda entrada aprovada tem `url`, `author` e `license` preenchidos
+- [x] Nenhuma entrada aprovada é cosplay, estátua, grafite ou objeto que não represente o personagem
+- [x] Rejeitados não entram no arquivo — ausência é o fallback previsto
+- [x] Relatório de cobertura por categoria registrado no commit
+- [x] Gate check passa: `npm test`
+- [x] Test count: suíte permanece em 46
 
 **Tests**: none
 **Gate**: quick
 
 **Commit**: `feat(images): add curated free-licensed character image catalog`
+
+**Execução real**: 6 subagentes abriram as 157 sobreviventes da triagem automática e julgaram "um brasileiro reconhece isto?"; 89 aprovadas, 68 rejeitadas. `server/character-images.ts` escrito com as 89 entradas, chave por nome normalizado, ordenado pela mesma ordem de categoria/personagem de `characterSets`. Cobertura por categoria: Música 20/20, Esportes 19/20, História/ciência/cultura 18/20, Fantasia e ficção científica 9/25, Literatura e mitologia 5/20, Séries 5/21, Videogames 3/22, Disney e Pixar 3/30, DC 2/18, Marvel 2/20, Cinema 2/25, Ficção brasileira 1/20, Animação 0/20, Anime e mangá 0/23.
 
 ---
 
