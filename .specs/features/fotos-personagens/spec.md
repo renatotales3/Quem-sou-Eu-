@@ -109,7 +109,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CARD-01 | P1: Foto no card dos outros jogadores | Design | Pending |
+| CARD-01 | P1: Foto no card dos outros jogadores | Design | Implementing |
 | CARD-02 | P1: Foto no card dos outros jogadores | Design | Pending |
 | CARD-03 | P1: Foto no card dos outros jogadores | Design | Pending |
 | CARD-04 | P1: Foto no card dos outros jogadores | Design | Pending |
@@ -119,7 +119,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | IMG-04 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-05 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-06 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
-| PRIV-01 | P2: Privacidade preservada com o campo novo | Design | Pending |
+| PRIV-01 | P2: Privacidade preservada com o campo novo | Design | Implementing |
 | PRIV-02 | P2: Privacidade preservada com o campo novo | Design | Pending |
 | PRIV-03 | P2: Privacidade preservada com o campo novo | Design | Pending |
 

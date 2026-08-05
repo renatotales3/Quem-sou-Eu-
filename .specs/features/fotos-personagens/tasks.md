@@ -207,15 +207,17 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] `image?: { url, author, license }` declarado sem importar código de `server/`
-- [ ] Estrutura espelha `CharacterImage`, sem acoplar as camadas
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: ≥ 50 testes
+- [x] `image?: { url, author, license }` declarado sem importar código de `server/`
+- [x] Estrutura espelha `CharacterImage`, sem acoplar as camadas
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: ≥ 50 testes
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(protocol): expose character image in the public view`
+
+**Execução real**: `npm run build && npm test` passam; 51 testes (inalterado, T5 é contrato de tipos, camada sem teste na matriz).
 
 ---
 

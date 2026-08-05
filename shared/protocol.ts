@@ -4,6 +4,14 @@ export interface CharacterPublic {
   id: string;
   name: string;
   category: string;
+  // Espelha CharacterImage de server/character-images.ts sem importar
+  // código de servidor: shared/ não deve depender de server/, mesmo motivo
+  // pelo qual name e category já são redeclarados aqui.
+  image?: {
+    url: string;
+    author: string;
+    license: string;
+  };
 }
 
 export interface PlayerView {
