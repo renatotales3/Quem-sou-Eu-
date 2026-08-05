@@ -56,6 +56,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: server/character-images.ts:396 (data-hygiene)
 - last seen: 2026-08-05T01:47:25Z
 
+### L-008 - When a curated-image resolver matches a person (actor, voice actor) rather than a role, check for the same image URL reused across different characters before visual review — a duplicate hit is objective, code-checkable proof the resolver returned a person's generic photo instead of a role-specific one.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `curation` · harmful: 0
+- features: fotos-personagens
+- evidence: IMG-02 (curation)
+- last seen: 2026-08-05T03:28:53Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

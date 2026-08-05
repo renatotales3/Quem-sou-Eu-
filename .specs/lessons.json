@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 8,
+  "next_id": 9,
   "lessons": [
     {
       "id": "L-001",
@@ -130,6 +130,24 @@
       ],
       "created": "2026-08-05T01:47:25Z",
       "last_seen": "2026-08-05T01:47:25Z"
+    },
+    {
+      "id": "L-008",
+      "key": "ac_gap::when a curated image resolver matches a person actor voice actor rather than a role check for the same image url reused across different characters before visual review a duplicate hit is objective code checkable proof the resolver returned a person s generic photo instead of a role specific one",
+      "text": "When a curated-image resolver matches a person (actor, voice actor) rather than a role, check for the same image URL reused across different characters before visual review — a duplicate hit is objective, code-checkable proof the resolver returned a person's generic photo instead of a role-specific one.",
+      "signal": "ac_gap",
+      "scope": "curation",
+      "status": "candidate",
+      "features": [
+        "fotos-personagens"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "IMG-02 (curation)"
+      ],
+      "created": "2026-08-05T03:28:53Z",
+      "last_seen": "2026-08-05T03:28:53Z"
     }
   ]
 }
