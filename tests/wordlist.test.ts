@@ -127,7 +127,7 @@ describe('catálogo de imagens', () => {
   });
 
   it('só existem as fontes conhecidas do catálogo (IMG-02)', () => {
-    const knownSources = new Set(['Wikimedia Commons', 'AniList']);
+    const knownSources = new Set(['Wikimedia Commons', 'AniList', 'TMDB', 'Comic Vine']);
     for (const image of Object.values(characterImages)) {
       expect(knownSources.has(image.source)).toBe(true);
     }
@@ -154,6 +154,8 @@ describe('catálogo de imagens', () => {
     const hostBySource: Record<string, string> = {
       'Wikimedia Commons': 'upload.wikimedia.org',
       AniList: 's4.anilist.co',
+      TMDB: 'image.tmdb.org',
+      'Comic Vine': 'comicvine.gamespot.com',
     };
 
     for (const image of Object.values(characterImages)) {
@@ -174,12 +176,13 @@ describe('catálogo de imagens', () => {
     }
   });
 
-  it('nenhum arquivo de server/ ou src/ fora de character-images.ts referencia domínio da Wikimedia ou do AniList (IMG-05)', () => {
+  it('nenhum arquivo de server/ ou src/ fora de character-images.ts referencia domínio da Wikimedia, AniList, TMDB ou Comic Vine (IMG-05)', () => {
     // IMG-05 proíbe chamada a qualquer fonte externa de imagem em runtime.
-    // Com uma segunda fonte (AniList), a varredura precisa cobrir os dois
-    // domínios: um código que passasse a falar com s4.anilist.co em runtime
-    // reintroduziria a mesma dependência externa que a Wikimedia já proibia.
-    const externalImageDomain = /wiki(?:pedia|media|data)\.org|anilist\.co/i;
+    // Com quatro fontes (Commons, AniList, TMDB, Comic Vine), a varredura
+    // precisa cobrir os quatro domínios: um código que passasse a falar com
+    // qualquer um deles em runtime reintroduziria a mesma dependência
+    // externa que a Wikimedia já proibia.
+    const externalImageDomain = /wiki(?:pedia|media|data)\.org|anilist\.co|image\.tmdb\.org|comicvine\.gamespot\.com/i;
     const roots = [new URL('../server/', import.meta.url), new URL('../src/', import.meta.url)];
     const offenders: string[] = [];
 
