@@ -297,6 +297,7 @@ function App(): JSX.Element {
           <span>Distribua a dúvida.</span>
           <span>Descubra a resposta.</span>
           <span>Não olhe a sua testa.</span>
+          <span className="home-footer-credit">Este produto usa a API do TMDB mas não é endossado nem certificado pelo TMDB.</span>
         </footer>
       </main>
     );
@@ -474,7 +475,7 @@ function CharacterCard({ player, index }: { player: RoomView['players'][number];
       <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div>
       {showImage ? <img className="character-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div>}
       <div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div>
-      {showImage && <p className="character-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}, fonte ${image!.source}`}>{image!.license} · {image!.author} · {image!.source}</p>}
+      {showImage && <p className="character-credit">{creditLabel(image!)}</p>}
     </article>
   );
 }
@@ -489,10 +490,46 @@ function RevealRow({ player }: { player: RoomView['players'][number] }): JSX.Ele
       <div>
         <strong>{player.nickname}</strong>
         <span>{player.character?.name ?? 'Sem personagem'}</span>
-        {showImage && <small className="reveal-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}, fonte ${image!.source}`}>{image!.license} · {image!.author} · {image!.source}</small>}
+        {showImage && <small className="reveal-credit">{creditLabel(image!)}</small>}
       </div>
       <em>{player.character?.category ?? '—'}</em>
     </div>
+  );
+}
+
+type ImageCredit = { url: string; author: string; license: string; source: string };
+
+/**
+ * Crédito acessível de uma imagem (CARD-04): autor e fonte vêm antes da
+ * licença de propósito. A licença do Comic Vine e do TMDB é um parágrafo
+ * inteiro de termos de uso, não um rótulo curto como "CC BY 2.0" — com o
+ * `-webkit-line-clamp` de poucas linhas em styles.css, deixá-la primeiro
+ * cortava o autor (e o próprio link do Comic Vine) antes de aparecerem na
+ * tela. Autor e fonte são curtos e cabem sempre; é a licença, no fim, que
+ * absorve o corte quando o texto não cabe — a atribuição em si nunca é
+ * truncada. O `aria-label` no wrapper repete essa ordem para leitor de tela.
+ */
+function creditLabel({ author, license, source }: ImageCredit): JSX.Element {
+  const label = `Foto: ${author}, fonte ${source}, licença ${license}`;
+  return (
+    <span aria-label={label}>
+      {author} · {source === 'Comic Vine' ? <ComicVineLink /> : source} · {license}
+    </span>
+  );
+}
+
+/**
+ * Termos do Comic Vine exigem link de volta ao site sempre que os dados da
+ * API são exibidos. `aria-label` carrega o aviso de nova aba porque o texto
+ * visível ("Comic Vine") já ocupa espaço contado pelo line-clamp do
+ * elemento pai — um texto extra visualmente oculto ainda entraria nessa
+ * conta e empurraria o corte para antes do previsto.
+ */
+function ComicVineLink(): JSX.Element {
+  return (
+    <a href="https://comicvine.gamespot.com" target="_blank" rel="noopener noreferrer" aria-label="Comic Vine (abre em nova aba)">
+      Comic Vine
+    </a>
   );
 }
 

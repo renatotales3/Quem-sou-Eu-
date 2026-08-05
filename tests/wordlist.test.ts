@@ -183,6 +183,16 @@ describe('catálogo de imagens', () => {
     // qualquer um deles em runtime reintroduziria a mesma dependência
     // externa que a Wikimedia já proibia.
     const externalImageDomain = /wiki(?:pedia|media|data)\.org|anilist\.co|image\.tmdb\.org|comicvine\.gamespot\.com/i;
+
+    // Exceção única e explícita: os termos da API do Comic Vine exigem link
+    // de volta para o site sempre que dados da API aparecem na interface
+    // (ver src/App.tsx, ComicVineLink). É um <a href> estático de
+    // navegação — o usuário decide clicar ou não — não uma chamada de rede
+    // em runtime, que é o que IMG-05 proíbe. Só este literal exato (âncora
+    // para a raiz do site) é descontado da varredura; um fetch, XHR ou
+    // qualquer outro caminho para o domínio continua batendo no guard.
+    const comicVineAttributionLink = 'href="https://comicvine.gamespot.com"';
+
     const roots = [new URL('../server/', import.meta.url), new URL('../src/', import.meta.url)];
     const offenders: string[] = [];
 
@@ -192,7 +202,11 @@ describe('catálogo de imagens', () => {
         const entryUrl = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, dirUrl);
         if (entry.isDirectory()) {
           walk(entryUrl);
-        } else if (externalImageDomain.test(readFileSync(entryUrl, 'utf8'))) {
+          continue;
+        }
+        const content = readFileSync(entryUrl, 'utf8');
+        const sanitized = content.split(comicVineAttributionLink).join('');
+        if (externalImageDomain.test(sanitized)) {
           offenders.push(entryUrl.pathname);
         }
       }
