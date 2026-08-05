@@ -37,6 +37,8 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | Atribuição | Autor e licença gravados por imagem e exibidos na interface | CC BY e CC BY-SA exigem atribuição; verificado na API que os metadados existem | y |
 | Personagem sem imagem aprovada | Mantém o card atual, inicial e cor | Já é um visual desenhado e funcional; ausência de foto não pode virar espaço vazio | y |
 | Licença de domínio público | Registrada como tal, crédito exibido de todo modo | Não é exigido, mas é barato e honesto | y |
+| Fontes além do Commons | Permitidas, com fonte e base de uso registradas por imagem | O catálogo deixa de ser "só imagem livre". Os termos de API do AniList permitem uso abaixo de US$150/mês de receita, mas isso cobre a API e os dados — a arte dos personagens continua sendo dos estúdios, e hospedar não concede licença. É uso tolerado em projeto de fã, não licença livre. Decisão consciente do dono do projeto para uso não comercial | y |
+| Distinção visível ao jogador | O crédito exibe a fonte junto do autor e da licença | Se o catálogo mistura procedências, esconder isso seria desonesto com quem olha o card | y |
 
 **Open questions:** none — todas resolvidas ou registradas acima.
 
@@ -69,7 +71,8 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 
 **Acceptance Criteria**:
 
-1. The system SHALL usar somente arquivos do Wikimedia Commons, nunca arquivos locais da Wikipédia em fair use. <!-- ubiquitous -->
+1. The system SHALL usar somente fontes cujos termos permitam o uso não comercial pretendido, e SHALL registrar a fonte de cada imagem. <!-- ubiquitous -->
+7. The system SHALL registrar, para cada imagem, a base sob a qual ela é usada: licença livre quando a fonte é o Wikimedia Commons, ou os termos do provedor quando não é. <!-- ubiquitous -->
 2. The system SHALL registrar autor e licença de cada imagem aprovada. <!-- ubiquitous -->
 3. The system SHALL NOT requisitar a Wikipédia, o Wikidata ou o Commons em tempo de execução, nem no servidor nem no cliente. <!-- ubiquitous -->
 4. IF uma entrada do catálogo de imagens referenciar um personagem inexistente THEN a suíte de testes SHALL falhar. <!-- unwanted-behavior -->
@@ -119,6 +122,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | IMG-04 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-05 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-06 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
+| IMG-07 | P1: Catálogo de imagens livre e verificável | Design | Pending |
 | PRIV-01 | P2: Privacidade preservada com o campo novo | Design | Implementing |
 | PRIV-02 | P2: Privacidade preservada com o campo novo | Design | Implementing |
 | PRIV-03 | P2: Privacidade preservada com o campo novo | Design | Implementing |
@@ -127,7 +131,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 13 total, 0 mapped to tasks, 13 unmapped ⚠️
+**Coverage:** 14 total, 13 mapped to tasks, 1 unmapped ⚠️ (IMG-07, na extensão AniList)
 
 ---
 
