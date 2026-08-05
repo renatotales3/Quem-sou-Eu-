@@ -44,6 +44,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: server/game.ts:311 (mutant g, round 2) (server/game.ts)
 - last seen: 2026-08-04T23:18:51Z
 
+### L-006 - When a curated-data acceptance criterion depends on human visual judgment (e.g. 'not cosplay/statue/graffiti'), add an automatable metadata proxy check (e.g. scan source-platform category tags) instead of leaving it fully untested — filename-only triage misses cases the platform's own category metadata would catch.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `curation` · harmful: 0
+- features: fotos-personagens
+- evidence: IMG-02 (curation)
+- last seen: 2026-08-05T01:47:25Z
+
+### L-007 - When copying attribution text from an HTML-sourced API field (e.g. Commons extmetadata) into a JS string rendered as JSX text, decode HTML entities first — React does not re-decode entities inside already-parsed text nodes, so raw &amp; renders literally on screen.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `data-hygiene` · harmful: 0
+- features: fotos-personagens
+- evidence: server/character-images.ts:396 (data-hygiene)
+- last seen: 2026-08-05T01:47:25Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
