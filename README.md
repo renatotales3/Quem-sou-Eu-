@@ -24,24 +24,41 @@ npm start
 
 O mesmo processo Node serve `dist/`, o endpoint `/healthz` e os WebSockets. As salas ficam em memória e são perdidas quando o processo reinicia.
 
-## Deploy na Vercel + Railway
+## Deploy na Vercel + Render
 
 A interface é estática e vai para a Vercel. O servidor precisa de um processo
 Node vivo — Socket.IO mantém a conexão aberta e o estado das salas mora na
-memória do processo — então ele vai para a Railway.
+memória do processo — então ele vai para o Render, que tem plano gratuito.
 
-**O servidor não pode rodar em mais de uma réplica.** Salas, jogadores,
+**O servidor não pode rodar em mais de uma instância.** Salas, jogadores,
 personagens já usados e os instantes da rodada vivem num `Map` em
-`server/game.ts`. Com duas réplicas, quem cria a sala cai numa e quem entra com
-o código cai na outra, que nunca ouviu falar dela — o convidado recebe "Essa
-sala não existe mais". Por isso `railway.json` fixa `numReplicas: 1`. Escalar
-horizontalmente exigiria mover o estado para Redis e adotar o adapter do
-Socket.IO. Pelo mesmo motivo o jogo não roda em plataforma serverless.
+`server/game.ts`. Com duas instâncias, quem cria a sala cai numa e quem entra
+com o código cai na outra, que nunca ouviu falar dela — o convidado recebe
+"Essa sala não existe mais". O plano gratuito do Render não escala além de uma
+instância, o que aqui é uma vantagem. Escalar horizontalmente exigiria mover o
+estado para Redis e adotar o adapter do Socket.IO. Pelo mesmo motivo o jogo não
+roda em plataforma serverless.
 
-### 1. Servidor na Railway
+### O que o plano gratuito custa
 
-Aponte a Railway para o repositório. O `railway.json` já define build
-(`npm run build:server`), start (`npm start`) e healthcheck (`/healthz`).
+O Render hiberna um serviço gratuito após 15 minutos sem receber requisição
+HTTP nem mensagem WebSocket, e voltar leva cerca de um minuto. Na prática:
+
+- **Durante a partida ele não hiberna.** O Socket.IO troca ping/pong a cada
+  ~25s, e desde fevereiro de 2026 mensagem WebSocket conta como atividade.
+- **A primeira pessoa do dia espera ~1 min.** O cliente trata isso: bate no
+  `/healthz` para acordar o servidor antes de abrir o socket, mostra "acordando
+  servidor" e explica a espera na tela, em vez de acusar erro de conexão.
+- **Sala parada 15+ min é perdida.** O estado é em memória. O TTL padrão de
+  salas já é 30 min, então na prática pouco muda.
+- São 750 horas de instância por mês, o que cobre um serviço rodando o mês
+  inteiro.
+
+### 1. Servidor no Render
+
+Aponte o Render para o repositório. O `render.yaml` já define plano, build
+(`npm ci && npm run build:server`), start (`npm start`) e healthcheck
+(`/healthz`).
 
 Variáveis:
 
@@ -50,8 +67,8 @@ Variáveis:
 | `PUBLIC_ORIGIN` | `https://SEU-APP.vercel.app,https://*.vercel.app` |
 | `ROOM_TTL_MINUTES` | `30` |
 
-Não defina `PORT` nem `HOST`: a Railway injeta `PORT` e o servidor já escuta em
-`0.0.0.0`. Gere o domínio público e guarde a URL.
+Não defina `PORT` nem `HOST`: o Render injeta `PORT` e o servidor já escuta em
+`0.0.0.0`. Guarde a URL `.onrender.com`.
 
 Sem `dist/`, o servidor sobe em modo api-only: `/` responde um JSON de
 identificação e só `/healthz` e `/socket.io` ficam de pé. É o esperado — a
@@ -64,28 +81,32 @@ Importe o mesmo repositório. O `vercel.json` já define build
 
 | Variável | Valor |
 | --- | --- |
-| `VITE_SERVER_URL` | `https://SEU-APP.up.railway.app` |
+| `VITE_SERVER_URL` | `https://SEU-APP.onrender.com` |
 
 `VITE_SERVER_URL` é lida em **tempo de build**, não em runtime: trocar o valor
 exige um novo deploy da interface, não basta salvar a variável.
 
 ### 3. Fechar o círculo
 
-A ordem tem uma dependência circular: a Vercel precisa da URL da Railway, e o
-`PUBLIC_ORIGIN` da Railway precisa da URL da Vercel. Suba a Railway primeiro,
-depois a Vercel, e então volte na Railway para ajustar `PUBLIC_ORIGIN` com o
+A ordem tem uma dependência circular: a Vercel precisa da URL do Render, e o
+`PUBLIC_ORIGIN` do Render precisa da URL da Vercel. Suba o Render primeiro,
+depois a Vercel, e então volte no Render para ajustar `PUBLIC_ORIGIN` com o
 domínio real. O curinga `https://*.vercel.app` cobre os preview deploys, que
 ganham um subdomínio novo a cada branch.
 
 Para conferir se ficou de pé:
 
 ```bash
-curl https://SEU-APP.up.railway.app/healthz
+curl https://SEU-APP.onrender.com/healthz
 # {"ok":true,"rooms":0}
 ```
 
-Se a interface abrir mas ficar em "desconectado", quase sempre é `PUBLIC_ORIGIN`
-sem o domínio da Vercel — o navegador mostra o erro de CORS no console.
+Se a interface abrir mas ficar em "desconectado", quase sempre é
+`PUBLIC_ORIGIN` sem o domínio da Vercel — o navegador mostra o erro de CORS no
+console.
+
+> O `railway.json` continua no repositório e funciona do mesmo jeito, caso você
+> queira voltar para a Railway. As variáveis são as mesmas.
 
 ## Docker
 

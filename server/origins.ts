@@ -21,6 +21,17 @@ export function parseAllowedOrigins(value: string | undefined): Array<string | R
   return entries.map((entry) => (entry.includes('*') ? wildcardToRegExp(entry) : entry));
 }
 
+/**
+ * Testa uma origem contra o resultado de `parseAllowedOrigins`. O Socket.IO
+ * aplica isso sozinho nas rotas dele; esta função existe para as rotas do
+ * Express, que não passam pelo CORS do Socket.IO — hoje o `/healthz`, que o
+ * cliente consulta para acordar o servidor num host que hiberna.
+ */
+export function isOriginAllowed(allowed: Array<string | RegExp> | true, origin: string): boolean {
+  if (allowed === true) return true;
+  return allowed.some((entry) => (typeof entry === 'string' ? entry === origin : entry.test(origin)));
+}
+
 function wildcardToRegExp(pattern: string): RegExp {
   const escaped = pattern
     .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

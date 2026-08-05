@@ -1,0 +1,26 @@
+# Blueprint do servidor Socket.IO no Render.
+#
+# A interface é estática e fica na Vercel (ver vercel.json); aqui roda só o
+# processo Node com os WebSockets.
+#
+# O plano free NÃO escala além de uma instância, e isso é exatamente o que este
+# jogo precisa: salas, jogadores e personagens usados vivem num Map em memória
+# (server/game.ts), então duas instâncias quebrariam a entrada por código.
+services:
+  - name: quem-sou-eu
+    type: web
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build:server
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      # Preenchido no painel na criação do blueprint: precisa do domínio real da
+      # Vercel, que só existe depois do primeiro deploy da interface.
+      # Formato: https://SEU-APP.vercel.app,https://*.vercel.app
+      - key: PUBLIC_ORIGIN
+        sync: false
+      - key: ROOM_TTL_MINUTES
+        value: 30
+      - key: NODE_ENV
+        value: production

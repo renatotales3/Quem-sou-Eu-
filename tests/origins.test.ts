@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseAllowedOrigins } from '../server/origins';
+import { isOriginAllowed, parseAllowedOrigins } from '../server/origins';
 
 function allows(value: string | undefined, origin: string): boolean {
-  const parsed = parseAllowedOrigins(value);
-  if (parsed === true) return true;
-  return parsed.some((entry) => (typeof entry === 'string' ? entry === origin : entry.test(origin)));
+  return isOriginAllowed(parseAllowedOrigins(value), origin);
 }
 
 describe('parseAllowedOrigins', () => {
@@ -51,5 +49,20 @@ describe('parseAllowedOrigins', () => {
     expect(allows(value, 'https://jogo.com.br')).toBe(true);
     expect(allows(value, 'https://preview-42.vercel.app')).toBe(true);
     expect(allows(value, 'https://invasor.com')).toBe(false);
+  });
+});
+
+describe('isOriginAllowed', () => {
+  it('libera qualquer origem quando a lista é `true`', () => {
+    expect(isOriginAllowed(true, 'https://qualquer-coisa.com')).toBe(true);
+  });
+
+  it('compara origem exata contra entradas de texto', () => {
+    expect(isOriginAllowed(['https://a.app'], 'https://a.app')).toBe(true);
+    expect(isOriginAllowed(['https://a.app'], 'https://b.app')).toBe(false);
+  });
+
+  it('recusa quando a lista está vazia', () => {
+    expect(isOriginAllowed([], 'https://a.app')).toBe(false);
   });
 });

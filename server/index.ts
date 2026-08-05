@@ -5,20 +5,33 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import type { ClientToServerEvents, InterServerEvents, ServerToClientEvents, SocketData } from '../shared/protocol';
 import { createGameManager } from './game';
-import { parseAllowedOrigins } from './origins';
+import { isOriginAllowed, parseAllowedOrigins } from './origins';
 
 const app = express();
 const httpServer = createServer(app);
+const allowedOrigins = parseAllowedOrigins(process.env.PUBLIC_ORIGIN);
 const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(httpServer, {
   cors: {
-    origin: parseAllowedOrigins(process.env.PUBLIC_ORIGIN),
+    origin: allowedOrigins,
     credentials: true,
   },
 });
 const gameManager = createGameManager(io);
 
 app.disable('x-powered-by');
-app.get('/healthz', (_request, response) => {
+
+// O CORS do Socket.IO só cobre as rotas dele, e o `/healthz` é consultado pelo
+// próprio navegador quando a interface está em outro domínio: num host free que
+// hiberna, o cliente bate aqui para acordar o servidor e para saber quando ele
+// respondeu. Sem estes cabeçalhos o navegador faria a requisição (acordando o
+// serviço) mas bloquearia a leitura da resposta, e o cliente nunca saberia que
+// já pode conectar.
+app.get('/healthz', (request, response) => {
+  const origin = request.headers.origin;
+  if (typeof origin === 'string' && isOriginAllowed(allowedOrigins, origin)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Vary', 'Origin');
+  }
   response.json({ ok: true, rooms: gameManager.getRoomCount() });
 });
 

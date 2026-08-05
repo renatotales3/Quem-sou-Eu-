@@ -9,10 +9,10 @@ import type {
   RoundFinishedPayload,
 } from '../shared/protocol';
 import { formatDuration } from '../shared/time';
-import { clearSession, readSession, saveSession, socket, type SessionData } from './socket';
+import { clearSession, readSession, saveSession, serverMayHibernate, socket, wakeServer, type SessionData } from './socket';
 
 type HomeMode = 'create' | 'join';
-type ConnectionState = 'offline' | 'connecting' | 'online' | 'reconnecting';
+type ConnectionState = 'offline' | 'connecting' | 'waking' | 'online' | 'reconnecting';
 type Feedback = { tone: 'neutral' | 'success' | 'error'; message: string } | null;
 
 const MAX_NICKNAME_LENGTH = 24;
@@ -46,6 +46,18 @@ function App(): JSX.Element {
     };
     const onDisconnect = (): void => setConnection('offline');
     const onConnectError = (): void => {
+      // Num servidor que hiberna, as primeiras falhas são esperadas enquanto ele
+      // sobe — o Socket.IO ainda tem tentativas de sobra. Só vira erro visível
+      // quando o orçamento de reconexão acaba (`reconnect_failed`), para não
+      // acusar falha de um servidor que está apenas acordando.
+      if (serverMayHibernate) {
+        setConnection('waking');
+        return;
+      }
+      setConnection('offline');
+      setError('Não consegui conectar agora. Tente novamente em alguns segundos.');
+    };
+    const onReconnectFailed = (): void => {
       setConnection('offline');
       setError('Não consegui conectar agora. Tente novamente em alguns segundos.');
     };
@@ -93,6 +105,7 @@ function App(): JSX.Element {
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
+    socket.io.on('reconnect_failed', onReconnectFailed);
     socket.on('room:state', onRoomState);
     socket.on('round:started', onRoundStarted);
     socket.on('guess:result', onGuessResult);
@@ -101,16 +114,21 @@ function App(): JSX.Element {
     socket.on('room:notice', onRoomNotice);
     socket.on('error', onGameError);
 
+    let cancelled = false;
     if (session) {
-      setConnection('reconnecting');
+      setConnection(serverMayHibernate ? 'waking' : 'reconnecting');
       socket.auth = session;
-      socket.connect();
+      void wakeServer().then(() => {
+        if (!cancelled && !socket.connected) socket.connect();
+      });
     }
 
     return () => {
+      cancelled = true;
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('connect_error', onConnectError);
+      socket.io.off('reconnect_failed', onReconnectFailed);
       socket.off('room:state', onRoomState);
       socket.off('round:started', onRoundStarted);
       socket.off('guess:result', onGuessResult);
@@ -174,9 +192,11 @@ function App(): JSX.Element {
       setPendingAction(null);
       emitRoomAction(action.mode, action.nickname, action.code);
     } else {
-      setConnection('connecting');
+      setConnection(serverMayHibernate ? 'waking' : 'connecting');
       socket.auth = {};
-      socket.connect();
+      void wakeServer().then(() => {
+        if (!socket.connected) socket.connect();
+      });
     }
   }
 
@@ -264,6 +284,11 @@ function App(): JSX.Element {
               </button>
             </form>
             {error && <InlineNotice tone="error">{error}</InlineNotice>}
+            {connection === 'waking' && !error && (
+              <InlineNotice tone="neutral">
+                Acordando o servidor. No plano gratuito ele hiberna sem uso, e voltar leva cerca de um minuto.
+              </InlineNotice>
+            )}
             <p className="privacy-note"><span aria-hidden="true">✦</span> Seu personagem nunca é enviado para a sua tela durante a rodada.</p>
           </div>
         </section>
@@ -428,7 +453,7 @@ function Logo(): JSX.Element {
 }
 
 function ConnectionPill({ state }: { state: ConnectionState }): JSX.Element {
-  const labels: Record<ConnectionState, string> = { offline: 'desconectado', connecting: 'conectando', online: 'ao vivo', reconnecting: 'reconectando' };
+  const labels: Record<ConnectionState, string> = { offline: 'desconectado', connecting: 'conectando', waking: 'acordando servidor', online: 'ao vivo', reconnecting: 'reconectando' };
   return <span className={`connection-pill connection-${state}`}><span className="connection-dot" aria-hidden="true" />{labels[state]}</span>;
 }
 
