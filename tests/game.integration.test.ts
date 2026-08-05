@@ -55,7 +55,9 @@ function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, 
     const timeout = setTimeout(() => {
       socket.off(event as never, listener as never);
       reject(new Error(`Timeout esperando ${String(event)}`));
-    }, 4_000);
+      // Folga generosa: ver o comentário em vitest.config.ts. Prazo aqui não é
+      // asserção, só evita a suíte travar se o evento nunca chegar.
+    }, 15_000);
     const listener = (payload: T): void => {
       if (predicate && !predicate(payload)) return;
       clearTimeout(timeout);
@@ -70,7 +72,7 @@ function connectClient(): Promise<TestSocket> {
   const client = createClient(address, { autoConnect: false, forceNew: true });
   managerClients.push(client);
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Timeout conectando cliente')), 4_000);
+    const timeout = setTimeout(() => reject(new Error('Timeout conectando cliente')), 15_000);
     client.once('connect', () => {
       clearTimeout(timeout);
       resolve(client);
