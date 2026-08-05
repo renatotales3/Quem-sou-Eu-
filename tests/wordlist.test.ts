@@ -117,16 +117,24 @@ describe('catálogo de imagens', () => {
     }
   });
 
-  it('toda entrada aprovada tem autor e licença preenchidos (IMG-03)', () => {
+  it('toda entrada aprovada tem autor, licença e fonte preenchidos (IMG-03, IMG-07)', () => {
     expect(Object.keys(characterImages).length).toBeGreaterThan(0);
     for (const image of Object.values(characterImages)) {
       expect(image.author.trim().length).toBeGreaterThan(0);
       expect(image.license.trim().length).toBeGreaterThan(0);
+      expect(image.source.trim().length).toBeGreaterThan(0);
     }
   });
 
-  it('toda URL é um thumbnail do Commons de no máximo 400px, sem parâmetros de rastreamento (IMG-06)', () => {
-    // Quatro entradas aprovadas não têm "/thumb/" no caminho: o arquivo
+  it('só existem as fontes conhecidas do catálogo (IMG-02)', () => {
+    const knownSources = new Set(['Wikimedia Commons', 'AniList']);
+    for (const image of Object.values(characterImages)) {
+      expect(knownSources.has(image.source)).toBe(true);
+    }
+  });
+
+  it('toda URL bate com o host esperado da própria fonte, e a do Commons é um thumbnail de no máximo 400px sem parâmetros de rastreamento (IMG-06)', () => {
+    // Quatro entradas do Commons não têm "/thumb/" no caminho: o arquivo
     // original já é menor que o limite pedido, então a API do Commons
     // devolve o próprio original como thumbnail (ver comentário no topo de
     // server/character-images.ts). Medido via imageinfo em 2026-08-05
@@ -140,10 +148,22 @@ describe('catálogo de imagens', () => {
       'https://upload.wikimedia.org/wikipedia/commons/c/c0/Pac-Man_gameplay_%281x_pixel-perfect_recreation%29.png',
     ]);
 
+    // Host esperado por fonte: cada provedor externo tem um domínio fixo, e
+    // uma URL que não bate com o da própria fonte quebra o teste em vez de
+    // colar num host qualquer.
+    const hostBySource: Record<string, string> = {
+      'Wikimedia Commons': 'upload.wikimedia.org',
+      AniList: 's4.anilist.co',
+    };
+
     for (const image of Object.values(characterImages)) {
       const parsed = new URL(image.url);
-      expect(parsed.hostname).toBe('upload.wikimedia.org');
+      const expectedHost = hostBySource[image.source];
+      expect(expectedHost).toBeDefined();
+      expect(parsed.hostname).toBe(expectedHost);
       expect(parsed.search).toBe('');
+
+      if (image.source !== 'Wikimedia Commons') continue;
 
       const thumbMatch = image.url.match(/\/thumb\/.*\/(\d+)px-[^/]+$/);
       if (thumbMatch) {
@@ -154,8 +174,12 @@ describe('catálogo de imagens', () => {
     }
   });
 
-  it('nenhum arquivo de server/ ou src/ fora de character-images.ts referencia domínio da Wikimedia (IMG-05)', () => {
-    const wikimediaDomain = /wiki(?:pedia|media|data)\.org/i;
+  it('nenhum arquivo de server/ ou src/ fora de character-images.ts referencia domínio da Wikimedia ou do AniList (IMG-05)', () => {
+    // IMG-05 proíbe chamada a qualquer fonte externa de imagem em runtime.
+    // Com uma segunda fonte (AniList), a varredura precisa cobrir os dois
+    // domínios: um código que passasse a falar com s4.anilist.co em runtime
+    // reintroduziria a mesma dependência externa que a Wikimedia já proibia.
+    const externalImageDomain = /wiki(?:pedia|media|data)\.org|anilist\.co/i;
     const roots = [new URL('../server/', import.meta.url), new URL('../src/', import.meta.url)];
     const offenders: string[] = [];
 
@@ -165,7 +189,7 @@ describe('catálogo de imagens', () => {
         const entryUrl = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, dirUrl);
         if (entry.isDirectory()) {
           walk(entryUrl);
-        } else if (wikimediaDomain.test(readFileSync(entryUrl, 'utf8'))) {
+        } else if (externalImageDomain.test(readFileSync(entryUrl, 'utf8'))) {
           offenders.push(entryUrl.pathname);
         }
       }
@@ -175,7 +199,7 @@ describe('catálogo de imagens', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('Character.image só existe para quem tem entrada aprovada, e reflete url/author/license (IMG-01, IMG-02)', () => {
+  it('Character.image só existe para quem tem entrada aprovada, e reflete url/author/license/source (IMG-01, IMG-02)', () => {
     const withImage = characters.filter((character) => character.image);
     expect(withImage.length).toBe(Object.keys(characterImages).length);
     for (const character of withImage) {
@@ -188,14 +212,14 @@ describe('catálogo de imagens', () => {
     expect(withoutImage.length).toBeGreaterThan(0);
   });
 
-  it('não guarda entidade HTML em autor nem licença (IMG-03)', () => {
+  it('não guarda entidade HTML em autor, licença nem fonte (IMG-03)', () => {
     // A API do Commons devolve o autor em HTML, então `&amp;` chega no lugar de
     // `&`. React não decodifica entidade em texto de JSX: o card mostraria
     // literalmente "Elliott &amp;amp; Fry" e o crédito ficaria errado. Guarda
     // relevante agora, porque cada provedor novo traz autores em HTML.
     const entidade = /&[a-zA-Z]+;|&#\d+;/;
     const sujas = Object.entries(characterImages)
-      .filter(([, image]) => entidade.test(image.author) || entidade.test(image.license))
+      .filter(([, image]) => entidade.test(image.author) || entidade.test(image.license) || entidade.test(image.source))
       .map(([key]) => key);
     expect(sujas).toEqual([]);
   });
