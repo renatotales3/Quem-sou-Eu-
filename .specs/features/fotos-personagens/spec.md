@@ -122,7 +122,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | IMG-04 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-05 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-06 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
-| IMG-07 | P1: Catálogo de imagens livre e verificável | Design | Pending |
+| IMG-07 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | PRIV-01 | P2: Privacidade preservada com o campo novo | Design | Implementing |
 | PRIV-02 | P2: Privacidade preservada com o campo novo | Design | Implementing |
 | PRIV-03 | P2: Privacidade preservada com o campo novo | Design | Implementing |
@@ -131,7 +131,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 14 total, 13 mapped to tasks, 1 unmapped ⚠️ (IMG-07, na extensão AniList)
+**Coverage:** 14 total, 14 mapped to tasks, 0 unmapped
 
 ---
 

@@ -1,12 +1,25 @@
 /**
  * Catálogo de imagens curadas por personagem.
  *
- * Procedência: Wikidata P18 (imagem oficial) -> arquivo no Wikimedia
- * Commons, resolvido em lote por scripts/resolve-character-images.mjs (T1),
- * filtrado por triagem automática de nome de arquivo e categoria (T2) e
- * revisado visualmente por humano, um a um, com o critério "um brasileiro
- * reconhece o personagem nesta imagem" (T3). Curadoria concluída em
- * 2026-08-05.
+ * Procedência: duas fontes, cada uma com seu próprio pipeline de curadoria.
+ *
+ * 'Wikimedia Commons' (89 entradas): Wikidata P18 (imagem oficial) ->
+ * arquivo no Commons, resolvido em lote por
+ * scripts/resolve-character-images.mjs (T1), filtrado por triagem automática
+ * de nome de arquivo e categoria (T2) e revisado visualmente por humano, um
+ * a um, com o critério "um brasileiro reconhece o personagem nesta imagem"
+ * (T3). Curadoria concluída em 2026-08-05.
+ *
+ * 'AniList' (22 entradas, categoria Anime e mangá): resolvido via API do
+ * AniList a partir do nome do personagem, gravado em
+ * .image-candidates/anilist.json, e revisado visualmente com o mesmo
+ * critério de reconhecimento acima, gravado em
+ * .image-candidates/veredito-anime.json. Curadoria concluída em 2026-08-05;
+ * de 23 candidatos aprovados na revisão visual, 22 entraram no catálogo —
+ * Satoru Gojo ficou de fora por decisão do orquestrador: a imagem aprovada é
+ * um close extremo de painel cômico do mangá (boca aberta, língua de fora),
+ * não o visual pelo qual o personagem é reconhecido, então ele fica sem
+ * imagem (fallback de inicial e cor).
  *
  * Dado estático versionado, não gerado pelo build: só entram aqui
  * personagens aprovados na revisão visual. Ausência de uma chave é o caso
@@ -23,6 +36,10 @@
  * largura pedida (141px–262px de largura, medido via imageinfo em
  * 2026-08-05) — ainda satisfaz "thumbnail pequeno, nunca o original
  * grande", só que sem o segmento /thumb/ no caminho.
+ *
+ * As entradas 'AniList' apontam para `s4.anilist.co`, o CDN de retrato de
+ * personagem da própria API — não passam pelo limite de 400px do IMG-06,
+ * que é uma regra específica de thumbnail do Commons.
  *
  * Chave: nome do personagem normalizado (normalizeText), igual a
  * `aliasesByName` e `englishOriginals` neste mesmo módulo de catálogo.
@@ -88,6 +105,142 @@ export const characterImages: Record<string, CharacterImage> = {
     license: 'Public domain',
     source: 'Wikimedia Commons',
   }, // Malévola — Maleficent - Sleeping Beauty 1970 Reissue Trailer.png
+  // Anime e mangá
+  goku: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/246-wsRRr6z1kii8.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Goku — AniList character 246, Gokuu Son (Dragon Ball)
+  vegeta: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b913-NIFkKazWM8VO.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Vegeta — AniList character 913 (Dragon Ball)
+  gohan: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b2093-kdFZhqcNSsqW.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Gohan — AniList character 2093, Gohan Son (Dragon Ball)
+  piccolo: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b914-KuS8AWjqBrqa.jpg',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Piccolo — AniList character 914 (Dragon Ball)
+  'naruto uzumaki': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b17-phjcWCkRuIhu.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Naruto Uzumaki — AniList character 17 (Naruto)
+  'sasuke uchiha': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b13-SISLEw1oAD7a.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Sasuke Uchiha — AniList character 13 (Naruto)
+  'kakashi hatake': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b85-mkVBh2yjxjmx.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Kakashi Hatake — AniList character 85 (Naruto)
+  luffy: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b40-MNypXsxSRb1R.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Luffy — AniList character 40, Luffy Monkey (One Piece)
+  'roronoa zoro': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b62-S7oAeA9WInjV.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Roronoa Zoro — AniList character 62, Zoro Roronoa (One Piece)
+  nami: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b723-vp5hPptgnNEC.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Nami — AniList character 723 (One Piece)
+  sanji: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b305-6lisPmHtCnLT.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Sanji — AniList character 305 (One Piece)
+  'eren yeager': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b40882-dsj7IP943WFF.jpg',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Eren Yeager — AniList character 40882 (Attack on Titan)
+  'mikasa ackerman': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b40881-F3gr1PkreDvj.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Mikasa Ackerman — AniList character 40881 (Attack on Titan)
+  'levi ackerman': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b45627-CR68RyZmddGG.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Levi Ackerman — AniList character 45627, Levi (Attack on Titan)
+  'light yagami': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b80-26EhwSsSqQ50.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Light Yagami — AniList character 80 (Death Note)
+  l: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b71-1W4panC53vfs.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // L — AniList character 71, L Lawliet (Death Note)
+  'tanjiro kamado': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b126071-BTNEc1nRIv68.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Tanjiro Kamado — AniList character 126071, Tanjirou Kamado (Demon Slayer)
+  'nezuko kamado': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b127518-NRlq1CQ1v1ro.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Nezuko Kamado — AniList character 127518 (Demon Slayer)
+  // Satoru Gojo intencionalmente fora: imagem aprovada na busca é um close
+  // extremo de painel cômico do mangá (boca aberta, língua de fora), não o
+  // visual pelo qual o personagem é reconhecido. Fica sem imagem (fallback).
+  'sailor moon': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b2030-GQvVYPEYkXCy.jpg',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Sailor Moon — AniList character 2030, Usagi Tsukino
+  'ash ketchum': {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b2473-JDoo3I82Km4l.png',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Ash Ketchum — AniList character 2473, Satoshi (Pokémon)
+  pikachu: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b3891-edgrZOgCJ9do.jpg',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Pikachu — AniList character 3891 (Pokémon)
+  totoro: {
+    url: 'https://s4.anilist.co/file/anilistcdn/character/large/b269-sbPL4w1ygjSe.jpg',
+    author: 'Estúdio detentor dos direitos',
+    license: 'Uso não comercial via API do AniList',
+    source: 'AniList',
+  }, // Totoro — AniList character 269 (My Neighbor Totoro, Ghibli)
   // Videogames
   'master chief': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Halo_4_-_Master_Chief.jpg/330px-Halo_4_-_Master_Chief.jpg',

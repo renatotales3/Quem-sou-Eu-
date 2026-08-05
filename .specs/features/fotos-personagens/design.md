@@ -89,9 +89,10 @@ A fronteira importa: nada em `server/` ou `src/` fala com a Wikimedia. O script 
 - **Interfaces**:
   ```typescript
   export interface CharacterImage {
-    url: string        // thumbnail do Commons, ≤320px
+    url: string        // thumbnail do Commons (≤400px) ou URL do AniList
     author: string     // exigido; entrada sem autor é rejeitada na curadoria
-    license: string    // ex. 'CC BY-SA 2.0', 'Public domain'
+    license: string    // ex. 'CC BY-SA 2.0', 'Public domain', 'Uso não comercial via API do AniList'
+    source: string      // 'Wikimedia Commons' | 'AniList' — base de uso da imagem (IMG-02, IMG-07)
   }
   export const characterImages: Record<string, CharacterImage>
   ```
@@ -124,6 +125,7 @@ interface CharacterPublic {
     url: string
     author: string
     license: string
+    source: string    // 'Wikimedia Commons' | 'AniList'
   }
 }
 ```
