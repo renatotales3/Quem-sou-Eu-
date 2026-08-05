@@ -112,17 +112,19 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Rejeita padrões conhecidos com motivo registrado por candidato
-- [ ] Casos medidos na amostra caem na triagem: `FB-111 Bugs Bunny Nose Art`, `Bushwick Brooklyn Art`, `Madame Tussauds`, `Cosplay`
-- [ ] Emite `contact-sheet.html` com os sobreviventes, para revisão visual
-- [ ] Relatório final imprime aprovados, rejeitados e o motivo de cada rejeição
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: suíte permanece em 46
+- [x] Rejeita padrões conhecidos com motivo registrado por candidato
+- [x] Casos medidos na amostra caem na triagem: `FB-111 Bugs Bunny Nose Art`, `Madame Tussauds`, `Cosplay` (confirmado na execução real; `Bushwick Brooklyn Art` não apareceu nesta consulta ao vivo — a amostra do Wikidata muda com o tempo — mas o padrão `graffiti`/`grafite` pegou outro caso real: `Don Ramón Graffiti in Managua.jpg`)
+- [x] Emite `contact-sheet.html` com os sobreviventes, para revisão visual
+- [x] Relatório final imprime aprovados, rejeitados e o motivo de cada rejeição
+- [x] Gate check passa: `npm test`
+- [x] Test count: suíte permanece em 46
 
 **Tests**: none
 **Gate**: quick
 
 **Commit**: `chore(images): triage candidates that do not depict the character`
+
+**Execução real**: 157 aprovados na triagem, 22 rejeitados (10 cosplay, 2 sem atribuição, 2 statue, 1 tussauds, 1 nose art, 1 parade, 1 comic-con, 1 sculpture, 1 wax, 1 wax museum, 1 graffiti), 125 sem imagem. `contact-sheet.html` com 157 figuras gravado em `.image-candidates/`.
 
 ---
 

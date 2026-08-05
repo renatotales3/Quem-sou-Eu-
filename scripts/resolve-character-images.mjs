@@ -129,6 +129,59 @@ function stripHtml(html) {
   return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Padrões (case-insensitive, sem acento) que indicam que a imagem não
+ * retrata o personagem, e sim um objeto, evento ou performance sobre ele:
+ * cosplay, estátua de cera, grafite, brinquedo, nose art, parada etc.
+ */
+const TRIAGE_PATTERNS = [
+  'cosplay',
+  'comic-con',
+  'comic con',
+  'tussauds',
+  'wax museum',
+  'wax',
+  'statue',
+  'estátua',
+  'sculpture',
+  'graffiti',
+  'grafite',
+  'mural',
+  'street art',
+  'nose art',
+  'lego',
+  'toy',
+  'figurine',
+  'action figure',
+  'balloon',
+  'parade',
+  'costume',
+  'fan art',
+  'mascot',
+  'theme park',
+  'disneyland',
+  'universal studios',
+];
+
+function normalizeForMatch(text) {
+  return (text ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Retorna o motivo da rejeição se o nome do arquivo ou alguma categoria do
+ * Commons casar com um padrão conhecido de imagem que não é o personagem. */
+function triageReason(fileName, categories) {
+  const haystack = normalizeForMatch([fileName, ...categories].join(' | '));
+  for (const pattern of TRIAGE_PATTERNS) {
+    if (haystack.includes(normalizeForMatch(pattern))) {
+      return `triagem: nome/categoria indica "${pattern}", não o personagem`;
+    }
+  }
+  return null;
+}
+
 function titleFor(entry) {
   return TITLE_OVERRIDES[entry.name] ?? entry.name;
 }
@@ -277,6 +330,21 @@ function buildCandidate(entry, qidByName, fileByQid, infoByFile) {
     };
   }
 
+  const triage = triageReason(file, info.categories);
+  if (triage) {
+    return {
+      ...base,
+      qid,
+      file,
+      url: info.thumbUrl,
+      width: info.width,
+      author: info.author,
+      license: info.license,
+      status: 'rejected',
+      reason: triage,
+    };
+  }
+
   return {
     ...base,
     qid,
@@ -285,21 +353,75 @@ function buildCandidate(entry, qidByName, fileByQid, infoByFile) {
     width: info.width,
     author: info.author,
     license: info.license,
-    status: 'found',
+    status: 'survivor',
     reason: null,
-    _categories: info.categories,
   };
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+/** Grava uma página HTML única em grade com os sobreviventes da triagem, para revisão visual humana. */
+function writeContactSheet(survivors, outPath) {
+  const cards = survivors
+    .map(
+      (c) => `    <figure class="card">
+      <img src="${escapeHtml(c.url)}" alt="${escapeHtml(c.name)}" loading="lazy" />
+      <figcaption>
+        <strong>${escapeHtml(c.name)}</strong>
+        <span class="category">${escapeHtml(c.category)}</span>
+        <span class="file">${escapeHtml(c.file)}</span>
+        <span class="credit">${escapeHtml(c.author)} — ${escapeHtml(c.license)}</span>
+      </figcaption>
+    </figure>`,
+    )
+    .join('\n');
+
+  const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Contact sheet — candidatos de imagem</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #111; color: #eee; }
+  h1 { font-size: 1.25rem; margin-bottom: 4px; }
+  p.meta { color: #999; margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; padding: 0; }
+  .card { background: #1c1c1c; border: 1px solid #333; border-radius: 8px; padding: 8px; margin: 0; }
+  .card img { width: 100%; height: 180px; object-fit: cover; border-radius: 4px; display: block; background: #000; }
+  figcaption { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; font-size: 0.8rem; }
+  figcaption strong { font-size: 0.95rem; }
+  .category { color: #9ad; }
+  .file { color: #888; word-break: break-all; font-size: 0.7rem; }
+  .credit { color: #bbb; font-style: italic; }
+</style>
+</head>
+<body>
+  <h1>Contact sheet — sobreviventes da triagem automática</h1>
+  <p class="meta">${survivors.length} candidatos para revisão visual. Gerado por scripts/resolve-character-images.mjs.</p>
+  <div class="grid">
+${cards}
+  </div>
+</body>
+</html>
+`;
+
+  fs.writeFileSync(outPath, html);
 }
 
 function printReport(candidates) {
   const total = candidates.length;
-  const found = candidates.filter((c) => c.status === 'found');
+  const survivors = candidates.filter((c) => c.status === 'survivor');
   const rejected = candidates.filter((c) => c.status === 'rejected');
   const none = candidates.filter((c) => c.status === 'none');
 
-  console.log('\n=== Relatório de resolução ===');
+  console.log('\n=== Relatório de resolução e triagem ===');
   console.log(`Total de personagens: ${total}`);
-  console.log(`Candidatos resolvidos (com atribuição): ${found.length}`);
+  console.log(`Aprovados na triagem: ${survivors.length}`);
   console.log(`Rejeitados: ${rejected.length}`);
   console.log(`Sem imagem: ${none.length}`);
 
@@ -314,11 +436,11 @@ function printReport(candidates) {
     }
   }
 
-  console.log('\nCobertura por categoria (resolvidos / total):');
+  console.log('\nCobertura por categoria (aprovados na triagem / total):');
   for (const category of [...new Set(candidates.map((c) => c.category))]) {
     const catTotal = candidates.filter((c) => c.category === category).length;
-    const catFound = found.filter((c) => c.category === category).length;
-    console.log(`  ${category}: ${catFound}/${catTotal}`);
+    const catSurvivors = survivors.filter((c) => c.category === category).length;
+    console.log(`  ${category}: ${catSurvivors}/${catTotal}`);
   }
 }
 
@@ -346,7 +468,12 @@ async function main() {
 
   const candidatesPath = path.join(args.out, 'candidates.json');
   fs.writeFileSync(candidatesPath, JSON.stringify(candidates, null, 2));
-  console.error(`\nGravado: ${candidatesPath}`);
+  console.error(`Gravado: ${candidatesPath}`);
+
+  const survivors = candidates.filter((c) => c.status === 'survivor');
+  const contactSheetPath = path.join(args.out, 'contact-sheet.html');
+  writeContactSheet(survivors, contactSheetPath);
+  console.error(`Gravado: ${contactSheetPath}`);
 
   printReport(candidates);
 }
