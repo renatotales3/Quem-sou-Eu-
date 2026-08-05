@@ -11,6 +11,9 @@ export interface CharacterPublic {
     url: string;
     author: string;
     license: string;
+    // Fonte da imagem: 'Wikimedia Commons' (licença livre) ou 'AniList' (arte
+    // de estúdio, uso não comercial tolerado) — IMG-02, IMG-07.
+    source: string;
   };
 }
 

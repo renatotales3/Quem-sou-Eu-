@@ -474,7 +474,7 @@ function CharacterCard({ player, index }: { player: RoomView['players'][number];
       <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div>
       {showImage ? <img className="character-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div>}
       <div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div>
-      {showImage && <p className="character-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}`}>{image!.license} · {image!.author}</p>}
+      {showImage && <p className="character-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}, fonte ${image!.source}`}>{image!.license} · {image!.author} · {image!.source}</p>}
     </article>
   );
 }
@@ -489,7 +489,7 @@ function RevealRow({ player }: { player: RoomView['players'][number] }): JSX.Ele
       <div>
         <strong>{player.nickname}</strong>
         <span>{player.character?.name ?? 'Sem personagem'}</span>
-        {showImage && <small className="reveal-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}`}>{image!.license} · {image!.author}</small>}
+        {showImage && <small className="reveal-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}, fonte ${image!.source}`}>{image!.license} · {image!.author} · {image!.source}</small>}
       </div>
       <em>{player.character?.category ?? '—'}</em>
     </div>
