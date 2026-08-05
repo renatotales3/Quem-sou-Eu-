@@ -393,12 +393,12 @@ export const characterImages: Record<string, CharacterImage> = {
   }, // Isaac Newton — GodfreyKneller-IsaacNewton-1689.jpg
   'mahatma gandhi': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Mahatma-Gandhi%2C_studio%2C_1931.jpg/330px-Mahatma-Gandhi%2C_studio%2C_1931.jpg',
-    author: 'Elliott &amp; Fry',
+    author: 'Elliott & Fry',
     license: 'Public domain',
   }, // Mahatma Gandhi — Mahatma-Gandhi, studio, 1931.jpg
   'nelson mandela': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Nelson_Mandela_1994.jpg/330px-Nelson_Mandela_1994.jpg',
-    author: 'Kingkongphoto &amp; www.celebrity-photos.com from Laurel',
+    author: 'Kingkongphoto & www.celebrity-photos.com from Laurel',
     license: 'CC BY-SA 2.0',
   }, // Nelson Mandela — Nelson Mandela 1994.jpg
   'martin luther king jr': {

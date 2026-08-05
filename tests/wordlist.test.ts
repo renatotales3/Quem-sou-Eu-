@@ -187,4 +187,16 @@ describe('catálogo de imagens', () => {
     expect(withoutImage.length).toBe(characters.length - withImage.length);
     expect(withoutImage.length).toBeGreaterThan(0);
   });
+
+  it('não guarda entidade HTML em autor nem licença (IMG-03)', () => {
+    // A API do Commons devolve o autor em HTML, então `&amp;` chega no lugar de
+    // `&`. React não decodifica entidade em texto de JSX: o card mostraria
+    // literalmente "Elliott &amp;amp; Fry" e o crédito ficaria errado. Guarda
+    // relevante agora, porque cada provedor novo traz autores em HTML.
+    const entidade = /&[a-zA-Z]+;|&#\d+;/;
+    const sujas = Object.entries(characterImages)
+      .filter(([, image]) => entidade.test(image.author) || entidade.test(image.license))
+      .map(([key]) => key);
+    expect(sujas).toEqual([]);
+  });
 });
