@@ -1,5 +1,44 @@
 #!/usr/bin/env node
 /**
+ * ============================================================================
+ * AVISO: A SAÍDA DESTE SCRIPT NÃO ESTÁ NO CATÁLOGO (server/character-images.ts)
+ * ============================================================================
+ *
+ * As 41 entradas TMDB que este script resolveu foram removidas do catálogo
+ * em 2026-08-05. Motivo: o `profile_path` que este script usa (linha ~29
+ * abaixo) é a foto genérica de divulgação do ator/atriz, não uma still do
+ * personagem no papel — reprova o critério "um brasileiro reconhece o
+ * personagem" que todo o resto do catálogo segue. Evidência que forçou a
+ * remoção, não uma opinião:
+ *
+ *   1. Três pares de personagens diferentes tinham a URL idêntica porque o
+ *      ator é o mesmo: 'neo'/'john wick' (Keanu Reeves), 'jack
+ *      sparrow'/'willy wonka' (Johnny Depp), 'michael corleone'/'tony
+ *      montana' (Al Pacino).
+ *   2. Descompasso de época: 'obi wan kenobi' era um retrato preto e branco
+ *      de Alec Guinness dos anos 1950, de terno — zero contexto Star Wars.
+ *   3. Sem contexto de papel: headshot de divulgação, sem figurino, para as
+ *      41 entradas.
+ *
+ * Este arquivo NÃO foi apagado — os 46 WORK_HINTS abaixo (mapeamento
+ * obra->personagem->ator, verificado um a um) custaram trabalho real e
+ * continuam válidos se um dia alguém tentar resolver a fonte de outro jeito
+ * (ex.: still de cena via /movie/{id}/images em vez de profile_path). Mas
+ * rodar este script de novo e colar a saída de volta no catálogo é a
+ * regressão exata que foi revertida.
+ *
+ * tests/wordlist.test.ts tira 'TMDB' de knownSources e do mapa
+ * hostBySource, e tem um teste dedicado que falha se qualquer entrada do
+ * catálogo apontar para image.tmdb.org. Reintroduzir a saída deste script
+ * no catálogo quebra a suíte de propósito — não é um teste frágil, é a
+ * guarda funcionando.
+ *
+ * Ver comentário de procedência no topo de server/character-images.ts e a
+ * tabela de Assumptions em .specs/features/fotos-personagens/spec.md para
+ * o registro completo da decisão.
+ * ============================================================================
+ */
+/**
  * scripts/resolve-tmdb-images.mjs
  *
  * Script de curadoria dev-only (fora do build, fora de todo tsconfig).

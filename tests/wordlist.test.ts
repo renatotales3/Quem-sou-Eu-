@@ -127,7 +127,12 @@ describe('catálogo de imagens', () => {
   });
 
   it('só existem as fontes conhecidas do catálogo (IMG-02)', () => {
-    const knownSources = new Set(['Wikimedia Commons', 'AniList', 'TMDB', 'Comic Vine']);
+    // 'TMDB' saiu da lista de propósito (ver comentário de procedência no
+    // topo de server/character-images.ts): a fonte devolvia a foto genérica
+    // do ator, não do personagem no papel, então uma entrada TMDB
+    // reintroduzida acidentalmente quebra esta asserção em vez de passar em
+    // silêncio.
+    const knownSources = new Set(['Wikimedia Commons', 'AniList', 'Comic Vine']);
     for (const image of Object.values(characterImages)) {
       expect(knownSources.has(image.source)).toBe(true);
     }
@@ -154,7 +159,6 @@ describe('catálogo de imagens', () => {
     const hostBySource: Record<string, string> = {
       'Wikimedia Commons': 'upload.wikimedia.org',
       AniList: 's4.anilist.co',
-      TMDB: 'image.tmdb.org',
       'Comic Vine': 'comicvine.gamespot.com',
     };
 
@@ -178,10 +182,12 @@ describe('catálogo de imagens', () => {
 
   it('nenhum arquivo de server/ ou src/ fora de character-images.ts referencia domínio da Wikimedia, AniList, TMDB ou Comic Vine (IMG-05)', () => {
     // IMG-05 proíbe chamada a qualquer fonte externa de imagem em runtime.
-    // Com quatro fontes (Commons, AniList, TMDB, Comic Vine), a varredura
-    // precisa cobrir os quatro domínios: um código que passasse a falar com
-    // qualquer um deles em runtime reintroduziria a mesma dependência
-    // externa que a Wikimedia já proibia.
+    // O catálogo usa três fontes hoje (Commons, AniList, Comic Vine) — TMDB
+    // foi removido do catálogo (ver comentário de procedência no topo de
+    // server/character-images.ts) —, mas o domínio do TMDB continua nesta
+    // varredura de propósito: image.tmdb.org é proibido em código de
+    // produção mesmo sem nenhuma entrada usando-o, então um fetch/XHR para
+    // ele ainda quebra o teste em vez de escapar em silêncio.
     const externalImageDomain = /wiki(?:pedia|media|data)\.org|anilist\.co|image\.tmdb\.org|comicvine\.gamespot\.com/i;
 
     // Exceção única e explícita: os termos da API do Comic Vine exigem link
@@ -239,5 +245,25 @@ describe('catálogo de imagens', () => {
       .filter(([, image]) => entidade.test(image.author) || entidade.test(image.license) || entidade.test(image.source))
       .map(([key]) => key);
     expect(sujas).toEqual([]);
+  });
+
+  it('nenhuma entrada do catálogo aponta para image.tmdb.org (decisão: TMDB removido)', () => {
+    // TMDB devolvia a foto genérica de divulgação do ator/atriz, não uma
+    // still do personagem no papel — evidência registrada em spec.md
+    // (tabela de Assumptions) e no comentário de procedência no topo de
+    // server/character-images.ts: três pares de personagens diferentes
+    // compartilhavam a URL idêntica porque o ator é o mesmo (neo/john wick,
+    // jack sparrow/willy wonka, michael corleone/tony montana), e
+    // 'obi wan kenobi' era um retrato preto e branco de Alec Guinness dos
+    // anos 1950, sem nenhum contexto do papel. O dono do projeto decidiu
+    // remover a fonte inteira em vez de curar entrada por entrada. Este
+    // teste é o guard-rail: se alguém reintroduzir uma URL do TMDB (por
+    // exemplo, rodando de novo scripts/resolve-tmdb-images.mjs e colando o
+    // resultado de volta no catálogo), a suíte quebra aqui em vez de deixar
+    // a regressão passar em silêncio.
+    const comTmdb = Object.entries(characterImages)
+      .filter(([, image]) => new URL(image.url).hostname === 'image.tmdb.org')
+      .map(([key]) => key);
+    expect(comTmdb).toEqual([]);
   });
 });

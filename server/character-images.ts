@@ -1,9 +1,12 @@
 /**
  * Catálogo de imagens curadas por personagem.
  *
- * Procedência: quatro fontes, cada uma com seu próprio pipeline de
- * curadoria. 179 entradas no total: 89 Wikimedia Commons + 22 AniList + 41
- * TMDB + 27 Comic Vine.
+ * Procedência: três fontes, cada uma com seu próprio pipeline de curadoria.
+ * 138 entradas no total: 89 Wikimedia Commons + 22 AniList + 27 Comic Vine.
+ *
+ * A fonte TMDB (41 entradas) foi removida em 2026-08-05 — ver
+ * "TMDB removido" abaixo. O total já esteve em 179/4 fontes; caiu para
+ * 138/3 fontes por essa remoção, não por perda de curadoria.
  *
  * 'Wikimedia Commons' (89 entradas): Wikidata P18 (imagem oficial) ->
  * arquivo no Commons, resolvido em lote por
@@ -23,20 +26,31 @@
  * não o visual pelo qual o personagem é reconhecido, então ele fica sem
  * imagem (fallback de inicial e cor).
  *
- * 'TMDB' (41 entradas, categorias Fantasia e ficção científica, Cinema e
- * Séries): resolvido via API do TMDB a partir do nome do personagem,
- * apontando para a foto do ator/atriz que o interpreta (categoria de
- * personagem live-action, não desenho), resolvido por
- * scripts/resolve-tmdb-images.mjs e revisado visualmente com o mesmo
- * critério de reconhecimento acima. Curadoria concluída em 2026-08-05,
- * consolidada em .image-candidates/aprovados-lote2.json.
- *
  * 'Comic Vine' (27 entradas, categorias Marvel e DC): resolvido via API do
  * Comic Vine a partir do nome do personagem, apontando para arte de capa de
  * quadrinho, resolvido por scripts/resolve-comicvine-images.mjs e revisado
  * visualmente com o mesmo critério de reconhecimento acima. Curadoria
  * concluída em 2026-08-05, consolidada em
  * .image-candidates/aprovados-lote2.json.
+ *
+ * TMDB removido (2026-08-05): as 41 entradas resolvidas por
+ * scripts/resolve-tmdb-images.mjs apontavam para o `profile_path` do
+ * ator/atriz — a foto genérica de divulgação da pessoa, não uma still do
+ * papel — e por isso reprovaram o critério "um brasileiro reconhece o
+ * personagem" (spec.md, tabela de Assumptions). Evidência: (1) três pares de
+ * personagens diferentes compartilhavam a URL idêntica porque o ator é o
+ * mesmo — 'neo'/'john wick' (Keanu Reeves), 'jack sparrow'/'willy wonka'
+ * (Johnny Depp), 'michael corleone'/'tony montana' (Al Pacino); (2)
+ * descompasso de época, ex. 'obi wan kenobi' era um retrato preto e branco
+ * de Alec Guinness dos anos 1950, de terno; (3) headshot de divulgação sem
+ * figurino nem contexto de papel, para o restante das 41. Decisão do dono
+ * do projeto: qualidade acima de cobertura — remover a fonte inteira em vez
+ * de tentar salvar entradas individualmente. O script
+ * scripts/resolve-tmdb-images.mjs continua no repositório (contém 46
+ * WORK_HINTS revisados um a um), mas sua saída não deve voltar ao catálogo —
+ * ver aviso no topo do próprio script. tests/wordlist.test.ts tira 'TMDB' da
+ * lista de fontes permitidas e falha caso qualquer entrada volte a apontar
+ * para `image.tmdb.org`, então uma reintrodução acidental quebra a suíte.
  *
  * Dado estático versionado, não gerado pelo build: só entram aqui
  * personagens aprovados na revisão visual. Ausência de uma chave é o caso
@@ -54,26 +68,24 @@
  * 2026-08-05) — ainda satisfaz "thumbnail pequeno, nunca o original
  * grande", só que sem o segmento /thumb/ no caminho.
  *
- * As entradas 'AniList' apontam para `s4.anilist.co`, 'TMDB' para
- * `image.tmdb.org` e 'Comic Vine' para `comicvine.gamespot.com` — os CDNs
- * de imagem da própria API de cada provedor. Nenhuma delas passa pelo
- * limite de 400px do IMG-06, que é uma regra específica de thumbnail do
- * Commons; cada provedor já resolve para um tamanho adequado a card por
- * conta própria (TMDB: `w300`; Comic Vine: `scale_medium`).
+ * As entradas 'AniList' apontam para `s4.anilist.co` e 'Comic Vine' para
+ * `comicvine.gamespot.com` — os CDNs de imagem da própria API de cada
+ * provedor. Nenhuma delas passa pelo limite de 400px do IMG-06, que é uma
+ * regra específica de thumbnail do Commons; cada provedor já resolve para
+ * um tamanho adequado a card por conta própria (Comic Vine:
+ * `scale_medium`).
  *
  * Chave: nome do personagem normalizado (normalizeText), igual a
  * `aliasesByName` e `englishOriginals` neste mesmo módulo de catálogo.
  *
  * `source` (IMG-02, IMG-07) registra de onde a imagem vem e, com isso, a
  * base sob a qual ela é usada: 'Wikimedia Commons' é licença livre (autor e
- * licença acima são a atribuição exigida por CC BY / CC BY-SA); 'AniList',
- * 'TMDB' e 'Comic Vine' são arte/foto de estúdio ou editora usada sob os
- * termos da respectiva API (uso não comercial tolerado em projeto de fã,
- * não licença livre) — ver spec.md, tabela de Assumptions, linha "Fontes
- * além do Commons". TMDB exige ainda o aviso de não-endosso na interface
- * ("Este produto usa a API do TMDB mas não é endossado nem certificado pelo
- * TMDB") e Comic Vine exige link de volta para o site sempre que os dados
- * são exibidos — ambos cumpridos em src/App.tsx, não neste módulo.
+ * licença acima são a atribuição exigida por CC BY / CC BY-SA); 'AniList' e
+ * 'Comic Vine' são arte/foto de estúdio ou editora usada sob os termos da
+ * respectiva API (uso não comercial tolerado em projeto de fã, não licença
+ * livre) — ver spec.md, tabela de Assumptions, linha "Fontes além do
+ * Commons". Comic Vine exige link de volta para o site sempre que os dados
+ * são exibidos — cumprido em src/App.tsx, não neste módulo.
  */
 
 export interface CharacterImage {
@@ -447,12 +459,6 @@ export const characterImages: Record<string, CharacterImage> = {
     source: 'Wikimedia Commons',
   }, // Steve (Minecraft) — Steve? 2.png
   // Fantasia e ficção científica
-  'frodo bolseiro': {
-    url: 'https://image.tmdb.org/t/p/w300/7UKRbJBNG7mxBl2QQc5XsAh6F8B.jpg',
-    author: 'Elijah Wood',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Frodo Bolseiro — TMDB profile photo of Elijah Wood
   gandalf: {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/GANDALF.jpg/330px-GANDALF.jpg',
     author: 'Nidoart',
@@ -465,60 +471,24 @@ export const characterImages: Record<string, CharacterImage> = {
     license: 'CC BY-SA 4.0',
     source: 'Wikimedia Commons',
   }, // Gollum — Gollum s journey commences by Frederic Bennett (detail).jpg
-  'harry potter': {
-    url: 'https://image.tmdb.org/t/p/w300/uUFfo8RANo7tuckB6AZAnESne55.jpg',
-    author: 'Daniel Radcliffe',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Harry Potter — TMDB profile photo of Daniel Radcliffe
-  'hermione granger': {
-    url: 'https://image.tmdb.org/t/p/w300/A14lLCZYDhfYdBa0fFRpwMDiwRN.jpg',
-    author: 'Emma Watson',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Hermione Granger — TMDB profile photo of Emma Watson
   'ron weasley': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Ron_Weasley.jpg/330px-Ron_Weasley.jpg',
     author: 'Mademoiselle Ortie / Elodie Tihange',
     license: 'CC BY-SA 4.0',
     source: 'Wikimedia Commons',
   }, // Ron Weasley — Ron Weasley.jpg
-  'alvo dumbledore': {
-    url: 'https://image.tmdb.org/t/p/w300/lCvcVMuxrg1f5A8OMqY9AqkkcZR.jpg',
-    author: 'Richard Harris',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Alvo Dumbledore — TMDB profile photo of Richard Harris
-  'severo snape': {
-    url: 'https://image.tmdb.org/t/p/w300/7tADZs4ILE93oJ5pAh6mKQFEq2m.jpg',
-    author: 'Alan Rickman',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Severo Snape — TMDB profile photo of Alan Rickman
   'draco malfoy': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Draco_Malfoy_fanart_-_Cor-Sa.jpg/330px-Draco_Malfoy_fanart_-_Cor-Sa.jpg',
     author: 'Cor-Sa on DeviantArt',
     license: 'CC BY-SA 3.0',
     source: 'Wikimedia Commons',
   }, // Draco Malfoy — Draco Malfoy fanart - Cor-Sa.jpg
-  'katniss everdeen': {
-    url: 'https://image.tmdb.org/t/p/w300/6WTY6HjXMGxnHilJRVC3eLnu43F.jpg',
-    author: 'Jennifer Lawrence',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Katniss Everdeen — TMDB profile photo of Jennifer Lawrence
   'luke skywalker': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/6/67/Luke_Skywalker_-_Welcome_Banner_%28Cropped%29.jpg',
     author: 'Official Star Wars Flickr',
     license: 'CC BY 2.0',
     source: 'Wikimedia Commons',
   }, // Luke Skywalker — Luke Skywalker - Welcome Banner (Cropped).jpg
-  'leia organa': {
-    url: 'https://image.tmdb.org/t/p/w300/of4yHmryKPy92eeskUQ7MRmjC3l.jpg',
-    author: 'Carrie Fisher',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Leia Organa — TMDB profile photo of Carrie Fisher
   'han solo': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Han_Solo_in_Carbonite_%2831649435213%29.jpg/330px-Han_Solo_in_Carbonite_%2831649435213%29.jpg',
     author: 'William Warby from London, England',
@@ -531,36 +501,12 @@ export const characterImages: Record<string, CharacterImage> = {
     license: 'CC BY 2.0',
     source: 'Wikimedia Commons',
   }, // Chewbacca — Solo- A Star Wars Story Japan Premiere Red Carpet- Chewbacca.jpg
-  'obi wan kenobi': {
-    url: 'https://image.tmdb.org/t/p/w300/qaN3cZdd2pvKaOXIIJ5BXnbjPp3.jpg',
-    author: 'Alec Guinness',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Obi-Wan Kenobi — TMDB profile photo of Alec Guinness
   'c 3po': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Star_Wars_-_A_New_Hope%2C_filming_in_Death_Valley_%28cropped%29.jpg',
     author: 'Unknown authorUnknown author',
     license: 'Public domain',
     source: 'Wikimedia Commons',
   }, // C-3PO — Star Wars - A New Hope, filming in Death Valley (cropped).jpg
-  rey: {
-    url: 'https://image.tmdb.org/t/p/w300/dnRtM8YBxidAshD76XIMN495Yqc.jpg',
-    author: 'Daisy Ridley',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Rey — TMDB profile photo of Daisy Ridley
-  neo: {
-    url: 'https://image.tmdb.org/t/p/w300/8RZLOyYGsoRe9p44q3xin9QkMHv.jpg',
-    author: 'Keanu Reeves',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Neo — TMDB profile photo of Keanu Reeves
-  trinity: {
-    url: 'https://image.tmdb.org/t/p/w300/xD4jTA3KmVp5Rq3aHcymL9DUGjD.jpg',
-    author: 'Carrie-Anne Moss',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Trinity — TMDB profile photo of Carrie-Anne Moss
   godzilla: {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Godzilla_%281954%29_%28cropped%29.jpg/330px-Godzilla_%281954%29_%28cropped%29.jpg',
     author: 'Toho Company Ltd.',
@@ -568,108 +514,18 @@ export const characterImages: Record<string, CharacterImage> = {
     source: 'Wikimedia Commons',
   }, // Godzilla — Godzilla (1954) (cropped).jpg
   // Cinema
-  'forrest gump': {
-    url: 'https://image.tmdb.org/t/p/w300/oFvZoKI6lvU03n4YoNGAll9rkas.jpg',
-    author: 'Tom Hanks',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Forrest Gump — TMDB profile photo of Tom Hanks
   'indiana jones': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Indianajones4.jpg/330px-Indianajones4.jpg',
     author: 'John Griffiths',
     license: 'CC BY-SA 2.0',
     source: 'Wikimedia Commons',
   }, // Indiana Jones — Indianajones4.jpg
-  'james bond': {
-    url: 'https://image.tmdb.org/t/p/w300/iFerDZUmC5Fu26i4qI8xnUVEHc7.jpg',
-    author: 'Daniel Craig',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // James Bond — TMDB profile photo of Daniel Craig
-  'ethan hunt': {
-    url: 'https://image.tmdb.org/t/p/w300/maf8PhSvDCdEwjEMbYfGpojR5RP.jpg',
-    author: 'Tom Cruise',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Ethan Hunt — TMDB profile photo of Tom Cruise
-  'john wick': {
-    url: 'https://image.tmdb.org/t/p/w300/8RZLOyYGsoRe9p44q3xin9QkMHv.jpg',
-    author: 'Keanu Reeves',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // John Wick — TMDB profile photo of Keanu Reeves
   'rocky balboa': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Sylvester_Stallone_Rocky_VI_2005.jpg/330px-Sylvester_Stallone_Rocky_VI_2005.jpg',
     author: 'Lance Cpl. Ray Lewis',
     license: 'Public domain',
     source: 'Wikimedia Commons',
   }, // Rocky Balboa — Sylvester Stallone Rocky VI 2005.jpg
-  rambo: {
-    url: 'https://image.tmdb.org/t/p/w300/gn3pDWthJqR0VDYGViGD3048og7.jpg',
-    author: 'Sylvester Stallone',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Rambo — TMDB profile photo of Sylvester Stallone
-  'marty mcfly': {
-    url: 'https://image.tmdb.org/t/p/w300/2JB4FMgQmnhbBlQ4SxWFN9EIVDi.jpg',
-    author: 'Michael J. Fox',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Marty McFly — TMDB profile photo of Michael J. Fox
-  'doc brown': {
-    url: 'https://image.tmdb.org/t/p/w300/nxVjpyb3UrfbPZnEyDNlQVlFAs5.jpg',
-    author: 'Christopher Lloyd',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Doc Brown — TMDB profile photo of Christopher Lloyd
-  'jack sparrow': {
-    url: 'https://image.tmdb.org/t/p/w300/k2xt6EUxQDwYRKIyI4IBdZxfs8n.jpg',
-    author: 'Johnny Depp',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Jack Sparrow — TMDB profile photo of Johnny Depp
-  'willy wonka': {
-    url: 'https://image.tmdb.org/t/p/w300/k2xt6EUxQDwYRKIyI4IBdZxfs8n.jpg',
-    author: 'Johnny Depp',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Willy Wonka — TMDB profile photo of Johnny Depp
-  'mary poppins': {
-    url: 'https://image.tmdb.org/t/p/w300/yQ0J92DMiLtQYoytLJ6CuBkdeN0.jpg',
-    author: 'Julie Andrews',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Mary Poppins — TMDB profile photo of Julie Andrews
-  'elle woods': {
-    url: 'https://image.tmdb.org/t/p/w300/mfjunuTHrd0wnh8UG1ImMN9FSws.jpg',
-    author: 'Reese Witherspoon',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Elle Woods — TMDB profile photo of Reese Witherspoon
-  'michael corleone': {
-    url: 'https://image.tmdb.org/t/p/w300/m8HAAjq1T75JypKk0v1FFQn4ysZ.jpg',
-    author: 'Al Pacino',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Michael Corleone — TMDB profile photo of Al Pacino
-  'tony montana': {
-    url: 'https://image.tmdb.org/t/p/w300/m8HAAjq1T75JypKk0v1FFQn4ysZ.jpg',
-    author: 'Al Pacino',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Tony Montana — TMDB profile photo of Al Pacino
-  'jules winnfield': {
-    url: 'https://image.tmdb.org/t/p/w300/qdfRtvPCj51C9Uy5VEgjgj69JyV.jpg',
-    author: 'Samuel L. Jackson',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Jules Winnfield — TMDB profile photo of Samuel L. Jackson
-  'beatrix kiddo': {
-    url: 'https://image.tmdb.org/t/p/w300/hlYG0MC6im0MHNq1xixxVilfwyR.jpg',
-    author: 'Uma Thurman',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Beatrix Kiddo — TMDB profile photo of Uma Thurman
   // Séries
   'walter white': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Bryan_Cranston_%287598828512%29.jpg/330px-Bryan_Cranston_%287598828512%29.jpg',
@@ -683,108 +539,18 @@ export const characterImages: Record<string, CharacterImage> = {
     license: 'CC BY-SA 2.0',
     source: 'Wikimedia Commons',
   }, // Jesse Pinkman — Aaron Paul (7598828942).jpg
-  'saul goodman': {
-    url: 'https://image.tmdb.org/t/p/w300/rF0Lb6SBhGSTvjRffmlKRSeI3jE.jpg',
-    author: 'Bob Odenkirk',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Saul Goodman — TMDB profile photo of Bob Odenkirk
   'sherlock holmes': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Adventures_with_Sherlock_Holmes_TD_Gallery_Jan_5-Mar_10%2C_2012.jpg/330px-Adventures_with_Sherlock_Holmes_TD_Gallery_Jan_5-Mar_10%2C_2012.jpg',
     author: 'Special Collections Toronto Public Library from Toronto, Canada',
     license: 'Public domain',
     source: 'Wikimedia Commons',
   }, // Sherlock Holmes — Adventures with Sherlock Holmes TD Gallery Jan 5-Mar 10, 2012.jpg
-  'john watson': {
-    url: 'https://image.tmdb.org/t/p/w300/nrO54AzrxiNgCjBUOSz6ebyxDZY.jpg',
-    author: 'Martin Freeman',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // John Watson — TMDB profile photo of Martin Freeman
-  'michael scott': {
-    url: 'https://image.tmdb.org/t/p/w300/cS7Cbyff6wFVfUGem497vy9LS7A.jpg',
-    author: 'Steve Carell',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Michael Scott — TMDB profile photo of Steve Carell
   'dwight schrute': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/RainnwilsonOct07.jpg/330px-RainnwilsonOct07.jpg',
     author: 'StacyD at https://www.flickr.com/people/ctrlaltstacy/',
     license: 'CC BY 3.0',
     source: 'Wikimedia Commons',
   }, // Dwight Schrute — RainnwilsonOct07.jpg
-  'jim halpert': {
-    url: 'https://image.tmdb.org/t/p/w300/pmVGDb6Yl6OyFcHVGbu1EYNfyFK.jpg',
-    author: 'John Krasinski',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Jim Halpert — TMDB profile photo of John Krasinski
-  'rachel green': {
-    url: 'https://image.tmdb.org/t/p/w300/PBSCmHDFdCMBhjx0EbXpTw4Z94.jpg',
-    author: 'Jennifer Aniston',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Rachel Green — TMDB profile photo of Jennifer Aniston
-  'ross geller': {
-    url: 'https://image.tmdb.org/t/p/w300/XtKzJ9lM5Xwa7vCmE4xNHy6Owf.jpg',
-    author: 'David Schwimmer',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Ross Geller — TMDB profile photo of David Schwimmer
-  'monica geller': {
-    url: 'https://image.tmdb.org/t/p/w300/cSOORhCRPJiwKghozXVXrOBi3Tp.jpg',
-    author: 'Courteney Cox',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Monica Geller — TMDB profile photo of Courteney Cox
-  'chandler bing': {
-    url: 'https://image.tmdb.org/t/p/w300/ecDzkLWPV1z0x31I1GTjNmLxAHk.jpg',
-    author: 'Matthew Perry',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Chandler Bing — TMDB profile photo of Matthew Perry
-  'joey tribbiani': {
-    url: 'https://image.tmdb.org/t/p/w300/a7Fl1sLUq1UDJ4pHsnwpBdEiDEZ.jpg',
-    author: 'Matt LeBlanc',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Joey Tribbiani — TMDB profile photo of Matt LeBlanc
-  'dexter morgan': {
-    url: 'https://image.tmdb.org/t/p/w300/7zUMGoujuev5PUwwv4Gl6ikB50k.jpg',
-    author: 'Michael C. Hall',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Dexter Morgan — TMDB profile photo of Michael C. Hall
-  'daenerys targaryen': {
-    url: 'https://image.tmdb.org/t/p/w300/iFY6t7Ux9r70WB7Sp0TTVz6eGtm.jpg',
-    author: 'Emilia Clarke',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Daenerys Targaryen — TMDB profile photo of Emilia Clarke
-  'jon snow': {
-    url: 'https://image.tmdb.org/t/p/w300/iGXlJbExWwZmo9sUDsYuzf4Sv4y.jpg',
-    author: 'Kit Harington',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Jon Snow — TMDB profile photo of Kit Harington
-  'arya stark': {
-    url: 'https://image.tmdb.org/t/p/w300/5RjD4dDpRDAhalFtvcUj7zdLWYB.jpg',
-    author: 'Maisie Williams',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Arya Stark — TMDB profile photo of Maisie Williams
-  'tyrion lannister': {
-    url: 'https://image.tmdb.org/t/p/w300/9CAd7wr8QZyIN0E7nm8v1B6WkGn.jpg',
-    author: 'Peter Dinklage',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Tyrion Lannister — TMDB profile photo of Peter Dinklage
-  'thomas shelby': {
-    url: 'https://image.tmdb.org/t/p/w300/2lKs67r7FI4bPu0AXxMUJZxmUXn.jpg',
-    author: 'Cillian Murphy',
-    license: 'Uso não comercial via API do TMDB (sujeito ao aviso de não-endosso do TMDB); a fotografia em si permanece sob direito do estúdio ou do fotógrafo profissional — TMDB licencia o acesso à API/aos dados para uso não comercial, não é licença livre da imagem. Cache acima de 6 meses é proibido pelos termos da API: a URL precisa ser rerresolvida periodicamente.',
-    source: 'TMDB',
-  }, // Thomas Shelby — TMDB profile photo of Cillian Murphy
   'o doutor': {
     url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Sylvester_McCoy_Doctor.jpg/330px-Sylvester_McCoy_Doctor.jpg',
     author: 'Jack1956',

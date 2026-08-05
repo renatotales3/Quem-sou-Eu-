@@ -297,7 +297,6 @@ function App(): JSX.Element {
           <span>Distribua a dúvida.</span>
           <span>Descubra a resposta.</span>
           <span>Não olhe a sua testa.</span>
-          <span className="home-footer-credit">Este produto usa a API do TMDB mas não é endossado nem certificado pelo TMDB.</span>
         </footer>
       </main>
     );
@@ -501,8 +500,8 @@ type ImageCredit = { url: string; author: string; license: string; source: strin
 
 /**
  * Crédito acessível de uma imagem (CARD-04): autor e fonte vêm antes da
- * licença de propósito. A licença do Comic Vine e do TMDB é um parágrafo
- * inteiro de termos de uso, não um rótulo curto como "CC BY 2.0" — com o
+ * licença de propósito. A licença do Comic Vine é um parágrafo inteiro de
+ * termos de uso, não um rótulo curto como "CC BY 2.0" — com o
  * `-webkit-line-clamp` de poucas linhas em styles.css, deixá-la primeiro
  * cortava o autor (e o próprio link do Comic Vine) antes de aparecerem na
  * tela. Autor e fonte são curtos e cabem sempre; é a licença, no fim, que
