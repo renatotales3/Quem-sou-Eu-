@@ -1,10 +1,12 @@
 import { normalizeText } from './normalization';
+import { characterImages, type CharacterImage } from './character-images';
 
 export interface Character {
   id: string;
   name: string;
   category: string;
   aliases: string[];
+  image?: CharacterImage;
 }
 
 interface CharacterSeed {
@@ -191,12 +193,16 @@ for (const seed of seeds) {
   }
 }
 
-export const characters: Character[] = Array.from(uniqueSeeds.values()).map((seed, index) => ({
-  id: `character-${String(index + 1).padStart(4, '0')}`,
-  name: seed.name,
-  category: seed.category,
-  aliases: seed.aliases ?? [],
-}));
+export const characters: Character[] = Array.from(uniqueSeeds.values()).map((seed, index) => {
+  const image = characterImages[normalizeText(seed.name)];
+  return {
+    id: `character-${String(index + 1).padStart(4, '0')}`,
+    name: seed.name,
+    category: seed.category,
+    aliases: seed.aliases ?? [],
+    ...(image ? { image } : {}),
+  };
+});
 
 const MIN_CURATED_CHARACTERS = 250;
 if (characters.length < MIN_CURATED_CHARACTERS) {

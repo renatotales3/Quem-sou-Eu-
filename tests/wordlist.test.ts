@@ -1,5 +1,7 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { characterMatches, characters, englishOriginals, pickCharacters, totalSeedCount } from '../server/wordlist';
+import { characterImages } from '../server/character-images';
 import { normalizeText } from '../server/normalization';
 
 describe('wordlist', () => {
@@ -104,5 +106,85 @@ describe('wordlist', () => {
     const picked = pickCharacters(characters.length, excludeIds);
     expect(picked.length).toBe(3);
     expect(new Set(picked.map((character) => character.id)).size).toBe(3);
+  });
+});
+
+describe('catálogo de imagens', () => {
+  it('toda chave de characterImages casa com um personagem existente (guarda contra rename órfão, IMG-04)', () => {
+    const displayedKeys = new Set(characters.map((character) => normalizeText(character.name)));
+    for (const key of Object.keys(characterImages)) {
+      expect(displayedKeys.has(key)).toBe(true);
+    }
+  });
+
+  it('toda entrada aprovada tem autor e licença preenchidos (IMG-03)', () => {
+    expect(Object.keys(characterImages).length).toBeGreaterThan(0);
+    for (const image of Object.values(characterImages)) {
+      expect(image.author.trim().length).toBeGreaterThan(0);
+      expect(image.license.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('toda URL é um thumbnail do Commons de no máximo 400px, sem parâmetros de rastreamento (IMG-06)', () => {
+    // Quatro entradas aprovadas não têm "/thumb/" no caminho: o arquivo
+    // original já é menor que o limite pedido, então a API do Commons
+    // devolve o próprio original como thumbnail (ver comentário no topo de
+    // server/character-images.ts). Medido via imageinfo em 2026-08-05
+    // (141px-262px de largura) - dentro do limite, só sem o segmento
+    // "/thumb/" no caminho. Uma URL nova fora do padrão de thumbnail e fora
+    // desta lista quebra o teste, em vez de escapar em silêncio.
+    const originalFileExceptions = new Set([
+      'https://upload.wikimedia.org/wikipedia/commons/1/15/Star_Wars_-_A_New_Hope%2C_filming_in_Death_Valley_%28cropped%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/1/16/Rihanna_visits_U.S._Embassy_in_Barbados_2024_%28cropped%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/6/67/Luke_Skywalker_-_Welcome_Banner_%28Cropped%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/c/c0/Pac-Man_gameplay_%281x_pixel-perfect_recreation%29.png',
+    ]);
+
+    for (const image of Object.values(characterImages)) {
+      const parsed = new URL(image.url);
+      expect(parsed.hostname).toBe('upload.wikimedia.org');
+      expect(parsed.search).toBe('');
+
+      const thumbMatch = image.url.match(/\/thumb\/.*\/(\d+)px-[^/]+$/);
+      if (thumbMatch) {
+        expect(Number(thumbMatch[1])).toBeLessThanOrEqual(400);
+      } else {
+        expect(originalFileExceptions.has(image.url)).toBe(true);
+      }
+    }
+  });
+
+  it('nenhum arquivo de server/ ou src/ fora de character-images.ts referencia domínio da Wikimedia (IMG-05)', () => {
+    const wikimediaDomain = /wiki(?:pedia|media|data)\.org/i;
+    const roots = [new URL('../server/', import.meta.url), new URL('../src/', import.meta.url)];
+    const offenders: string[] = [];
+
+    function walk(dirUrl: URL): void {
+      for (const entry of readdirSync(dirUrl, { withFileTypes: true })) {
+        if (entry.name === 'character-images.ts') continue;
+        const entryUrl = new URL(entry.isDirectory() ? `${entry.name}/` : entry.name, dirUrl);
+        if (entry.isDirectory()) {
+          walk(entryUrl);
+        } else if (wikimediaDomain.test(readFileSync(entryUrl, 'utf8'))) {
+          offenders.push(entryUrl.pathname);
+        }
+      }
+    }
+
+    for (const root of roots) walk(root);
+    expect(offenders).toEqual([]);
+  });
+
+  it('Character.image só existe para quem tem entrada aprovada, e reflete url/author/license (IMG-01, IMG-02)', () => {
+    const withImage = characters.filter((character) => character.image);
+    expect(withImage.length).toBe(Object.keys(characterImages).length);
+    for (const character of withImage) {
+      const curated = characterImages[normalizeText(character.name)];
+      expect(character.image).toEqual(curated);
+    }
+
+    const withoutImage = characters.filter((character) => !character.image);
+    expect(withoutImage.length).toBe(characters.length - withImage.length);
+    expect(withoutImage.length).toBeGreaterThan(0);
   });
 });

@@ -175,18 +175,20 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] `Character.image` opcional, ausente para quem não tem imagem aprovada
-- [ ] Teste: toda chave de `characterImages` casa com um personagem existente (pega rename órfão, IMG-04)
-- [ ] Teste: toda URL é de `upload.wikimedia.org` e tem largura ≤320 no caminho do thumbnail (IMG-06)
-- [ ] Teste: toda entrada tem autor e licença não vazios (IMG-03)
-- [ ] Teste: nenhum arquivo de `server/` ou `src/` referencia domínio da Wikimedia fora de `character-images.ts` (IMG-05)
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 50 testes
+- [x] `Character.image` opcional, ausente para quem não tem imagem aprovada
+- [x] Teste: toda chave de `characterImages` casa com um personagem existente (pega rename órfão, IMG-04)
+- [x] Teste: toda URL é de `upload.wikimedia.org` e tem largura ≤400 no caminho do thumbnail (IMG-06)
+- [x] Teste: toda entrada tem autor e licença não vazios (IMG-03)
+- [x] Teste: nenhum arquivo de `server/` ou `src/` referencia domínio da Wikimedia fora de `character-images.ts` (IMG-05)
+- [x] Gate check passa: `npm test`
+- [x] Test count: ≥ 50 testes
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `feat(wordlist): attach curated images to catalog characters`
+
+**Execução real**: IMG-06 usa 400px (spec corrigido, não 320 — Commons não aceita largura arbitrária). 4 das 89 entradas aprovadas não têm `/thumb/` no caminho: o arquivo original já é menor que o limite pedido (141px-262px, medido via imageinfo em 2026-08-05), então a API devolve o próprio original como thumbnail. O teste trata isso como exceção explícita e nomeada (allowlist de URL), não como brecha silenciosa — qualquer URL nova fora do padrão de thumbnail e fora da lista quebra o teste. 51 testes (46 + 5 novos).
 
 ---
 
