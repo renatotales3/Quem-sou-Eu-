@@ -80,18 +80,20 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Resolve os 304 personagens em lote, com `User-Agent` identificando o projeto
-- [ ] Usa **apenas** Wikidata P18 (Commons), nunca `pageimages` da Wikipédia
-- [ ] Grava url do thumbnail ≤320px, autor e licença por candidato
-- [ ] Candidato sem autor declarado é marcado como rejeitado, não gravado em branco
-- [ ] Script não é importado por nada em `server/` nem `src/`
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: suíte permanece em 46 (script é dev-only, camada sem teste na matriz)
+- [x] Resolve os 304 personagens em lote, com `User-Agent` identificando o projeto
+- [x] Usa **apenas** Wikidata P18 (Commons), nunca `pageimages` da Wikipédia
+- [x] Grava url do thumbnail ≤320px, autor e licença por candidato
+- [x] Candidato sem autor declarado é marcado como rejeitado, não gravado em branco
+- [x] Script não é importado por nada em `server/` nem `src/` (confirmado: `grep -rn "resolve-character-images" server/ src/` sem ocorrência)
+- [x] Gate check passa: `npm test`
+- [x] Test count: suíte permanece em 46 (script é dev-only, camada sem teste na matriz)
 
 **Tests**: none
 **Gate**: quick
 
 **Commit**: `chore(images): add wikidata image resolution script`
+
+**Execução real**: 304 personagens processados; 286 com QID, 179 com P18, 177 resolvidos com atribuição completa, 2 rejeitados por falta de autor/licença, 125 sem imagem. `TITLE_OVERRIDES` preenchido e verificado (via `list=search` + conferência do QID final) para `Mario`, `Luigi`, `Marta`, `Emília`; `Tom` e `Alice` investigados e deixados sem override — nenhum título de pt.wikipedia resolve para o QID certo do personagem nesses dois casos (ver comentário no script).
 
 ---
 

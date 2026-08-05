@@ -112,12 +112,12 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | CARD-02 | P1: Foto no card dos outros jogadores | Design | Pending |
 | CARD-03 | P1: Foto no card dos outros jogadores | Design | Pending |
 | CARD-04 | P1: Foto no card dos outros jogadores | Design | Pending |
-| IMG-01 | P1: Catálogo de imagens livre e verificável | Design | Pending |
-| IMG-02 | P1: Catálogo de imagens livre e verificável | Design | Pending |
+| IMG-01 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
+| IMG-02 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-03 | P1: Catálogo de imagens livre e verificável | Design | Pending |
 | IMG-04 | P1: Catálogo de imagens livre e verificável | Design | Pending |
 | IMG-05 | P1: Catálogo de imagens livre e verificável | Design | Pending |
-| IMG-06 | P1: Catálogo de imagens livre e verificável | Design | Pending |
+| IMG-06 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | PRIV-01 | P2: Privacidade preservada com o campo novo | Design | Pending |
 | PRIV-02 | P2: Privacidade preservada com o campo novo | Design | Pending |
 | PRIV-03 | P2: Privacidade preservada com o campo novo | Design | Pending |
