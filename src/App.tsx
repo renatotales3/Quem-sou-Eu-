@@ -369,7 +369,7 @@ function App(): JSX.Element {
             <div className="reveal-card paper-card">
               <div className="panel-heading"><div><span className="micro-label">A fita completa</span><h2>Quem era quem</h2></div><span className="panel-mark">ALL IN</span></div>
               <div className="reveal-list">
-                {room.players.map((player) => <div className="reveal-row" key={player.id}><span className="reveal-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span><div><strong>{player.nickname}</strong><span>{player.character?.name ?? 'Sem personagem'}</span></div><em>{player.character?.category ?? '—'}</em></div>)}
+                {room.players.map((player) => <RevealRow key={player.id} player={player} />)}
               </div>
             </div>
           </div>
@@ -398,7 +398,7 @@ function App(): JSX.Element {
               <span className="card-stamp">IDENTIDADE LACRADA</span>
             </div>
             <div className="others-grid" aria-label="Personagens dos outros jogadores">
-              {otherPlayers.map((player, index) => <CharacterCard key={player.id} player={player} index={index} />)}
+              {otherPlayers.map((player, index) => <CharacterCard key={`${player.id}-${player.character?.image?.url ?? 'sem-foto'}`} player={player} index={index} />)}
             </div>
           </div>
         </div>
@@ -466,7 +466,34 @@ function PlayerRow({ player, you }: { player: RoomView['players'][number]; you: 
 }
 
 function CharacterCard({ player, index }: { player: RoomView['players'][number]; index: number }): JSX.Element {
-  return <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''}`}><div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div><div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div><div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div></article>;
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = player.character?.image;
+  const showImage = Boolean(image) && !imageFailed;
+  return (
+    <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''} ${showImage ? 'character-has-photo' : ''}`}>
+      <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div>
+      {showImage ? <img className="character-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div>}
+      <div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div>
+      {showImage && <p className="character-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}`}>{image!.license} · {image!.author}</p>}
+    </article>
+  );
+}
+
+function RevealRow({ player }: { player: RoomView['players'][number] }): JSX.Element {
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = player.character?.image;
+  const showImage = Boolean(image) && !imageFailed;
+  return (
+    <div className="reveal-row">
+      {showImage ? <img className="reveal-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <span className="reveal-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span>}
+      <div>
+        <strong>{player.nickname}</strong>
+        <span>{player.character?.name ?? 'Sem personagem'}</span>
+        {showImage && <small className="reveal-credit" aria-label={`Foto: ${image!.author}, licença ${image!.license}`}>{image!.license} · {image!.author}</small>}
+      </div>
+      <em>{player.character?.category ?? '—'}</em>
+    </div>
+  );
 }
 
 function InlineNotice({ tone, children }: { tone: 'neutral' | 'success' | 'error'; children: ReactNode }): JSX.Element {

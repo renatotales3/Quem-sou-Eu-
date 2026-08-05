@@ -110,9 +110,9 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | CARD-01 | P1: Foto no card dos outros jogadores | Design | Implementing |
-| CARD-02 | P1: Foto no card dos outros jogadores | Design | Pending |
-| CARD-03 | P1: Foto no card dos outros jogadores | Design | Pending |
-| CARD-04 | P1: Foto no card dos outros jogadores | Design | Pending |
+| CARD-02 | P1: Foto no card dos outros jogadores | Design | Implementing |
+| CARD-03 | P1: Foto no card dos outros jogadores | Design | Implementing |
+| CARD-04 | P1: Foto no card dos outros jogadores | Design | Implementing |
 | IMG-01 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-02 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-03 | P1: Catálogo de imagens livre e verificável | Design | Implementing |

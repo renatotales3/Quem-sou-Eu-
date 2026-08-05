@@ -268,18 +268,20 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Imagem exibida quando presente; nome e categoria sempre visíveis
-- [ ] `onError` troca para o visual atual, sem espaço vazio
-- [ ] Card sem imagem visualmente idêntico ao de hoje
-- [ ] Crédito de autor e licença acessível (atributo de acessibilidade ou legenda)
-- [ ] `alt` descritivo, nunca a resposta para quem não pode vê-la
-- [ ] Gate check passa: `npm run build && npm test`
-- [ ] Test count: suíte inalterada (camada sem teste na matriz)
+- [x] Imagem exibida quando presente; nome e categoria sempre visíveis
+- [x] `onError` troca para o visual atual, sem espaço vazio
+- [x] Card sem imagem visualmente idêntico ao de hoje
+- [x] Crédito de autor e licença acessível (atributo de acessibilidade ou legenda)
+- [x] `alt` descritivo, nunca a resposta para quem não pode vê-la
+- [x] Gate check passa: `npm run build && npm test`
+- [x] Test count: suíte inalterada (camada sem teste na matriz)
 
 **Tests**: none
 **Gate**: build
 
 **Commit**: `feat(ui): show character photo on the card with graceful fallback`
+
+**Execução real**: `CharacterCard` e a nova `RevealRow` (tela de revelação) renderizam `<img onError>` caindo para o avatar de inicial e cor; `alt="Foto de {nome}"` é aceitável porque o card só existe para personagens de outros jogadores (o nome já está visível em texto ao lado). Crédito exibido como `<p>`/`<small>` visível com `aria-label` redundante para leitor de tela, não só `title`. Cada card/linha usa uma key que inclui a URL da imagem, para o estado de erro não vazar de um personagem para o próximo quando a rodada troca.
 
 ---
 
