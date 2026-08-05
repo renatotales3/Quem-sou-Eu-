@@ -32,7 +32,8 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | Momento da resolução | Curadoria (script rodado à mão), URLs gravadas no repositório | Elimina dependência de runtime e, principalmente, permite revisar cada imagem antes de entrar | y |
 | Critério de aprovação | Um brasileiro reconhece o personagem na imagem | A medição mostrou grafite do Vegeta e Pernalonga pintado em caça: cobertura não é qualidade | y |
 | Quem revisa | Triagem automática por nome de arquivo e categoria do Commons, depois revisão visual das sobreviventes | Nome de arquivo já denuncia os piores casos (`FB-111 Bugs Bunny Nose Art`), mas só olhar resolve os ambíguos | y |
-| Tamanho da imagem | Thumbnail de 320px de largura, via `iiurlwidth` | Card é pequeno; puxar o original desperdiça banda do Commons e do jogador | y |
+| Tamanho da imagem | Thumbnail do Commons, limite de 400px | Card é pequeno e o original desperdiça banda. O limite era 320px, mas medi na implementação que o Commons **não aceita largura arbitrária**: pedir 320 devolve um thumbnail de 330px, e reescrever a URL para 320 responde HTTP 400. O limite passou a 400px para expressar a intenção (thumbnail pequeno, nunca o original) com um valor que a fonte consegue satisfazer | y |
+| Parâmetros de rastreamento na URL | Removidos antes de gravar | A API devolve a thumburl com `?utm_source=...&utm_campaign=imageinfo` anexado; gravar isso faria o navegador de cada jogador carregar telemetria de campanha da Wikimedia a cada card | y |
 | Atribuição | Autor e licença gravados por imagem e exibidos na interface | CC BY e CC BY-SA exigem atribuição; verificado na API que os metadados existem | y |
 | Personagem sem imagem aprovada | Mantém o card atual, inicial e cor | Já é um visual desenhado e funcional; ausência de foto não pode virar espaço vazio | y |
 | Licença de domínio público | Registrada como tal, crédito exibido de todo modo | Não é exigido, mas é barato e honesto | y |
@@ -72,7 +73,7 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 2. The system SHALL registrar autor e licença de cada imagem aprovada. <!-- ubiquitous -->
 3. The system SHALL NOT requisitar a Wikipédia, o Wikidata ou o Commons em tempo de execução, nem no servidor nem no cliente. <!-- ubiquitous -->
 4. IF uma entrada do catálogo de imagens referenciar um personagem inexistente THEN a suíte de testes SHALL falhar. <!-- unwanted-behavior -->
-5. The system SHALL apontar para thumbnail de no máximo 320px de largura, não para o arquivo original. <!-- ubiquitous -->
+5. The system SHALL apontar para um thumbnail do Commons de no máximo 400px de largura, nunca para o arquivo original, e a URL SHALL estar livre de parâmetros de rastreamento. <!-- ubiquitous -->
 6. WHEN uma imagem aprovada exigir atribuição THEN a interface SHALL exibir autor e licença de forma acessível. <!-- event-driven -->
 
 **Independent Test**: Rodar `npm test` — a suíte verifica que toda entrada casa com um personagem existente, que toda URL é do domínio do Commons com largura limitada, e que toda imagem tem autor e licença.
