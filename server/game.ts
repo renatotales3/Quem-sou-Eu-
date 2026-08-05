@@ -439,6 +439,7 @@ export class GameManager {
               id: player.character.id,
               name: player.character.name,
               category: player.character.category,
+              ...(player.character.image ? { image: player.character.image } : {}),
             },
           };
         }

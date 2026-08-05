@@ -199,6 +199,71 @@ describe('fluxo protegido de uma rodada', () => {
     expect(finishedB.room.players.find((player) => player.id === joined.playerId)?.character?.name).toBe(ownB!.name);
   });
 
+  it('a URL da imagem do próprio personagem não vaza durante a rodada e aparece na revelação (PRIV-02, PRIV-03)', async () => {
+    // Herdar a proteção de viewRoom para o campo `image` sem testar é
+    // exatamente como o mutante de POOL-06 sobreviveu na feature anterior
+    // (ver design.md Risks). Este teste força o sorteio para dois
+    // personagens com imagem aprovada — do contrário, sem imagem sorteada,
+    // a asserção de URL passaria vazia e não provaria nada.
+    const withImages = characters.filter((character) => character.image);
+    expect(withImages.length).toBeGreaterThanOrEqual(2);
+    const [chosenHostChar, chosenGuestChar] = withImages;
+
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Rui');
+    const joined = await joinRoom(guest, created.roomCode, 'Zoe');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const room = getInternalRoom(created.roomCode);
+    expect(room).toBeDefined();
+    room!.usedCharacterIds = new Set(
+      characters.filter((character) => character.id !== chosenHostChar!.id && character.id !== chosenGuestChar!.id).map((character) => character.id),
+    );
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+    // O pool tem só os dois personagens escolhidos, mas o sorteio embaralha
+    // qual jogador recebe qual — descobre-se o próprio personagem pela visão
+    // do adversário, do mesmo jeito que o teste de privacidade do nome já faz.
+    const ownHostChar = roundGuest.room.players.find((player) => player.id === created.playerId)?.character;
+    const ownGuestChar = roundHost.room.players.find((player) => player.id === joined.playerId)?.character;
+    expect(ownHostChar?.image).toBeDefined();
+    expect(ownGuestChar?.image).toBeDefined();
+    const hostOwnImageUrl = ownHostChar!.image!.url;
+    const guestOwnImageUrl = ownGuestChar!.image!.url;
+    expect(new Set([chosenHostChar!.image!.url, chosenGuestChar!.image!.url])).toEqual(new Set([hostOwnImageUrl, guestOwnImageUrl]));
+
+    // PRIV-02: a própria imagem não aparece no payload de ninguém durante a
+    // rodada, nem embutida em outro campo qualquer.
+    expect(JSON.stringify(roundHost)).not.toContain(hostOwnImageUrl);
+    expect(JSON.stringify(roundGuest)).not.toContain(guestOwnImageUrl);
+
+    // A imagem do adversário, em contrapartida, chega íntegra.
+    expect(roundGuest.room.players.find((player) => player.id === created.playerId)?.character?.image).toEqual(ownHostChar!.image);
+    expect(roundHost.room.players.find((player) => player.id === joined.playerId)?.character?.image).toEqual(ownGuestChar!.image);
+
+    const finishHost = waitForEvent<{ room: RoomView }>(host, 'round:finished');
+    const finishGuest = waitForEvent<{ room: RoomView }>(guest, 'round:finished');
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    const solveGuest = waitForEvent<{ correct: boolean }>(guest, 'guess:result');
+    host.emit('round:guess', { text: ownHostChar!.name });
+    guest.emit('round:guess', { text: ownGuestChar!.name });
+    await Promise.all([solveHost, solveGuest]);
+    const [finishedHost, finishedGuest] = await Promise.all([finishHost, finishGuest]);
+
+    // PRIV-03: depois de round:finished, o quadro revelado inclui a imagem
+    // de todos, inclusive a do próprio jogador.
+    expect(finishedHost.room.players.find((player) => player.id === created.playerId)?.character?.image?.url).toBe(hostOwnImageUrl);
+    expect(finishedGuest.room.players.find((player) => player.id === joined.playerId)?.character?.image?.url).toBe(guestOwnImageUrl);
+  });
+
   it('recusa a décima terceira pessoa', async () => {
     const clients = await Promise.all(Array.from({ length: MAX_PLAYERS + 1 }, () => connectClient()));
     const created = await createRoom(clients[0]!, 'Host');

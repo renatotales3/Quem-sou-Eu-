@@ -236,18 +236,20 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] `viewRoom` inclui `image` no mesmo bloco que já monta nome e categoria
-- [ ] Condição de revelação inalterada
-- [ ] Teste de integração: a URL da imagem do próprio personagem não aparece no payload durante a rodada (PRIV-02)
-- [ ] Teste de integração: a imagem aparece para todos após `round:finished` (PRIV-03)
-- [ ] O teste de privacidade existente continua passando
-- [ ] Gate check passa: `npm test`
-- [ ] Test count: ≥ 52 testes
+- [x] `viewRoom` inclui `image` no mesmo bloco que já monta nome e categoria
+- [x] Condição de revelação inalterada
+- [x] Teste de integração: a URL da imagem do próprio personagem não aparece no payload durante a rodada (PRIV-02)
+- [x] Teste de integração: a imagem aparece para todos após `round:finished` (PRIV-03)
+- [x] O teste de privacidade existente continua passando
+- [x] Gate check passa: `npm test`
+- [x] Test count: ≥ 52 testes
 
 **Tests**: integration
 **Gate**: full
 
 **Commit**: `feat(game): include character image without leaking the viewer own`
+
+**Execução real**: `image` entra dentro do mesmo objeto `character` que já existia no bloco condicional de `viewRoom`; o `if` que decide quando revelar não foi tocado. Teste força o pool a exatamente 2 personagens com imagem aprovada (mesma técnica do POOL-01), descobre a própria atribuição pela visão do adversário (a ordem do sorteio embaralha quem recebe qual) e confere a URL própria ausente durante a rodada e presente em `round:finished`. 52 testes (51 + 1 novo); o teste de privacidade do nome (linha ~178) continua verde.
 
 ---
 

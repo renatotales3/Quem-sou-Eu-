@@ -120,8 +120,8 @@ O card mostra nome e categoria do personagem dos outros jogadores, e nada mais. 
 | IMG-05 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | IMG-06 | P1: Catálogo de imagens livre e verificável | Design | Implementing |
 | PRIV-01 | P2: Privacidade preservada com o campo novo | Design | Implementing |
-| PRIV-02 | P2: Privacidade preservada com o campo novo | Design | Pending |
-| PRIV-03 | P2: Privacidade preservada com o campo novo | Design | Pending |
+| PRIV-02 | P2: Privacidade preservada com o campo novo | Design | Implementing |
+| PRIV-03 | P2: Privacidade preservada com o campo novo | Design | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
