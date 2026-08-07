@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState, type FormEvent, type JSX, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type JSX, type ReactNode } from 'react';
 import type {
   GameErrorPayload,
   GuessResultPayload,
   PlayerSolvedPayload,
   RoomActionResult,
+  RoomNoticePayload,
   RoomView,
   RoundFinishedPayload,
 } from '../shared/protocol';
-import { clearSession, readSession, saveSession, socket, type SessionData } from './socket';
+import { formatDuration } from '../shared/time';
+import { clearSession, readSession, saveSession, serverMayHibernate, socket, wakeServer, type SessionData } from './socket';
 
 type HomeMode = 'create' | 'join';
-type ConnectionState = 'offline' | 'connecting' | 'online' | 'reconnecting';
+type ConnectionState = 'offline' | 'connecting' | 'waking' | 'online' | 'reconnecting';
 type Feedback = { tone: 'neutral' | 'success' | 'error'; message: string } | null;
 
 const MAX_NICKNAME_LENGTH = 24;
@@ -28,6 +30,7 @@ function App(): JSX.Element {
   const [copied, setCopied] = useState(false);
   const [lastSolved, setLastSolved] = useState<PlayerSolvedPayload | null>(null);
   const [finalRanking, setFinalRanking] = useState<RoundFinishedPayload['ranking']>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const session = readSession();
@@ -43,6 +46,18 @@ function App(): JSX.Element {
     };
     const onDisconnect = (): void => setConnection('offline');
     const onConnectError = (): void => {
+      // Num servidor que hiberna, as primeiras falhas são esperadas enquanto ele
+      // sobe — o Socket.IO ainda tem tentativas de sobra. Só vira erro visível
+      // quando o orçamento de reconexão acaba (`reconnect_failed`), para não
+      // acusar falha de um servidor que está apenas acordando.
+      if (serverMayHibernate) {
+        setConnection('waking');
+        return;
+      }
+      setConnection('offline');
+      setError('Não consegui conectar agora. Tente novamente em alguns segundos.');
+    };
+    const onReconnectFailed = (): void => {
       setConnection('offline');
       setError('Não consegui conectar agora. Tente novamente em alguns segundos.');
     };
@@ -52,6 +67,7 @@ function App(): JSX.Element {
       if (nextRoom.phase === 'lobby') {
         setFeedback(null);
         setFinalRanking([]);
+        setNotice(null);
       }
     };
     const onRoundStarted = ({ room: nextRoom }: { room: RoomView }): void => {
@@ -74,6 +90,9 @@ function App(): JSX.Element {
       setFinalRanking(payload.ranking);
       setFeedback({ tone: 'success', message: 'Todo mundo descobriu. Agora a sala está revelada.' });
     };
+    const onRoomNotice = (payload: RoomNoticePayload): void => {
+      setNotice(payload.message);
+    };
     const onGameError = (payload: GameErrorPayload): void => {
       setError(payload.message);
       if (payload.code === 'SESSION_EXPIRED') {
@@ -86,28 +105,36 @@ function App(): JSX.Element {
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('connect_error', onConnectError);
+    socket.io.on('reconnect_failed', onReconnectFailed);
     socket.on('room:state', onRoomState);
     socket.on('round:started', onRoundStarted);
     socket.on('guess:result', onGuessResult);
     socket.on('player:solved', onPlayerSolved);
     socket.on('round:finished', onRoundFinished);
+    socket.on('room:notice', onRoomNotice);
     socket.on('error', onGameError);
 
+    let cancelled = false;
     if (session) {
-      setConnection('reconnecting');
+      setConnection(serverMayHibernate ? 'waking' : 'reconnecting');
       socket.auth = session;
-      socket.connect();
+      void wakeServer().then(() => {
+        if (!cancelled && !socket.connected) socket.connect();
+      });
     }
 
     return () => {
+      cancelled = true;
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('connect_error', onConnectError);
+      socket.io.off('reconnect_failed', onReconnectFailed);
       socket.off('room:state', onRoomState);
       socket.off('round:started', onRoundStarted);
       socket.off('guess:result', onGuessResult);
       socket.off('player:solved', onPlayerSolved);
       socket.off('round:finished', onRoundFinished);
+      socket.off('room:notice', onRoomNotice);
       socket.off('error', onGameError);
     };
   }, [pendingAction]);
@@ -116,6 +143,7 @@ function App(): JSX.Element {
   const otherPlayers = useMemo(() => room?.players.filter((player) => player.id !== room.you.id) ?? [], [room]);
   const solvedCount = room?.players.filter((player) => player.solved).length ?? 0;
   const isHost = Boolean(room && room.hostId === room.you.id);
+  const elapsedMs = useRoundClock(room);
 
   function emitRoomAction(mode: HomeMode, nextNickname: string, code: string): void {
     const handleResult = (result: RoomActionResult): void => {
@@ -164,9 +192,11 @@ function App(): JSX.Element {
       setPendingAction(null);
       emitRoomAction(action.mode, action.nickname, action.code);
     } else {
-      setConnection('connecting');
+      setConnection(serverMayHibernate ? 'waking' : 'connecting');
       socket.auth = {};
-      socket.connect();
+      void wakeServer().then(() => {
+        if (!socket.connected) socket.connect();
+      });
     }
   }
 
@@ -254,6 +284,11 @@ function App(): JSX.Element {
               </button>
             </form>
             {error && <InlineNotice tone="error">{error}</InlineNotice>}
+            {connection === 'waking' && !error && (
+              <InlineNotice tone="neutral">
+                Acordando o servidor. No plano gratuito ele hiberna sem uso, e voltar leva cerca de um minuto.
+              </InlineNotice>
+            )}
             <p className="privacy-note"><span aria-hidden="true">✦</span> Seu personagem nunca é enviado para a sua tela durante a rodada.</p>
           </div>
         </section>
@@ -270,7 +305,7 @@ function App(): JSX.Element {
   if (room.phase === 'lobby') {
     return (
       <main className="app-shell room-shell">
-        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} />
+        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} elapsedMs={elapsedMs} />
         <section className="lobby-layout" aria-labelledby="lobby-title">
           <div className="lobby-main">
             <p className="eyebrow">Sala aberta · aguardando todo mundo</p>
@@ -316,7 +351,7 @@ function App(): JSX.Element {
   if (room.phase === 'finished') {
     return (
       <main className="app-shell room-shell finish-shell">
-        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} />
+        <RoomHeader room={room} connection={connection} onLeave={leaveRoom} elapsedMs={elapsedMs} />
         <section className="finish-layout" aria-labelledby="finish-title">
           <div className="finish-hero">
             <p className="eyebrow">Quadro revelado · rodada {String(room.round).padStart(2, '0')}</p>
@@ -328,13 +363,13 @@ function App(): JSX.Element {
             <div className="ranking-card paper-card">
               <div className="panel-heading"><div><span className="micro-label">Placar da rodada</span><h2>Quem descobriu primeiro</h2></div><span className="panel-mark">RANK</span></div>
               <div className="ranking-list">
-                {finalRanking.map((player, index) => <div className="ranking-row" key={player.playerId}><span className={`rank-number rank-${index + 1}`}>{player.rank ?? '—'}</span><span className="ranking-name">{player.nickname}{player.playerId === room.you.id ? <small> você</small> : null}</span><span className="rank-label">{index === 0 ? 'primeiro' : index === 1 ? 'segundo' : index === 2 ? 'terceiro' : 'resolvido'}</span></div>)}
+                {finalRanking.map((player, index) => <div className="ranking-row" key={player.playerId}><span className={`rank-number rank-${index + 1}`}>{player.rank ?? '—'}</span><span className="ranking-name">{player.nickname}{player.playerId === room.you.id ? <small> você</small> : null}</span><span className="rank-time">{player.solveMs === null ? '—' : formatDuration(player.solveMs)}</span><span className="rank-label">{index === 0 ? 'primeiro' : index === 1 ? 'segundo' : index === 2 ? 'terceiro' : 'resolvido'}</span></div>)}
               </div>
             </div>
             <div className="reveal-card paper-card">
               <div className="panel-heading"><div><span className="micro-label">A fita completa</span><h2>Quem era quem</h2></div><span className="panel-mark">ALL IN</span></div>
               <div className="reveal-list">
-                {room.players.map((player) => <div className="reveal-row" key={player.id}><span className="reveal-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span><div><strong>{player.nickname}</strong><span>{player.character?.name ?? 'Sem personagem'}</span></div><em>{player.character?.category ?? '—'}</em></div>)}
+                {room.players.map((player) => <RevealRow key={player.id} player={player} />)}
               </div>
             </div>
           </div>
@@ -345,13 +380,14 @@ function App(): JSX.Element {
 
   return (
     <main className="app-shell room-shell game-shell">
-      <RoomHeader room={room} connection={connection} onLeave={leaveRoom} />
+      <RoomHeader room={room} connection={connection} onLeave={leaveRoom} elapsedMs={elapsedMs} />
       <section className="game-layout" aria-labelledby="game-title">
         <div className="game-main">
           <div className="game-intro-row">
             <div><p className="eyebrow">Rodada {String(room.round).padStart(2, '0')} · olhe para os outros</p><h1 id="game-title">Você vê todo mundo.<br /><span>Menos você.</span></h1></div>
             <div className="solve-meter"><strong>{solvedCount}</strong><span>de {room.players.length}<br />resolvidos</span></div>
           </div>
+          {notice && <InlineNotice tone="neutral">{notice}</InlineNotice>}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
           <div className="identity-board">
             <div className="secret-card" data-testid="secret-card">
@@ -362,7 +398,7 @@ function App(): JSX.Element {
               <span className="card-stamp">IDENTIDADE LACRADA</span>
             </div>
             <div className="others-grid" aria-label="Personagens dos outros jogadores">
-              {otherPlayers.map((player, index) => <CharacterCard key={player.id} player={player} index={index} />)}
+              {otherPlayers.map((player, index) => <CharacterCard key={`${player.id}-${player.character?.image?.url ?? 'sem-foto'}`} player={player} index={index} />)}
             </div>
           </div>
         </div>
@@ -377,17 +413,52 @@ function App(): JSX.Element {
   );
 }
 
+/**
+ * Cronômetro da rodada (AD-003): o servidor é a única fonte da verdade.
+ * `offset = serverNow - Date.now()` é recalculado a cada RoomView recebido
+ * e o tick de 1s só existe enquanto `phase === 'playing'` — nada de relógio
+ * do cliente, nada de contagem fora de rodada.
+ */
+function useRoundClock(room: RoomView | null): number | null {
+  const offsetRef = useRef(0);
+  const phase = room?.phase ?? null;
+  const roundStartedAt = room?.roundStartedAt ?? null;
+  const serverNow = room?.serverNow ?? null;
+
+  useEffect(() => {
+    if (serverNow === null) return;
+    offsetRef.current = serverNow - Date.now();
+  }, [serverNow]);
+
+  const [elapsedMs, setElapsedMs] = useState<number | null>(() =>
+    phase === 'playing' && roundStartedAt !== null ? Date.now() + offsetRef.current - roundStartedAt : null,
+  );
+
+  useEffect(() => {
+    if (phase !== 'playing' || roundStartedAt === null) {
+      setElapsedMs(null);
+      return;
+    }
+    const tick = (): void => setElapsedMs(Date.now() + offsetRef.current - roundStartedAt);
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+  }, [phase, roundStartedAt]);
+
+  return elapsedMs;
+}
+
 function Logo(): JSX.Element {
   return <div className="logo" aria-label="Quem Sou Eu"><span className="logo-mark">Q?</span><span className="logo-word">QUEM<br /><b>SOU EU</b></span></div>;
 }
 
 function ConnectionPill({ state }: { state: ConnectionState }): JSX.Element {
-  const labels: Record<ConnectionState, string> = { offline: 'desconectado', connecting: 'conectando', online: 'ao vivo', reconnecting: 'reconectando' };
+  const labels: Record<ConnectionState, string> = { offline: 'desconectado', connecting: 'conectando', waking: 'acordando servidor', online: 'ao vivo', reconnecting: 'reconectando' };
   return <span className={`connection-pill connection-${state}`}><span className="connection-dot" aria-hidden="true" />{labels[state]}</span>;
 }
 
-function RoomHeader({ room, connection, onLeave }: { room: RoomView; connection: ConnectionState; onLeave: () => void }): JSX.Element {
-  return <header className="topbar room-topbar"><Logo /><div className="room-meta"><span className="room-meta-label">sala</span><strong>{room.code}</strong><span className="room-round">R{String(room.round).padStart(2, '0')}</span></div><div className="topbar-actions"><ConnectionPill state={connection} /><button className="text-button" type="button" onClick={onLeave}>Sair</button></div></header>;
+function RoomHeader({ room, connection, onLeave, elapsedMs }: { room: RoomView; connection: ConnectionState; onLeave: () => void; elapsedMs: number | null }): JSX.Element {
+  return <header className="topbar room-topbar"><Logo /><div className="room-meta"><span className="room-meta-label">sala</span><strong>{room.code}</strong><span className="room-round">R{String(room.round).padStart(2, '0')}</span>{elapsedMs !== null && <span className="round-clock" aria-label="Tempo decorrido da rodada">{formatDuration(elapsedMs)}</span>}</div><div className="topbar-actions"><ConnectionPill state={connection} /><button className="text-button" type="button" onClick={onLeave}>Sair</button></div></header>;
 }
 
 function PlayerRow({ player, you }: { player: RoomView['players'][number]; you: boolean }): JSX.Element {
@@ -395,7 +466,70 @@ function PlayerRow({ player, you }: { player: RoomView['players'][number]; you: 
 }
 
 function CharacterCard({ player, index }: { player: RoomView['players'][number]; index: number }): JSX.Element {
-  return <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''}`}><div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div><div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div><div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div></article>;
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = player.character?.image;
+  const showImage = Boolean(image) && !imageFailed;
+  return (
+    <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''} ${showImage ? 'character-has-photo' : ''}`}>
+      <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div>
+      {showImage ? <img className="character-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div>}
+      <div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div>
+      {showImage && <p className="character-credit">{creditLabel(image!)}</p>}
+    </article>
+  );
+}
+
+function RevealRow({ player }: { player: RoomView['players'][number] }): JSX.Element {
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = player.character?.image;
+  const showImage = Boolean(image) && !imageFailed;
+  return (
+    <div className="reveal-row">
+      {showImage ? <img className="reveal-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <span className="reveal-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span>}
+      <div>
+        <strong>{player.nickname}</strong>
+        <span>{player.character?.name ?? 'Sem personagem'}</span>
+        {showImage && <small className="reveal-credit">{creditLabel(image!)}</small>}
+      </div>
+      <em>{player.character?.category ?? '—'}</em>
+    </div>
+  );
+}
+
+type ImageCredit = { url: string; author: string; license: string; source: string };
+
+/**
+ * Crédito acessível de uma imagem (CARD-04): autor e fonte vêm antes da
+ * licença de propósito. A licença do Comic Vine é um parágrafo inteiro de
+ * termos de uso, não um rótulo curto como "CC BY 2.0" — com o
+ * `-webkit-line-clamp` de poucas linhas em styles.css, deixá-la primeiro
+ * cortava o autor (e o próprio link do Comic Vine) antes de aparecerem na
+ * tela. Autor e fonte são curtos e cabem sempre; é a licença, no fim, que
+ * absorve o corte quando o texto não cabe — a atribuição em si nunca é
+ * truncada. O `aria-label` no wrapper repete essa ordem para leitor de tela.
+ */
+function creditLabel({ author, license, source }: ImageCredit): JSX.Element {
+  const label = `Foto: ${author}, fonte ${source}, licença ${license}`;
+  return (
+    <span aria-label={label}>
+      {author} · {source === 'Comic Vine' ? <ComicVineLink /> : source} · {license}
+    </span>
+  );
+}
+
+/**
+ * Termos do Comic Vine exigem link de volta ao site sempre que os dados da
+ * API são exibidos. `aria-label` carrega o aviso de nova aba porque o texto
+ * visível ("Comic Vine") já ocupa espaço contado pelo line-clamp do
+ * elemento pai — um texto extra visualmente oculto ainda entraria nessa
+ * conta e empurraria o corte para antes do previsto.
+ */
+function ComicVineLink(): JSX.Element {
+  return (
+    <a href="https://comicvine.gamespot.com" target="_blank" rel="noopener noreferrer" aria-label="Comic Vine (abre em nova aba)">
+      Comic Vine
+    </a>
+  );
 }
 
 function InlineNotice({ tone, children }: { tone: 'neutral' | 'success' | 'error'; children: ReactNode }): JSX.Element {

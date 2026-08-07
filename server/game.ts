@@ -39,6 +39,7 @@ interface PlayerState {
   rank: number | null;
   guesses: string[];
   disconnectedAt: number | null;
+  solvedAt: number | null;
 }
 
 interface RoomState {
@@ -49,6 +50,8 @@ interface RoomState {
   players: Map<string, PlayerState>;
   createdAt: number;
   updatedAt: number;
+  usedCharacterIds: Set<string>;
+  roundStartedAt: number | null;
 }
 
 interface SessionAuth {
@@ -110,6 +113,8 @@ export class GameManager {
       players: new Map([[player.id, player]]),
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      usedCharacterIds: new Set(),
+      roundStartedAt: null,
     };
 
     this.rooms.set(code, room);
@@ -220,6 +225,7 @@ export class GameManager {
     const rank = Array.from(room.players.values()).filter((candidate) => candidate.solved).length + 1;
     player.solved = true;
     player.rank = rank;
+    player.solvedAt = Date.now();
     this.touch(room);
 
     socket.emit('guess:result', {
@@ -233,6 +239,8 @@ export class GameManager {
       playerId: player.id,
       nickname: player.nickname,
       rank,
+      // room.phase === 'playing' aqui garante roundStartedAt não-nulo (setado junto no startRound).
+      solveMs: player.solvedAt - room.roundStartedAt!,
     });
     this.broadcastRoomState(room);
 
@@ -256,12 +264,14 @@ export class GameManager {
     }
 
     room.phase = 'lobby';
+    room.roundStartedAt = null;
     for (const candidate of room.players.values()) {
       candidate.ready = false;
       candidate.character = null;
       candidate.solved = false;
       candidate.rank = null;
       candidate.guesses = [];
+      candidate.solvedAt = null;
     }
     this.touch(room);
     this.broadcastRoomState(room);
@@ -271,8 +281,19 @@ export class GameManager {
     if (room.phase !== 'lobby') return;
     room.phase = 'playing';
     room.round += 1;
+    room.roundStartedAt = Date.now();
     const players = Array.from(room.players.values());
-    const assignedCharacters = pickCharacters(players.length);
+
+    const availableCount = characters.length - room.usedCharacterIds.size;
+    if (availableCount < players.length) {
+      room.usedCharacterIds.clear();
+      this.io.to(room.code).emit('room:notice', {
+        code: 'CATALOG_RECYCLED',
+        message: 'Os personagens deram a volta: o catálogo foi liberado de novo.',
+      });
+    }
+
+    const assignedCharacters = pickCharacters(players.length, room.usedCharacterIds);
 
     players.forEach((player, index) => {
       player.character = assignedCharacters[index] ?? null;
@@ -280,6 +301,9 @@ export class GameManager {
       player.solved = false;
       player.rank = null;
       player.guesses = [];
+      if (player.character) {
+        room.usedCharacterIds.add(player.character.id);
+      }
     });
     this.touch(room);
     this.broadcastRoomState(room);
@@ -291,7 +315,7 @@ export class GameManager {
     this.touch(room);
     const ranking = Array.from(room.players.values())
       .sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER))
-      .map((player) => ({ playerId: player.id, nickname: player.nickname, rank: player.rank }));
+      .map((player) => ({ playerId: player.id, nickname: player.nickname, rank: player.rank, solveMs: this.deriveSolveMs(room, player) }));
 
     this.broadcastRoomState(room);
     for (const player of room.players.values()) {
@@ -360,7 +384,7 @@ export class GameManager {
     } else if (room.phase === 'finished') {
       const ranking = Array.from(room.players.values())
         .sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER))
-        .map((candidate) => ({ playerId: candidate.id, nickname: candidate.nickname, rank: candidate.rank }));
+        .map((candidate) => ({ playerId: candidate.id, nickname: candidate.nickname, rank: candidate.rank, solveMs: this.deriveSolveMs(room, candidate) }));
       socket.emit('round:finished', { room: this.viewRoom(room, player.id), ranking });
     }
   }
@@ -394,6 +418,8 @@ export class GameManager {
       hostId: room.hostId,
       you: { id: viewer.id, nickname: viewer.nickname },
       guessHistory: [...viewer.guesses],
+      roundStartedAt: room.roundStartedAt,
+      serverNow: Date.now(),
       players: Array.from(room.players.values()).map((player) => {
         const publicPlayer = {
           id: player.id,
@@ -403,6 +429,7 @@ export class GameManager {
           connected: player.connected,
           solved: player.solved,
           rank: player.rank,
+          solveMs: this.deriveSolveMs(room, player),
         };
 
         if (player.character && (room.phase === 'finished' || (room.phase === 'playing' && player.id !== viewerId))) {
@@ -412,6 +439,7 @@ export class GameManager {
               id: player.character.id,
               name: player.character.name,
               category: player.character.category,
+              ...(player.character.image ? { image: player.character.image } : {}),
             },
           };
         }
@@ -463,6 +491,7 @@ export class GameManager {
       rank: null,
       guesses: [],
       disconnectedAt: null,
+      solvedAt: null,
     };
   }
 
@@ -511,18 +540,26 @@ export class GameManager {
 
   private resetAfterDeparture(room: RoomState): void {
     room.phase = 'lobby';
+    room.roundStartedAt = null;
     for (const candidate of room.players.values()) {
       candidate.ready = false;
       candidate.character = null;
       candidate.solved = false;
       candidate.rank = null;
       candidate.guesses = [];
+      candidate.solvedAt = null;
     }
     this.touch(room);
   }
 
   private touch(room: RoomState): void {
     room.updatedAt = Date.now();
+  }
+
+  /** AD-003: solveMs é sempre derivado de roundStartedAt/solvedAt, nunca armazenado. */
+  private deriveSolveMs(room: RoomState, player: PlayerState): number | null {
+    if (room.roundStartedAt === null || player.solvedAt === null) return null;
+    return player.solvedAt - room.roundStartedAt;
   }
 
   private cleanupRooms(): void {

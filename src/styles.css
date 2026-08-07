@@ -34,7 +34,7 @@ button, input { font: inherit; }
 
 button { cursor: pointer; }
 
-button:focus-visible, input:focus-visible { outline: 3px solid var(--acid); outline-offset: 3px; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--acid); outline-offset: 3px; }
 
 button:disabled { cursor: not-allowed; opacity: 0.55; }
 
@@ -134,7 +134,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .notice-success { color: #275512; background: #dcf6ae; }
 
-.home-footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted-dark); font: 10px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
+.home-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted-dark); font: 10px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
 
 .room-meta { display: flex; align-items: baseline; gap: 10px; margin-left: auto; margin-right: 18px; }
 
@@ -143,6 +143,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .room-meta strong { color: var(--acid); font: 15px var(--mono); letter-spacing: 0.18em; }
 
 .room-round { padding-left: 10px; border-left: 1px solid var(--line); }
+
+.round-clock { padding-left: 10px; border-left: 1px solid var(--line); color: var(--acid); font: 13px var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 
 .topbar-actions { display: flex; align-items: center; gap: 18px; }
 
@@ -253,6 +255,12 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .character-avatar { display: grid; place-items: center; width: 43px; height: 43px; border: 1px solid rgba(21, 21, 37, 0.35); border-radius: 50%; font: 18px var(--display); }
 
+/* Altura fixa em CSS, não no conteúdo: o espaço já existe antes da imagem
+   decodificar, então o card não "pula" quando a foto carrega. */
+.character-photo { display: block; width: 100%; height: 92px; object-fit: cover; border: 1px solid rgba(21, 21, 37, 0.35); border-radius: 7px; position: relative; z-index: 1; }
+
+.character-has-photo .character-card-top { margin-bottom: 2px; }
+
 .character-info { display: grid; gap: 3px; position: relative; z-index: 1; }
 
 .character-info strong { font-size: 13px; }
@@ -260,6 +268,21 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .character-info span { font-family: var(--display); font-size: clamp(17px, 2vw, 24px); letter-spacing: -0.06em; line-height: 0.95; }
 
 .character-info em { color: rgba(21, 21, 37, 0.62); font: 9px var(--mono); font-style: normal; text-transform: uppercase; }
+
+/* Crédito de autor e licença: CC BY e CC BY-SA exigem atribuição, então ele
+   precisa ser legível de fato. Caixa alta e corte numa linha só encurtavam
+   nomes de autor a ponto de não creditar ninguém — daí três linhas (a
+   licença do Comic Vine é um parágrafo de termos, não um rótulo curto
+   como "CC BY 2.0"; ver App.tsx `creditLabel`), caixa normal e um pouco mais
+   de contraste. O texto vem ordenado autor · fonte · licença: o corte do
+   line-clamp cai sempre na licença, nunca no autor. */
+.character-credit { margin: 3px 0 0; overflow: hidden; color: rgba(21, 21, 37, 0.68); font: 9px/1.25 var(--mono); letter-spacing: 0.01em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; white-space: normal; overflow-wrap: anywhere; position: relative; z-index: 1; }
+
+.character-credit a, .reveal-credit a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; }
+
+/* Cartão e crédito cortam overflow (line-clamp, cantoneira decorativa); um
+   outline de 3px com offset padrão vazaria por fora e seria cortado. */
+.character-credit a:focus-visible, .reveal-credit a:focus-visible { outline-offset: 1px; }
 
 .character-solved { filter: saturate(0.65); }
 
@@ -329,27 +352,33 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .ranking-list, .reveal-list { display: grid; margin-top: 10px; }
 
-.ranking-row { display: grid; grid-template-columns: 31px 1fr auto; align-items: center; gap: 9px; border-bottom: 1px solid var(--paper-line); padding: 13px 0; }
+.ranking-row { display: grid; grid-template-columns: 31px minmax(0, 1fr) auto auto; align-items: center; gap: 9px; border-bottom: 1px solid var(--paper-line); padding: 13px 0; }
 
 .rank-number { color: var(--muted-dark); font: 18px var(--mono); }
 
 .rank-1 { color: var(--coral); }
 
-.ranking-name { font-size: 13px; font-weight: 800; }
+.ranking-name { overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 
 .ranking-name small { color: var(--muted-dark); font: 10px var(--mono); }
 
-.rank-label { color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; }
+.rank-time { color: var(--muted-dark); font: 11px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.rank-label { color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; white-space: nowrap; }
 
 .reveal-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--paper-line); padding: 11px 0; }
 
 .reveal-avatar { width: 30px; height: 30px; color: var(--night); background: var(--acid); }
+
+.reveal-photo { display: block; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 
 .reveal-row > div { display: grid; gap: 2px; min-width: 0; }
 
 .reveal-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 
 .reveal-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--display); font-size: 18px; letter-spacing: -0.05em; }
+
+.reveal-credit { overflow: hidden; color: var(--muted-dark); font: 9px/1.25 var(--mono); letter-spacing: 0.01em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; white-space: normal; overflow-wrap: anywhere; }
 
 .reveal-row em { max-width: 130px; color: var(--muted-dark); font: 9px var(--mono); font-style: normal; text-align: right; text-transform: uppercase; }
 
@@ -368,8 +397,11 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 @media (max-width: 620px) {
   .home-shell, .room-shell { padding-right: 17px; padding-left: 17px; }
   .topbar { gap: 12px; }
-  .room-meta { margin-right: 0; }
+  .room-meta { margin-right: 0; gap: 8px; }
+  .round-clock { padding-left: 8px; font-size: 11px; }
   .topbar-actions .connection-pill, .home-topbar .connection-pill { display: none; }
+  .ranking-row { grid-template-columns: 24px minmax(0, 1fr) auto auto; gap: 6px; }
+  .rank-time, .rank-label { font-size: 8px; }
   .home-layout { width: calc(100vw - 34px); }
   .home-intro, .home-card, .lobby-main, .players-panel, .game-main, .guess-panel { width: 100%; min-width: 0; max-width: 100%; }
   .home-intro h1, .lobby-main h1, .finish-hero h1 { width: 100%; max-width: 100%; font-size: clamp(38px, 10.5vw, 58px); overflow-wrap: anywhere; }

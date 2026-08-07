@@ -1,8 +1,15 @@
 node_modules/
 dist/
 dist-server/
+.image-candidates/
 .env
 .env.*
 !.env.example
 npm-debug.log*
 .DS_Store
+
+# Skills replicadas para outros agentes pelo instalador (a fonte versionada é .claude/skills/)
+.cursor/
+.windsurf/
+.agents/*.backup
+.agents/.skill-lock.json.backup

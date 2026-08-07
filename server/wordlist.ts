@@ -1,10 +1,12 @@
 import { normalizeText } from './normalization';
+import { characterImages, type CharacterImage } from './character-images';
 
 export interface Character {
   id: string;
   name: string;
   category: string;
   aliases: string[];
+  image?: CharacterImage;
 }
 
 interface CharacterSeed {
@@ -15,42 +17,47 @@ interface CharacterSeed {
 
 // Núcleo popular: personagens e nomes que a maioria das pessoas reconhece.
 const characterSets: Record<string, string> = {
-  Marvel: `Spider-Man|Iron Man|Captain America|Thor|Hulk|Black Widow|Black Panther|Doctor Strange|Captain Marvel|Scarlet Witch|Ant-Man|Loki|Thanos|Deadpool|Wolverine|Venom|Daredevil|Nick Fury|Green Goblin|Miles Morales`,
-  DC: `Superman|Batman|Wonder Woman|Aquaman|Flash|Green Lantern|Supergirl|Robin|Cyborg|Shazam|Joker|Harley Quinn|Catwoman|Poison Ivy|Lex Luthor|Bane|Raven|Darkseid`,
-  'Disney e Pixar': `Mickey Mouse|Minnie Mouse|Donald Duck|Goofy|Simba|Mufasa|Scar|Ariel|Ursula|Belle|Beast|Aladdin|Jasmine|Genie|Mulan|Moana|Elsa|Anna|Olaf|Stitch|Peter Pan|Cinderella|Maleficent|Woody|Buzz Lightyear|Lightning McQueen|Remy|WALL-E|Joy|Miguel Rivera`,
-  Animação: `Bugs Bunny|Tom Cat|Jerry Mouse|Scooby-Doo|Shaggy Rogers|Homer Simpson|Bart Simpson|Lisa Simpson|Peter Griffin|Stewie Griffin|Rick Sanchez|Morty Smith|Aang|Zuko|SpongeBob SquarePants|Patrick Star|Finn the Human|Jake the Dog|Pica-Pau|Puss in Boots`,
+  Marvel: `Homem-Aranha|Homem de Ferro|Capitão América|Thor|Hulk|Viúva Negra|Pantera Negra|Doutor Estranho|Capitã Marvel|Feiticeira Escarlate|Homem-Formiga|Loki|Thanos|Deadpool|Wolverine|Venom|Demolidor|Nick Fury|Duende Verde|Miles Morales`,
+  DC: `Superman|Batman|Mulher-Maravilha|Aquaman|Flash|Lanterna Verde|Supergirl|Robin|Ciborgue|Shazam|Coringa|Arlequina|Mulher-Gato|Hera Venenosa|Lex Luthor|Bane|Ravena|Darkseid`,
+  'Disney e Pixar': `Mickey Mouse|Minnie Mouse|Pato Donald|Pateta|Simba|Mufasa|Scar|Ariel|Úrsula|Bela|Fera|Aladdin|Jasmine|Gênio|Mulan|Moana|Elsa|Anna|Olaf|Stitch|Peter Pan|Cinderela|Malévola|Woody|Buzz Lightyear|Relâmpago McQueen|Remy|WALL-E|Alegria|Miguel Rivera`,
+  Animação: `Pernalonga|Tom|Jerry|Scooby-Doo|Salsicha|Homer Simpson|Bart Simpson|Lisa Simpson|Peter Griffin|Stewie Griffin|Rick Sanchez|Morty Smith|Aang|Zuko|Bob Esponja|Patrick Estrela|Finn, o Humano|Jake, o Cão|Pica-Pau|Gato de Botas`,
   'Anime e mangá': `Goku|Vegeta|Gohan|Piccolo|Naruto Uzumaki|Sasuke Uchiha|Kakashi Hatake|Luffy|Roronoa Zoro|Nami|Sanji|Eren Yeager|Mikasa Ackerman|Levi Ackerman|Light Yagami|L|Tanjiro Kamado|Nezuko Kamado|Satoru Gojo|Sailor Moon|Ash Ketchum|Pikachu|Totoro`,
-  Videogames: `Mario|Luigi|Princess Peach|Bowser|Yoshi|Link|Zelda|Kirby|Donkey Kong|Sonic the Hedgehog|Tails|Knuckles|Dr. Eggman|Mega Man|Ryu|Chun-Li|Lara Croft|Kratos|Master Chief|Solid Snake|Pac-Man|Steve (Minecraft)`,
-  'Fantasia e ficção científica': `Frodo Baggins|Gandalf|Gollum|Sauron|Harry Potter|Hermione Granger|Ron Weasley|Albus Dumbledore|Severus Snape|Draco Malfoy|Voldemort|Katniss Everdeen|Luke Skywalker|Leia Organa|Han Solo|Chewbacca|Darth Vader|Yoda|Obi-Wan Kenobi|R2-D2|C-3PO|Rey|Neo|Trinity|Godzilla`,
-  Cinema: `Forrest Gump|Indiana Jones|James Bond|Ethan Hunt|John Wick|Rocky Balboa|Rambo|Marty McFly|Doc Brown|Jack Sparrow|Willy Wonka|Mary Poppins|The Grinch|Kevin McCallister|Elle Woods|Vito Corleone|Michael Corleone|Tony Montana|Jules Winnfield|Beatrix Kiddo|Maximus|William Wallace|Shrek|Gru|Jack Skellington`,
-  Séries: `Walter White|Jesse Pinkman|Saul Goodman|Sherlock Holmes|John Watson|Michael Scott|Dwight Schrute|Jim Halpert|Rachel Green|Ross Geller|Monica Geller|Chandler Bing|Joey Tribbiani|Dexter Morgan|Daenerys Targaryen|Jon Snow|Arya Stark|Tyrion Lannister|Eleven|Thomas Shelby|The Doctor`,
+  Videogames: `Mario|Luigi|Princesa Peach|Bowser|Yoshi|Link|Zelda|Kirby|Donkey Kong|Sonic|Tails|Knuckles|Dr. Eggman|Mega Man|Ryu|Chun-Li|Lara Croft|Kratos|Master Chief|Solid Snake|Pac-Man|Steve (Minecraft)`,
+  'Fantasia e ficção científica': `Frodo Bolseiro|Gandalf|Gollum|Sauron|Harry Potter|Hermione Granger|Ron Weasley|Alvo Dumbledore|Severo Snape|Draco Malfoy|Voldemort|Katniss Everdeen|Luke Skywalker|Leia Organa|Han Solo|Chewbacca|Darth Vader|Yoda|Obi-Wan Kenobi|R2-D2|C-3PO|Rey|Neo|Trinity|Godzilla`,
+  Cinema: `Forrest Gump|Indiana Jones|James Bond|Ethan Hunt|John Wick|Rocky Balboa|Rambo|Marty McFly|Doc Brown|Jack Sparrow|Willy Wonka|Mary Poppins|Grinch|Kevin McCallister|Elle Woods|Vito Corleone|Michael Corleone|Tony Montana|Jules Winnfield|Beatrix Kiddo|Maximus|William Wallace|Shrek|Gru|Jack Skellington`,
+  Séries: `Walter White|Jesse Pinkman|Saul Goodman|Sherlock Holmes|John Watson|Michael Scott|Dwight Schrute|Jim Halpert|Rachel Green|Ross Geller|Monica Geller|Chandler Bing|Joey Tribbiani|Dexter Morgan|Daenerys Targaryen|Jon Snow|Arya Stark|Tyrion Lannister|Onze|Thomas Shelby|O Doutor`,
   'Ficção brasileira': `Emília|Narizinho|Dona Benta|Saci-Pererê|Mônica|Cebolinha|Cascão|Magali|Chico Bento|Chaves|Chapolin Colorado|Seu Madruga|Chiquinha|Kiko|Dona Florinda|Carminha|Odete Roitman|Nazaré Tedesco|João Grilo|Chicó`,
   Música: `Michael Jackson|Elvis Presley|Madonna|Beyoncé|Rihanna|Lady Gaga|Taylor Swift|Britney Spears|Bruno Mars|Adele|Amy Winehouse|Bob Marley|John Lennon|Paul McCartney|Freddie Mercury|David Bowie|Elton John|Whitney Houston|Anitta|Roberto Carlos`,
   Esportes: `Pelé|Marta|Neymar|Ronaldo Nazário|Ronaldinho Gaúcho|Romário|Ayrton Senna|Rebeca Andrade|Michael Jordan|LeBron James|Kobe Bryant|Serena Williams|Simone Biles|Usain Bolt|Muhammad Ali|Mike Tyson|Rafael Nadal|Cristiano Ronaldo|Lionel Messi|Diego Maradona`,
-  'História, ciência e cultura': `Albert Einstein|Marie Curie|Isaac Newton|Leonardo da Vinci|Mahatma Gandhi|Nelson Mandela|Martin Luther King Jr.|Abraham Lincoln|Napoleon Bonaparte|Cleopatra|Steve Jobs|Bill Gates|Elon Musk|Oprah Winfrey|Walt Disney|Stan Lee|George Lucas|Steven Spielberg|Frida Kahlo|Vincent van Gogh`,
-  'Literatura e mitologia': `Alice|Mad Hatter|Tom Sawyer|Jay Gatsby|Atticus Finch|Don Quixote|Sancho Panza|Dorian Gray|Oliver Twist|Ebenezer Scrooge|Jane Eyre|Elizabeth Bennet|Mr Darcy|Frankenstein|Dracula|Aslan|Matilda Wormwood|Zeus|Hades|Medusa`,
+  'História, ciência e cultura': `Albert Einstein|Marie Curie|Isaac Newton|Leonardo da Vinci|Mahatma Gandhi|Nelson Mandela|Martin Luther King Jr.|Abraham Lincoln|Napoleão Bonaparte|Cleópatra|Steve Jobs|Bill Gates|Elon Musk|Oprah Winfrey|Walt Disney|Stan Lee|George Lucas|Steven Spielberg|Frida Kahlo|Vincent van Gogh`,
+  'Literatura e mitologia': `Alice|Chapeleiro Louco|Tom Sawyer|Jay Gatsby|Atticus Finch|Dom Quixote|Sancho Pança|Dorian Gray|Oliver Twist|Ebenezer Scrooge|Jane Eyre|Elizabeth Bennet|Sr. Darcy|Frankenstein|Drácula|Aslan|Matilda Wormwood|Zeus|Hades|Medusa`,
 };
 
 const aliasesByName: Record<string, string[]> = {
-  'spider man': ['Spiderman', 'Peter Parker'],
-  'iron man': ['Tony Stark'],
-  'captain america': ['Steve Rogers'],
+  'homem aranha': ['Spiderman', 'Peter Parker'],
+  'homem de ferro': ['Tony Stark'],
+  'capitao america': ['Steve Rogers'],
   hulk: ['Bruce Banner'],
-  'black panther': ['TChalla', "T'Challa"],
-  'doctor strange': ['Stephen Strange'],
-  'captain marvel': ['Carol Danvers'],
-  'scarlet witch': ['Wanda Maximoff'],
-  'ant man': ['Scott Lang'],
+  'pantera negra': ['TChalla', "T'Challa"],
+  'doutor estranho': ['Stephen Strange'],
+  'capita marvel': ['Carol Danvers'],
+  'feiticeira escarlate': ['Wanda Maximoff'],
+  'homem formiga': ['Scott Lang'],
   deadpool: ['Wade Wilson'],
   wolverine: ['Logan'],
-  superman: ['Clark Kent'],
+  superman: ['Clark Kent', 'Super-Homem'],
+  supergirl: ['Kara Zor-El', 'Super-Moça'],
   batman: ['Bruce Wayne'],
-  'wonder woman': ['Diana Prince'],
+  'mulher maravilha': ['Diana Prince'],
   flash: ['Barry Allen'],
-  catwoman: ['Selina Kyle'],
-  'harley quinn': ['Harleen Quinzel'],
+  'mulher gato': ['Selina Kyle'],
+  arlequina: ['Harleen Quinzel'],
   'mickey mouse': ['Mickey'],
-  'spongebob squarepants': ['Bob Esponja', 'SpongeBob'],
+  'bob esponja': ['SpongeBob'],
+  tom: ['Tom Cat'],
+  jerry: ['Jerry Mouse'],
+  salsicha: ['Shaggy'],
+  'patrick estrela': ['Patrick'],
   goku: ['Son Goku', 'Kakarotto'],
   'naruto uzumaki': ['Naruto'],
   luffy: ['Monkey D. Luffy'],
@@ -58,7 +65,6 @@ const aliasesByName: Record<string, string[]> = {
   'ash ketchum': ['Ash'],
   mario: ['Super Mario'],
   zelda: ['Princess Zelda'],
-  'sonic the hedgehog': ['Sonic'],
   'dr eggman': ['Eggman'],
   'steve minecraft': ['Steve'],
   'harry potter': ['Harry'],
@@ -69,11 +75,10 @@ const aliasesByName: Record<string, string[]> = {
   'marty mcfly': ['Marty'],
   'doc brown': ['Emmett Brown', 'Doc'],
   'jack sparrow': ['Captain Jack Sparrow'],
-  'the grinch': ['Grinch'],
   'kevin mccallister': ['Kevin'],
   'walter white': ['Heisenberg'],
   'sherlock holmes': ['Sherlock'],
-  'the doctor': ['Doctor Who'],
+  'o doutor': ['Doctor Who'],
   'chaves': ['El Chavo'],
   'chapolin colorado': ['Chapolin'],
   kiko: ['Quico'],
@@ -96,17 +101,89 @@ const aliasesByName: Record<string, string[]> = {
   'walt disney': ['Disney'],
   'stan lee': ['Stanley Lieber'],
   'vincent van gogh': ['Van Gogh'],
-  'mad hatter': ['Chapeleiro Maluco'],
+  'chapeleiro louco': ['Chapeleiro Maluco'],
   dracula: ['Count Dracula'],
 };
+
+// Nome PT-BR normalizado (normalizeText) -> nome original em inglês.
+// Registra só os pares em que a forma brasileira difere do original: um nome
+// que já é o mesmo em português e inglês (ex.: Batman, Goku) não entra aqui,
+// senão o teste do WORD-06 acusaria "inglês exibido" num nome correto.
+export const englishOriginals: Record<string, string> = {
+  'homem aranha': 'Spider-Man',
+  'homem de ferro': 'Iron Man',
+  'capitao america': 'Captain America',
+  'viuva negra': 'Black Widow',
+  'pantera negra': 'Black Panther',
+  'doutor estranho': 'Doctor Strange',
+  'capita marvel': 'Captain Marvel',
+  'feiticeira escarlate': 'Scarlet Witch',
+  'homem formiga': 'Ant-Man',
+  demolidor: 'Daredevil',
+  'duende verde': 'Green Goblin',
+  'mulher maravilha': 'Wonder Woman',
+  'lanterna verde': 'Green Lantern',
+  ciborgue: 'Cyborg',
+  coringa: 'Joker',
+  arlequina: 'Harley Quinn',
+  'mulher gato': 'Catwoman',
+  'hera venenosa': 'Poison Ivy',
+  ravena: 'Raven',
+  'pato donald': 'Donald Duck',
+  pateta: 'Goofy',
+  bela: 'Belle',
+  fera: 'Beast',
+  genio: 'Genie',
+  cinderela: 'Cinderella',
+  malevola: 'Maleficent',
+  'relampago mcqueen': 'Lightning McQueen',
+  alegria: 'Joy',
+  pernalonga: 'Bugs Bunny',
+  'salsicha': 'Shaggy Rogers',
+  'bob esponja': 'SpongeBob SquarePants',
+  'patrick estrela': 'Patrick Star',
+  'finn o humano': 'Finn the Human',
+  'jake o cao': 'Jake the Dog',
+  'pica pau': 'Woody Woodpecker',
+  'gato de botas': 'Puss in Boots',
+  'princesa peach': 'Princess Peach',
+  sonic: 'Sonic the Hedgehog',
+  'frodo bolseiro': 'Frodo Baggins',
+  'alvo dumbledore': 'Albus Dumbledore',
+  'severo snape': 'Severus Snape',
+  grinch: 'The Grinch',
+  onze: 'Eleven',
+  'o doutor': 'The Doctor',
+  // Diferença real de grafia (não é só acento: "ão" vs "on"), então
+  // normalizeText não faria o palpite em inglês bater sem este par.
+  'napoleao bonaparte': 'Napoleon Bonaparte',
+  'chapeleiro louco': 'Mad Hatter',
+  'dom quixote': 'Don Quixote',
+  'sancho panca': 'Sancho Panza',
+  'sr darcy': 'Mr Darcy',
+};
+
+function mergeAliases(name: string): string[] {
+  const key = normalizeText(name);
+  const baseAliases = aliasesByName[key] ?? [];
+  const original = englishOriginals[key];
+  if (!original || baseAliases.some((alias) => normalizeText(alias) === normalizeText(original))) {
+    return baseAliases;
+  }
+  return [...baseAliases, original];
+}
 
 const seeds: CharacterSeed[] = Object.entries(characterSets).flatMap(([category, names]) =>
   names.split('|').map((name) => ({
     name,
     category,
-    aliases: aliasesByName[normalizeText(name)],
+    aliases: mergeAliases(name),
   })),
 );
+
+// Exportado só para o teste de guarda contra colisão silenciosa de tradução:
+// se uniqueSeeds descartar uma entrada, characters.length < totalSeedCount.
+export const totalSeedCount = seeds.length;
 
 const uniqueSeeds = new Map<string, CharacterSeed>();
 for (const seed of seeds) {
@@ -116,12 +193,16 @@ for (const seed of seeds) {
   }
 }
 
-export const characters: Character[] = Array.from(uniqueSeeds.values()).map((seed, index) => ({
-  id: `character-${String(index + 1).padStart(4, '0')}`,
-  name: seed.name,
-  category: seed.category,
-  aliases: seed.aliases ?? [],
-}));
+export const characters: Character[] = Array.from(uniqueSeeds.values()).map((seed, index) => {
+  const image = characterImages[normalizeText(seed.name)];
+  return {
+    id: `character-${String(index + 1).padStart(4, '0')}`,
+    name: seed.name,
+    category: seed.category,
+    aliases: seed.aliases ?? [],
+    ...(image ? { image } : {}),
+  };
+});
 
 const MIN_CURATED_CHARACTERS = 250;
 if (characters.length < MIN_CURATED_CHARACTERS) {
@@ -130,8 +211,8 @@ if (characters.length < MIN_CURATED_CHARACTERS) {
   );
 }
 
-export function pickCharacters(amount: number): Character[] {
-  const pool = [...characters];
+export function pickCharacters(amount: number, excludeIds?: ReadonlySet<string>): Character[] {
+  const pool = excludeIds ? characters.filter((character) => !excludeIds.has(character.id)) : [...characters];
   for (let index = pool.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
     const current = pool[index];
