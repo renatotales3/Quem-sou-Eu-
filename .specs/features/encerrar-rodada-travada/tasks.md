@@ -356,11 +356,11 @@ Nenhuma dependência aponta para fase posterior.
 
 | Task | Status | Commit |
 | --- | --- | --- |
-| T1 | ✅ Done | `pendente` |
-| T2 | ✅ Done | `pendente` |
-| T3 | ✅ Done | `pendente` |
-| T4 | ✅ Done | `pendente` |
-| T5 | ✅ Done | `pendente` |
-| T6 | ✅ Done | `pendente` |
-| T7 | ✅ Done | `pendente` |
-| T8 | ✅ Done | `pendente` |
+| T1 | ✅ Done | `1cd01ef` |
+| T2 | ✅ Done | `537f498` |
+| T3 | ✅ Done | `662e3c8` |
+| T4 | ✅ Done | `f056276` |
+| T5 | ✅ Done | `bc698fe` |
+| T6 | ✅ Done | `b4ea22e` |
+| T7 | ✅ Done | `221adf4` |
+| T8 | ✅ Done | `25f9cc6` |

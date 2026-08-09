@@ -36,13 +36,13 @@
 
 ## Handoff
 
-- **Feature**: placar-da-sessao (`.specs/features/placar-da-sessao/`) — **concluída**
-- **Phase / Task**: 3 fases, 9 tasks (T1..T9) concluídas + 3 correções; 2 rodadas de Verifier; veredito final PASS
-- **Completed**: T1..T5 servidor (`f3ad9d5`, `da36bbe`, `cc0f66d`, `476c1b5`, `51feba8`), T6..T9 interface (`655e978`, `e6fe83d`, `5734867`, `36880e7`), correções (`ebec1c3`, `dd3780c`, `3c230bc`), spec+tasks em `94be07d`
+- **Feature**: encerrar-rodada-travada (`.specs/features/encerrar-rodada-travada/`) — **concluída**
+- **Phase / Task**: 3 fases, 8 tasks (T1..T8); 1 rodada de Verifier; veredito PASS, 0 lacunas, 7/7 mutantes mortos
+- **Completed**: T1 `1cd01ef`, T2 `537f498`, T3 `662e3c8`, T4 `f056276`, T5 `bc698fe`, T6 `b4ea22e`, T7 `221adf4`, T8 `25f9cc6`; spec+tasks `e980641` e extensão `6ac5186`
 - **In-progress** (file:line): none
-- **Next step**: UAT interativo das ACs de render — SCORE-10..14 do placar e NOTES-01/02/03/04/12/13/14 do bloco de notas. Depois disso, decidir push e ordem de merge das três branches.
+- **Next step**: UAT interativo de todas as ACs de render acumuladas — END-05/06/22 (comandos do anfitrião), SCORE-10..14 (placar) e NOTES-01..04/12/13/14 (bloco de notas). Depois, push e ordem de merge das quatro branches.
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feat/placar-da-sessao (local; parte de fix/ocultar-desconexao-na-rodada, que parte de main). Três branches locais não enviadas: feat/bloco-de-notas, fix/ocultar-desconexao-na-rodada, feat/placar-da-sessao.
-- **Mutante equivalente conhecido (não é lacuna)**: trocar `roundPlayerCount` por `players.size` no ponto de acerto não quebra teste nenhum, porque hoje sair no meio da rodada aborta a rodada e cair não remove do roster. Se algum dia o roster puder encolher durante `playing`, esse congelamento passa a ter efeito observável e precisa de teste. Invariante documentado em `server/game.ts:241-253`.
-- **Follow-up conhecido, fora de escopo**: um jogador que cai sem ter acertado trava o fim da rodada, porque `finishRound` só dispara quando todos acertam. Pré-existente, anterior a esta feature.
+- **Branch**: fix/encerrar-rodada-travada (local; parte de feat/placar-da-sessao → fix/ocultar-desconexao-na-rodada → main)
+- **Conflito de merge previsto**: `feat/bloco-de-notas` saiu de `main` e não conhece nenhuma mudança das outras três branches. Vai conflitar em `src/App.tsx` e `src/styles.css`. Mesclar por último, ou rebasear sobre esta linha antes.
+- **Escopo ampliado durante a execução**: a feature nasceu só com o botão de encerrar; o teste de END-12 expôs que `everyoneReady` também trava o início da rodada seguinte, e o dono do projeto aprovou a história de remoção do ausente (END-15..22) para fechar o bug de verdade.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 13,
   "lessons": [
     {
       "id": "L-001",
@@ -202,6 +202,24 @@
       ],
       "created": "2026-08-09T00:58:25Z",
       "last_seen": "2026-08-09T00:58:25Z"
+    },
+    {
+      "id": "L-012",
+      "key": "spec_precision_gap::uma assercao estrutural que ancora um call site por regex precisa de quantificador limitado com s s ela continua passando se a chamada migrar para um metodo auxiliar declarado depois da ancora que e exatamente a regressao que ela deveria pegar",
+      "text": "Uma asserção estrutural que ancora um call site por regex precisa de quantificador limitado: com [\\s\\S]*? ela continua passando se a chamada migrar para um método auxiliar declarado depois da âncora, que é exatamente a regressão que ela deveria pegar.",
+      "signal": "spec_precision_gap",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "encerrar-rodada-travada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verifier round 1, tests/game.integration.test.ts:441 (tests)"
+      ],
+      "created": "2026-08-09T01:51:44Z",
+      "last_seen": "2026-08-09T01:51:44Z"
     }
   ]
 }

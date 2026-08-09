@@ -148,28 +148,28 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| END-01 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-02 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-03 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-04 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-05 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-06 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-07 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-08 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-09 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-10 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-11 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-15 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-16 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-17 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-18 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-19 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-20 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-21 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-22 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-12 | P2: Sala segue jogável | Implementing | Implementing |
-| END-13 | P2: Sala segue jogável | Implementing | Implementing |
-| END-14 | P2: Sala segue jogável | Implementing | Implementing |
+| END-01 | P1: Encerrar a rodada travada | Implementing | Verified |
+| END-02 | P1: Encerrar a rodada travada | Implementing | Verified |
+| END-03 | P1: Encerrar a rodada travada | Implementing | Verified |
+| END-04 | P1: Encerrar a rodada travada | Implementing | Verified |
+| END-05 | P1: Encerrar a rodada travada | Implementing | Verified |
+| END-06 | P1: Encerrar a rodada travada | Implementing | Verified |
+| END-07 | P1: Recusar encerramento indevido | Implementing | Verified |
+| END-08 | P1: Recusar encerramento indevido | Implementing | Verified |
+| END-09 | P1: Recusar encerramento indevido | Implementing | Verified |
+| END-10 | P1: Recusar encerramento indevido | Implementing | Verified |
+| END-11 | P1: Recusar encerramento indevido | Implementing | Verified |
+| END-15 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-16 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-17 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-18 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-19 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-20 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-21 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-22 | P1: Remover o jogador ausente | Implementing | Verified |
+| END-12 | P2: Sala segue jogável | Implementing | Verified |
+| END-13 | P2: Sala segue jogável | Implementing | Verified |
+| END-14 | P2: Sala segue jogável | Implementing | Verified |
 
 **ID format:** `END-[NUMBER]`
 

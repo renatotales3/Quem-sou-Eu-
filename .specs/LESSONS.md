@@ -80,6 +80,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: SCORE-03 - .specs/features/placar-da-sessao/spec.md:38,57 (spec)
 - last seen: 2026-08-09T00:58:25Z
 
+### L-012 - Uma asserção estrutural que ancora um call site por regex precisa de quantificador limitado: com [\s\S]*? ela continua passando se a chamada migrar para um método auxiliar declarado depois da âncora, que é exatamente a regressão que ela deveria pegar.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: encerrar-rodada-travada
+- evidence: verifier round 1, tests/game.integration.test.ts:441 (tests)
+- last seen: 2026-08-09T01:51:44Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -438,7 +438,11 @@ describe('pool de personagens sem repetição na mesma sala', () => {
     const callSites = source.split('\n').filter((line) => /this\.finishRound\(/.test(line));
     expect(callSites).toHaveLength(2);
     expect(source).toMatch(/everyoneSolved[\s\S]{0,120}this\.finishRound\(/);
-    expect(source).toMatch(/private endEarly[\s\S]*?this\.finishRound\(/);
+    // Janela limitada de propósito: com quantificador ilimitado esta asserção
+    // continuaria passando se a chamada migrasse para um método auxiliar
+    // declarado depois de `endEarly`, que é justamente o caso que ela deveria
+    // pegar. O corpo de `endEarly` cabe com folga em 1200 caracteres.
+    expect(source).toMatch(/private endEarly[\s\S]{0,1200}this\.finishRound\(/);
   });
 
   it('descarta o registro de personagens usados junto com a sala (POOL-07)', async () => {
