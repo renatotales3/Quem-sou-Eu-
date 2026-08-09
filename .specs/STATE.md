@@ -28,11 +28,12 @@
 
 ## Handoff
 
-- **Feature**: melhorias-jogo (`.specs/features/melhorias-jogo/`) — **concluída**
-- **Phase / Task**: todas as 5 fases e 13 tasks concluídas; 3 rodadas de Verifier; veredito final PASS
-- **Completed**: T1..T13, mais 3 commits de correção (grafia PT-BR, lacunas de POOL/TIME rodada 1, lacunas de POOL-06/TIME-09 rodada 2)
+- **Feature**: bloco-de-notas (`.specs/features/bloco-de-notas/`) — **concluída**
+- **Phase / Task**: 2 fases, 5 tasks (T1..T5) concluídas; 1 rodada de Verifier; veredito PASS
+- **Completed**: T1..T5 (`9967dc9`, `e08c4d0`, `3c20f25`, `3373096`, `ec9cb51`), spec+tasks em `b429216`
 - **In-progress** (file:line): none
-- **Next step**: nada pendente nesta feature. Follow-up conhecido e fora de escopo: `createGameManager` aceita 1 parâmetro mas o teste passa 2 (`server/game.ts`, `tests/game.integration.test.ts`), e `tests/` não está em nenhum tsconfig — o typecheck nunca cobre os testes.
+- **Next step**: UAT interativo das 7 ACs de UI (NOTES-01, 02, 03, 04, 12, 13, 14) com o usuário — verificadas por inspeção, não por teste automatizado, conforme decisão registrada na spec. Depois disso, decidir sobre push/PR.
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: claude/repo-contextualization-yzxld1 (enviada para origin)
+- **Branch**: feat/bloco-de-notas (local, não enviada para origin)
+- **Follow-up conhecido, fora de escopo**: `tests/game.integration.test.ts` falha por timeout de socket sob carga paralela (visto 1x pelo worker e 1x pelo Verifier, verde ao reexecutar). Pré-existente, não é regressão desta feature.
