@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 9,
+  "next_id": 12,
   "lessons": [
     {
       "id": "L-001",
@@ -148,6 +148,60 @@
       ],
       "created": "2026-08-05T03:28:53Z",
       "last_seen": "2026-08-05T03:28:53Z"
+    },
+    {
+      "id": "L-009",
+      "key": "surviving_mutant::assert that a frozen snapshot value is the one consumed by the calculation not merely that it was stored",
+      "text": "Assert that a frozen/snapshot value is the one consumed by the calculation, not merely that it was stored",
+      "signal": "surviving_mutant",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "placar-da-sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md M4 - server/game.ts:245 (server)"
+      ],
+      "created": "2026-08-09T00:58:25Z",
+      "last_seen": "2026-08-09T00:58:25Z"
+    },
+    {
+      "id": "L-010",
+      "key": "ac_gap::test the acceptance criterion under its own stated precondition not a simpler state that happens to share the expected value",
+      "text": "Test the acceptance criterion under its own stated precondition, not a simpler state that happens to share the expected value",
+      "signal": "ac_gap",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "placar-da-sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SCORE-07 - tests/game.integration.test.ts:826 (tests)"
+      ],
+      "created": "2026-08-09T00:58:25Z",
+      "last_seen": "2026-08-09T00:58:25Z"
+    },
+    {
+      "id": "L-011",
+      "key": "spec_precision_gap::when an assumption fixes a field representation restate that exact value in the acceptance criterion so ac and assumption cannot disagree",
+      "text": "When an Assumption fixes a field representation, restate that exact value in the acceptance criterion so AC and Assumption cannot disagree",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "placar-da-sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SCORE-03 - .specs/features/placar-da-sessao/spec.md:38,57 (spec)"
+      ],
+      "created": "2026-08-09T00:58:25Z",
+      "last_seen": "2026-08-09T00:58:25Z"
     }
   ]
 }

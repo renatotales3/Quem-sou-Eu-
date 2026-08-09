@@ -36,11 +36,13 @@
 
 ## Handoff
 
-- **Feature**: melhorias-jogo (`.specs/features/melhorias-jogo/`) — **concluída**
-- **Phase / Task**: todas as 5 fases e 13 tasks concluídas; 3 rodadas de Verifier; veredito final PASS
-- **Completed**: T1..T13, mais 3 commits de correção (grafia PT-BR, lacunas de POOL/TIME rodada 1, lacunas de POOL-06/TIME-09 rodada 2)
+- **Feature**: placar-da-sessao (`.specs/features/placar-da-sessao/`) — **concluída**
+- **Phase / Task**: 3 fases, 9 tasks (T1..T9) concluídas + 3 correções; 2 rodadas de Verifier; veredito final PASS
+- **Completed**: T1..T5 servidor (`f3ad9d5`, `da36bbe`, `cc0f66d`, `476c1b5`, `51feba8`), T6..T9 interface (`655e978`, `e6fe83d`, `5734867`, `36880e7`), correções (`ebec1c3`, `dd3780c`, `3c230bc`), spec+tasks em `94be07d`
 - **In-progress** (file:line): none
-- **Next step**: nada pendente nesta feature. Follow-up conhecido e fora de escopo: `createGameManager` aceita 1 parâmetro mas o teste passa 2 (`server/game.ts`, `tests/game.integration.test.ts`), e `tests/` não está em nenhum tsconfig — o typecheck nunca cobre os testes.
+- **Next step**: UAT interativo das ACs de render — SCORE-10..14 do placar e NOTES-01/02/03/04/12/13/14 do bloco de notas. Depois disso, decidir push e ordem de merge das três branches.
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: claude/repo-contextualization-yzxld1 (enviada para origin)
+- **Branch**: feat/placar-da-sessao (local; parte de fix/ocultar-desconexao-na-rodada, que parte de main). Três branches locais não enviadas: feat/bloco-de-notas, fix/ocultar-desconexao-na-rodada, feat/placar-da-sessao.
+- **Mutante equivalente conhecido (não é lacuna)**: trocar `roundPlayerCount` por `players.size` no ponto de acerto não quebra teste nenhum, porque hoje sair no meio da rodada aborta a rodada e cair não remove do roster. Se algum dia o roster puder encolher durante `playing`, esse congelamento passa a ter efeito observável e precisa de teste. Invariante documentado em `server/game.ts:241-253`.
+- **Follow-up conhecido, fora de escopo**: um jogador que cai sem ter acertado trava o fim da rodada, porque `finishRound` só dispara quando todos acertam. Pré-existente, anterior a esta feature.

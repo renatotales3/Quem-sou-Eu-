@@ -62,6 +62,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: IMG-02 (curation)
 - last seen: 2026-08-05T03:28:53Z
 
+### L-009 - Assert that a frozen/snapshot value is the one consumed by the calculation, not merely that it was stored
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `server` · harmful: 0
+- features: placar-da-sessao
+- evidence: validation.md M4 - server/game.ts:245 (server)
+- last seen: 2026-08-09T00:58:25Z
+
+### L-010 - Test the acceptance criterion under its own stated precondition, not a simpler state that happens to share the expected value
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: placar-da-sessao
+- evidence: SCORE-07 - tests/game.integration.test.ts:826 (tests)
+- last seen: 2026-08-09T00:58:25Z
+
+### L-011 - When an Assumption fixes a field representation, restate that exact value in the acceptance criterion so AC and Assumption cannot disagree
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: placar-da-sessao
+- evidence: SCORE-03 - .specs/features/placar-da-sessao/spec.md:38,57 (spec)
+- last seen: 2026-08-09T00:58:25Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
