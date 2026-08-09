@@ -475,6 +475,6 @@ Nenhuma dependência aponta para fase posterior.
 | T6 | Done | feat(hints): cancel pending hint requests on departure or solve |
 | T7 | Done | feat(hints): show the hint powerup on the playing screen |
 | T8 | Done | feat(hints): pick which solver to ask for a hint |
-| T9 | Pending | — |
+| T9 | Done | feat(hints): highlight the card of a player asking for a hint |
 | T10 | Pending | — |
 | T11 | Pending | — |

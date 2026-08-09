@@ -533,9 +533,12 @@ function CharacterCard({ player, index }: { player: RoomView['players'][number];
   const [imageFailed, setImageFailed] = useState(false);
   const image = player.character?.image;
   const showImage = Boolean(image) && !imageFailed;
+  // HINT-08: o destaque diz que este jogador está pedindo dica, e só isso — ele
+  // não muda nada do personagem mostrado no card.
+  const asking = player.hintRequestTargetId !== null;
   return (
-    <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''} ${showImage ? 'character-has-photo' : ''}`}>
-      <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : 'na testa'}</span></div>
+    <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''} ${asking ? 'character-asking' : ''} ${showImage ? 'character-has-photo' : ''}`}>
+      <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{asking ? 'pedindo dica' : player.solved ? 'descobriu' : 'na testa'}</span></div>
       {showImage ? <img className="character-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div>}
       <div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div>
     </article>
