@@ -198,6 +198,10 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .player-name span { color: var(--muted-dark); font: 10px var(--mono); text-transform: uppercase; }
 
+.player-score { flex: 0 0 auto; display: flex; align-items: baseline; gap: 4px; color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; }
+
+.player-score strong { color: var(--night); font: 17px var(--mono); font-variant-numeric: tabular-nums; }
+
 .status-ring { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid rgba(21, 21, 37, 0.28); border-radius: 50%; color: var(--night); font-size: 11px; }
 
 .player-ready .status-ring { border-color: var(--acid-dark); background: var(--acid); }
@@ -217,6 +221,12 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .solve-meter { display: flex; align-items: baseline; gap: 8px; flex: 0 0 auto; padding-bottom: 4px; color: var(--muted); font: 10px/1.35 var(--mono); text-transform: uppercase; }
 
 .solve-meter strong { color: var(--acid); font: 38px var(--mono); }
+
+.game-meters { display: flex; align-items: flex-end; gap: 22px; flex: 0 0 auto; }
+
+.session-meter { display: flex; align-items: baseline; gap: 8px; flex: 0 0 auto; padding-bottom: 4px; border-left: 1px solid var(--line); padding-left: 22px; color: var(--muted); font: 10px/1.35 var(--mono); text-transform: uppercase; }
+
+.session-meter strong { color: var(--sky); font: 38px var(--mono); font-variant-numeric: tabular-nums; }
 
 .ticker { display: flex; align-items: center; gap: 10px; margin-top: 26px; color: var(--muted); font-size: 12px; }
 
@@ -351,6 +361,26 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .rank-label { color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; white-space: nowrap; }
 
+.session-standings { margin-top: 18px; border-top: 1px solid var(--paper-line); padding-top: 16px; }
+
+.standings-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted-dark); font: 10px var(--mono); text-transform: uppercase; }
+
+.standings-heading .micro-label { margin: 0; color: var(--muted-dark); }
+
+.standings-list { display: grid; margin-top: 6px; }
+
+.standings-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 9px; border-bottom: 1px solid var(--paper-line); padding: 10px 0; }
+
+.standings-row:last-child { border-bottom: 0; }
+
+.standings-name { overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+
+.standings-name small { color: var(--muted-dark); font: 10px var(--mono); }
+
+.standings-gain { color: var(--muted-dark); font: 9px var(--mono); text-transform: uppercase; white-space: nowrap; }
+
+.standings-total { color: var(--night); font: 18px var(--mono); font-variant-numeric: tabular-nums; }
+
 .reveal-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--paper-line); padding: 11px 0; }
 
 .reveal-avatar { width: 30px; height: 30px; color: var(--night); background: var(--acid); }
@@ -398,6 +428,10 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .game-intro-row { align-items: flex-start; flex-direction: column; gap: 18px; }
   .game-intro-row h1 { font-size: clamp(45px, 13vw, 68px); }
   .solve-meter { padding: 0; }
+  .game-meters { gap: 16px; }
+  .session-meter { padding: 0 0 0 16px; }
+  .session-meter strong, .solve-meter strong { font-size: 30px; }
+  .standings-gain { font-size: 8px; }
   .identity-board { grid-template-columns: 1fr; }
   .secret-card { min-height: 220px; }
   .secret-symbol { font-size: 53px; }

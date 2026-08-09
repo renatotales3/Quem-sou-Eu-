@@ -400,4 +400,4 @@ Nenhuma dependência aponta para fase posterior.
 | T6 | Done | `feat(score): show session standings in the lobby panel` |
 | T7 | Done | `feat(score): show session total on the playing screen` |
 | T8 | Done | `feat(score): show session standings on the reveal screen` |
-| T9 | Pending | — |
+| T9 | Done | `style(score): style the session standings surfaces` |

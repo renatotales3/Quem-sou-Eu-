@@ -163,7 +163,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 
 **ID format:** `SCORE-[NUMBER]`
 
-**Coverage:** 18 total, 18 mapeados para tasks. 13 concluídos (SCORE-01..09, SCORE-15..18); 5 pendentes na Phase 3 de interface (SCORE-10..14).
+**Coverage:** 18 total, 18 mapeados para tasks. 18 concluídos (SCORE-01..18); nenhum pendente.
 
 ---
 
