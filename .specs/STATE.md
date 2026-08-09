@@ -35,20 +35,13 @@
 - **Status**: active
 
 ## Handoff
-
-- **Feature**: quatro features concluídas e mescladas em `main` nesta sessão (2026-08-09)
-  - `bloco-de-notas` — bloco de notas privado do jogador. 5 tasks, Verifier PASS.
-  - `placar-da-sessao` — pontos por posição acumulados na sessão. 9 tasks + 3 correções, Verifier PASS na 2ª rodada.
-  - `encerrar-rodada-travada` — anfitrião encerra rodada travada e remove jogador ausente. 8 tasks, Verifier PASS.
-  - Mais dois ajustes sem spec formal: ocultar desconexão durante a rodada e remover o crédito de imagem dos cards (AD-004).
-- **Phase / Task**: nada em andamento
+- **Feature**: powerup-de-dica (`.specs/features/powerup-de-dica/`) — **concluída**
+- **Phase / Task**: 3 fases, 11 tasks (T1..T11) + 3 correções; 2 rodadas de Verifier; veredito PASS, 8/8 mutantes mortos
+- **Completed**: servidor `1178053`, `bc4c1d8`, `485630b`, `efeddf7`, `164d395`, `77e7f4a`; interface `a49b806`, `44d4ded`, `3b1ec2d`, `3cb1f44`, `d27bc98`; correções `23fea84`, `a369208`, `ce4ad2c`; spec+tasks `c3c0985`
 - **In-progress** (file:line): none
-- **Next step**: **UAT interativo pendente de todas as ACs de render** — nenhuma delas tem teste automatizado, porque o projeto não tem jsdom nem testing-library. São elas: NOTES-01/02/03/04/12/13/14 (bloco de notas), SCORE-10..14 (placar nas três telas) e END-05/06/22 (comandos do anfitrião).
+- **Next step**: decidir sobre o flake de socket (abaixo). Depois, UAT interativo acumulado e merge da branch `feat/powerup-de-dica` em `main`.
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: `main`, com as quatro branches mescladas e enviadas para origin
-- **Follow-ups conhecidos, fora de escopo**:
-  - `tests/game.integration.test.ts` tem flake de timeout de socket sob carga paralela — reexecutar antes de tratar como falha.
-  - `createGameManager` aceita 1 parâmetro mas o teste passa 2; `tests/` não está em nenhum tsconfig, então o typecheck nunca cobre os testes.
-  - Mutante equivalente conhecido em `server/game.ts:241-253`: trocar `roundPlayerCount` por `players.size` não quebra teste nenhum hoje, porque o roster não encolhe durante `playing`. Se isso mudar, o congelamento passa a precisar de teste.
-  - AD-004 deixou `IMG-06` da spec `fotos-personagens` divergente do código: a spec ainda exige exibir atribuição, a interface não exibe mais.
+- **Branch**: feat/powerup-de-dica (local, não enviada; parte de `main`)
+- **Decisão de desenho registrada**: a concessão de power-ups é **derivada, nunca agendada** — `shared/hints.ts` é a fonte única dos marcos de 30/40/50 e do teto de 3, e cliente e servidor a chamam. Isso preserva a guarda TIME-09, que assere um único agendador em `server/game.ts`. Qualquer feature futura que dependa de tempo deve seguir o mesmo caminho.
+- **PROBLEMA ABERTO — flake de socket**: `tests/game.integration.test.ts` falha por `Timeout esperando <evento>` de forma intermitente, em testes variados e pré-existentes (já visto em POOL-01/02, SCORE-01, SCORE-06, SCORE-09, END-16 e no teste de privacidade). Chegou a ~1 em 4 execuções durante esta feature e caiu para 0 em 4 na verificação final, sem que nada no código explicasse a diferença — ou seja, está **latente, não resolvido**. A suíte de integração cresceu de 49 para 68 testes contra um Socket.IO real, com `waitForEvent` de timeout fixo em 15s e `testTimeout` de 30s. Com falso vermelho recorrente o gate deixa de distinguir falha real de ruído. Precisa de decisão própria: investigar contenção/paralelismo do vitest, ou aumentar prazos, ou isolar a suíte de integração.

@@ -86,6 +86,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verifier round 1, tests/game.integration.test.ts:441 (tests)
 - last seen: 2026-08-09T01:51:44Z
 
+### L-013 - Um teste cujo efeito é apagado logo depois por um reset mais amplo não prova nada: ancore a asserção numa fase em que o reset não roda, ou prove que o mutante morre antes de dar a cobertura por boa.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: powerup-de-dica
+- evidence: verifier rodada 1 (tests)
+- last seen: 2026-08-09T02:56:16Z
+
+### L-014 - Uma AC cujo efeito o desenho torna inobservável é AC vazia: se nenhum consumidor lê o valor, a implementação vira código morto e a evidência acaba emprestada de outra AC.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: powerup-de-dica
+- evidence: verifier rodada 1 (tests)
+- last seen: 2026-08-09T02:56:16Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

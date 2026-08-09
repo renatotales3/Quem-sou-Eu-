@@ -59,7 +59,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 1. WHEN a rodada completa 30, 40 e 50 minutos THEN o servidor SHALL conceder um power-up de dica a cada jogador que ainda não acertou naquele instante. <!-- HINT-01 -->
 2. The system SHALL derivar o tempo decorrido de `roundStartedAt` do servidor, nunca do relógio do cliente. <!-- HINT-02 -->
 3. WHILE o jogador não usa os power-ups recebidos, o servidor SHALL acumulá-los até o máximo de 3. <!-- HINT-03 -->
-4. IF o jogador já acertou na rodada corrente THEN o servidor SHALL impedir que ele obtenha ou gaste power-up em qualquer liberação posterior, pela mesma guarda de HINT-16 — a evidência desta AC é compartilhada com HINT-16. <!-- HINT-04 -->
+4. IF o jogador já acertou na rodada corrente THEN o servidor SHALL impedir que ele gaste power-up em qualquer liberação posterior, pela mesma guarda de HINT-16 — a evidência desta AC é compartilhada com HINT-16. <!-- HINT-04 -->
 5. WHEN uma rodada começa THEN o servidor SHALL zerar os power-ups e os pedidos pendentes de todos os jogadores. <!-- HINT-05 -->
 6. WHILE o jogador tem ao menos um power-up e ainda não acertou, a interface SHALL exibir o power-up com a quantidade disponível. <!-- HINT-06 -->
 

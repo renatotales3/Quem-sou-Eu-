@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 13,
+  "next_id": 15,
   "lessons": [
     {
       "id": "L-001",
@@ -220,6 +220,42 @@
       ],
       "created": "2026-08-09T01:51:44Z",
       "last_seen": "2026-08-09T01:51:44Z"
+    },
+    {
+      "id": "L-013",
+      "key": "surviving_mutant::um teste cujo efeito e apagado logo depois por um reset mais amplo nao prova nada ancore a assercao numa fase em que o reset nao roda ou prove que o mutante morre antes de dar a cobertura por boa",
+      "text": "Um teste cujo efeito é apagado logo depois por um reset mais amplo não prova nada: ancore a asserção numa fase em que o reset não roda, ou prove que o mutante morre antes de dar a cobertura por boa.",
+      "signal": "surviving_mutant",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "powerup-de-dica"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verifier rodada 1 (tests)"
+      ],
+      "created": "2026-08-09T02:56:16Z",
+      "last_seen": "2026-08-09T02:56:16Z"
+    },
+    {
+      "id": "L-014",
+      "key": "surviving_mutant::uma ac cujo efeito o desenho torna inobservavel e ac vazia se nenhum consumidor le o valor a implementacao vira codigo morto e a evidencia acaba emprestada de outra ac",
+      "text": "Uma AC cujo efeito o desenho torna inobservável é AC vazia: se nenhum consumidor lê o valor, a implementação vira código morto e a evidência acaba emprestada de outra AC.",
+      "signal": "surviving_mutant",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "powerup-de-dica"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verifier rodada 1 (tests)"
+      ],
+      "created": "2026-08-09T02:56:16Z",
+      "last_seen": "2026-08-09T02:56:16Z"
     }
   ]
 }
