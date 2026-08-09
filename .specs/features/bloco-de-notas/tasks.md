@@ -258,7 +258,7 @@ Nenhuma dependência aponta para fase posterior.
 
 | Task | Status | Commit |
 | --- | --- | --- |
-| T1 | Pending | — |
+| T1 | Done | feat(notes): derive per-room per-round storage key |
 | T2 | Pending | — |
 | T3 | Pending | — |
 | T4 | Pending | — |
