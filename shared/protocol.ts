@@ -27,6 +27,14 @@ export interface PlayerView {
   rank: number | null;
   character?: CharacterPublic;
   solveMs: number | null;
+  /** Total acumulado da sessão, sempre calculado pelo servidor (SCORE-05). */
+  score: number;
+  /**
+   * Pontos ganhos na rodada corrente. `null` enquanto o jogador não acertou:
+   * distingue "ainda não acertou" de "acertou e levou 0", caso que a fórmula
+   * atual não produz mas que uma mudança de fórmula criaria.
+   */
+  roundPoints: number | null;
 }
 
 export interface RoomView {

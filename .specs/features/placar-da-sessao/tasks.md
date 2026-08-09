@@ -392,7 +392,7 @@ Nenhuma dependência aponta para fase posterior.
 
 | Task | Status | Commit |
 | --- | --- | --- |
-| T1 | Pending | — |
+| T1 | Done | `feat(score): expose session score fields in the shared protocol` |
 | T2 | Pending | — |
 | T3 | Pending | — |
 | T4 | Pending | — |

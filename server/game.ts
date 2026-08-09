@@ -430,6 +430,11 @@ export class GameManager {
           solved: player.solved,
           rank: player.rank,
           solveMs: this.deriveSolveMs(room, player),
+          // SPEC_DEVIATION: T1 declara `score`/`roundPoints` em PlayerView e o
+          // compilador exige que o produtor satisfaça o contrato no mesmo
+          // commit. O estado real por trás desses campos entra em T3.
+          score: 0,
+          roundPoints: null,
         };
 
         if (player.character && (room.phase === 'finished' || (room.phase === 'playing' && player.id !== viewerId))) {
