@@ -166,7 +166,7 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | END-19 | P1: Remover o jogador ausente | Implementing | Implementing |
 | END-20 | P1: Remover o jogador ausente | Implementing | Implementing |
 | END-21 | P1: Remover o jogador ausente | Implementing | Implementing |
-| END-22 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-22 | P1: Remover o jogador ausente | Implementing | Implementing |
 | END-12 | P2: Sala segue jogável | Implementing | Implementing |
 | END-13 | P2: Sala segue jogável | Implementing | Implementing |
 | END-14 | P2: Sala segue jogável | Implementing | Implementing |

@@ -242,6 +242,10 @@ function App(): JSX.Element {
     socket.emit('round:endEarly');
   }
 
+  function removeAbsent(playerId: string): void {
+    socket.emit('room:removeAbsent', { playerId });
+  }
+
   if (!room) {
     return (
       <main className="app-shell home-shell">
@@ -347,7 +351,7 @@ function App(): JSX.Element {
               <span className="panel-mark">{room.round === 0 ? 'R00' : `R${String(room.round).padStart(2, '0')}`}</span>
             </div>
             <div className="player-list">
-              {(room.round === 0 ? room.players : sortBySessionScore(room.players)).map((player) => <PlayerRow key={player.id} player={player} you={player.id === room.you.id} showScore={room.round > 0} />)}
+              {(room.round === 0 ? room.players : sortBySessionScore(room.players)).map((player) => <PlayerRow key={player.id} player={player} you={player.id === room.you.id} showScore={room.round > 0} onRemove={isHost && !player.connected && player.id !== room.you.id ? () => removeAbsent(player.id) : undefined} />)}
             </div>
             <p className="panel-footnote">O anfitrião muda automaticamente se alguém sair.</p>
           </aside>
@@ -481,8 +485,12 @@ function RoomHeader({ room, connection, onLeave, elapsedMs }: { room: RoomView; 
   return <header className="topbar room-topbar"><Logo /><div className="room-meta"><span className="room-meta-label">sala</span><strong>{room.code}</strong><span className="room-round">R{String(room.round).padStart(2, '0')}</span>{elapsedMs !== null && <span className="round-clock" aria-label="Tempo decorrido da rodada">{formatDuration(elapsedMs)}</span>}</div><div className="topbar-actions"><ConnectionPill state={connection} /><button className="text-button" type="button" onClick={onLeave}>Sair</button></div></header>;
 }
 
-function PlayerRow({ player, you, showScore }: { player: RoomView['players'][number]; you: boolean; showScore: boolean }): JSX.Element {
-  return <div className={`player-row ${player.ready ? 'player-ready' : ''} ${!player.connected ? 'player-away' : ''}`}><span className="player-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span><div className="player-name"><strong>{player.nickname}{you ? <small> você</small> : null}</strong><span>{player.isHost ? 'anfitrião' : player.connected ? player.ready ? 'pronto' : 'pensando' : 'reconectando'}</span></div>{showScore && <span className="player-score" aria-label={`${player.score} pontos na sessão`}><strong>{player.score}</strong><span>pts</span></span>}<span className="status-ring" aria-label={player.ready ? 'pronto' : 'não pronto'}>{player.ready ? '✓' : ''}</span></div>;
+/**
+ * END-22: `onRemove` só chega preenchido nas linhas que o anfitrião pode
+ * remover — jogador desconectado que não é ele mesmo. Sem callback, sem botão.
+ */
+function PlayerRow({ player, you, showScore, onRemove }: { player: RoomView['players'][number]; you: boolean; showScore: boolean; onRemove?: () => void }): JSX.Element {
+  return <div className={`player-row ${player.ready ? 'player-ready' : ''} ${!player.connected ? 'player-away' : ''}`}><span className="player-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span><div className="player-name"><strong>{player.nickname}{you ? <small> você</small> : null}</strong><span>{player.isHost ? 'anfitrião' : player.connected ? player.ready ? 'pronto' : 'pensando' : 'reconectando'}</span></div>{showScore && <span className="player-score" aria-label={`${player.score} pontos na sessão`}><strong>{player.score}</strong><span>pts</span></span>}{onRemove && <button className="ghost-button remove-absent-button" type="button" onClick={onRemove} aria-label={`Remover ${player.nickname} da sala`}>Remover</button>}<span className="status-ring" aria-label={player.ready ? 'pronto' : 'não pronto'}>{player.ready ? '✓' : ''}</span></div>;
 }
 
 /**

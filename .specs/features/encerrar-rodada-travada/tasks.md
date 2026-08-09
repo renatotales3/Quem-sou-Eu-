@@ -362,5 +362,5 @@ Nenhuma dependência aponta para fase posterior.
 | T4 | ✅ Done | `pendente` |
 | T5 | ✅ Done | `pendente` |
 | T6 | ✅ Done | `pendente` |
-| T7 | Pending | — |
+| T7 | ✅ Done | `pendente` |
 | T8 | Pending | — |
