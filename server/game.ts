@@ -5,6 +5,7 @@ import type {
   CreateRoomInput,
   GameErrorPayload,
   GuessInput,
+  HintAnswerInput,
   HintRequestInput,
   InterServerEvents,
   JoinRoomInput,
@@ -103,6 +104,8 @@ export class GameManager {
     socket.on('room:removeAbsent', (payload) => this.removeAbsent(socket, payload));
     socket.on('room:leave', () => this.leave(socket));
     socket.on('hint:request', (payload) => this.requestHint(socket, payload));
+    socket.on('hint:answer', (payload) => this.answerHint(socket, payload));
+    socket.on('hint:cancel', () => this.cancelHint(socket));
     socket.on('disconnect', () => this.disconnect(socket));
 
     this.resumeFromHandshake(socket);
@@ -405,6 +408,49 @@ export class GameManager {
     player.hintRequestTargetId = target.id;
     this.touch(room);
     this.broadcastRoomState(room);
+  }
+
+  /**
+   * O alvo marca que respondeu e encerra o pedido (HINT-10). O power-up não
+   * volta: ele foi gasto no que se propunha a comprar, que é a dica.
+   *
+   * Só o alvo encerra (HINT-19). Sem essa checagem qualquer um poderia apagar o
+   * destaque de qualquer pedido, e o alvo perderia o único aviso de que é com ele.
+   */
+  private answerHint(socket: GameSocket, payload: HintAnswerInput): void {
+    const context = this.getContext(socket);
+    if (!context) return;
+    const { room, player } = context;
+    const asker = typeof payload?.askerId === 'string' ? room.players.get(payload.askerId) : undefined;
+    if (!asker || asker.hintRequestTargetId !== player.id) {
+      this.sendError(socket, 'NOT_HINT_TARGET', 'Esse pedido de dica não é para você.');
+      return;
+    }
+
+    asker.hintRequestTargetId = null;
+    this.touch(room);
+    this.broadcastRoomState(room);
+  }
+
+  /**
+   * Quem pediu desiste, e o power-up volta (HINT-11): escolher a pessoa errada é
+   * erro barato de cometer e caro de não poder desfazer.
+   */
+  private cancelHint(socket: GameSocket): void {
+    const context = this.getContext(socket);
+    if (!context) return;
+    const { room, player } = context;
+    if (!player.hintRequestTargetId) return;
+
+    this.releaseHintRequest(player, true);
+    this.touch(room);
+    this.broadcastRoomState(room);
+  }
+
+  /** Encerra o pedido pendente de `player`, devolvendo o power-up ou não (HINT-23). */
+  private releaseHintRequest(player: PlayerState, refund: boolean): void {
+    player.hintRequestTargetId = null;
+    if (refund) player.hintsUsed = Math.max(0, player.hintsUsed - 1);
   }
 
   private playAgain(socket: GameSocket): void {

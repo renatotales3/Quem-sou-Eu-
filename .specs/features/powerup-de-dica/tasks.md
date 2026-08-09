@@ -471,7 +471,7 @@ Nenhuma dependência aponta para fase posterior.
 | T2 | Done | feat(hints): expose hint powerup state in the shared protocol |
 | T3 | Done | feat(hints): track hint powerup state in the room |
 | T4 | Done | feat(hints): let a stuck player request a hint from a solver |
-| T5 | Pending | — |
+| T5 | Done | feat(hints): resolve a hint request by answer or cancel |
 | T6 | Pending | — |
 | T7 | Pending | — |
 | T8 | Pending | — |

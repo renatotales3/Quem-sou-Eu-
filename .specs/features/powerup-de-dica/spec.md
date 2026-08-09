@@ -158,8 +158,8 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-07 | P1: Pedir a dica | T4 | Done |
 | HINT-08 | P1: Pedir a dica | Tasks | Pending |
 | HINT-09 | P1: Pedir a dica | Tasks | Pending |
-| HINT-10 | P1: Pedir a dica | Tasks | Pending |
-| HINT-11 | P1: Pedir a dica | Tasks | Pending |
+| HINT-10 | P1: Pedir a dica | T5 | Done |
+| HINT-11 | P1: Pedir a dica | T5 | Done |
 | HINT-12 | P1: Pedir a dica | Tasks | Pending |
 | HINT-13 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-14 | P1: Recusar pedido indevido | T4 | Done |
@@ -167,7 +167,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-16 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-17 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-18 | P1: Recusar pedido indevido | T4 | Done |
-| HINT-19 | P1: Recusar pedido indevido | Tasks | Pending |
+| HINT-19 | P1: Recusar pedido indevido | T5 | Done |
 | HINT-20 | P2: Resistente à movimentação | Tasks | Pending |
 | HINT-21 | P2: Resistente à movimentação | Tasks | Pending |
 | HINT-22 | P2: Resistente à movimentação | Tasks | Pending |

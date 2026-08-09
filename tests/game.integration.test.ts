@@ -1871,3 +1871,57 @@ describe('pedido de dica: caminho válido e recusas (HINT-07, HINT-13..HINT-18)'
     expect(hintStateOf(created.roomCode, created.playerId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
   });
 });
+
+/** Sala pronta para dica com o pedido do anfitrião ao convidado já registrado. */
+async function pendingHintRequest(minutes = 31): Promise<Awaited<ReturnType<typeof startStalledRoundSetup>>> {
+  const setup = await hintReadyRoom(minutes);
+  const requested = waitForEvent<RoomView>(setup.host, 'room:state', (room) => room.players.find((player) => player.id === setup.hostId)?.hintRequestTargetId === setup.guestId);
+  setup.host.emit('hint:request', { targetId: setup.guestId });
+  await requested;
+  return setup;
+}
+
+describe('resposta e cancelamento do pedido de dica (HINT-10, HINT-11, HINT-19)', () => {
+  it('o alvo marcando que respondeu encerra o pedido de quem pediu (HINT-10)', async () => {
+    const { host, guest, hostId } = await pendingHintRequest();
+
+    const answered = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === null);
+    guest.emit('hint:answer', { askerId: hostId });
+    const view = await answered;
+
+    expect(view.players.find((player) => player.id === hostId)?.hintRequestTargetId).toBeNull();
+  });
+
+  it('o power-up não volta quando o alvo responde: foi gasto (HINT-10)', async () => {
+    const { host, guest, roomCode, hostId } = await pendingHintRequest();
+    expect(hintStateOf(roomCode, hostId).hintsUsed).toBe(1);
+
+    const answered = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === null);
+    guest.emit('hint:answer', { askerId: hostId });
+    await answered;
+
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: null });
+  });
+
+  it('quem pediu cancelando encerra o pedido e recupera o power-up (HINT-11)', async () => {
+    const { host, roomCode, hostId } = await pendingHintRequest();
+    expect(hintStateOf(roomCode, hostId).hintsUsed).toBe(1);
+
+    const canceled = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === null);
+    host.emit('hint:cancel');
+    const view = await canceled;
+
+    expect(view.players.find((player) => player.id === hostId)?.hintsUsed).toBe(0);
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('recusa com NOT_HINT_TARGET quem não é o alvo e mantém o pedido pendente (HINT-19)', async () => {
+    const { absent, roomCode, hostId, guestId } = await pendingHintRequest();
+
+    const refusal = waitForEvent<{ code: string }>(absent, 'error');
+    absent.emit('hint:answer', { askerId: hostId });
+
+    expect((await refusal).code).toBe('NOT_HINT_TARGET');
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
+  });
+});
