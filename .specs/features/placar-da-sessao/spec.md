@@ -148,7 +148,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | SCORE-04 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-05 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-06 | P1: Acumular entre rodadas | Tasks | Done (T5) |
-| SCORE-07 | P1: Acumular entre rodadas | Tasks | Done (T3) |
+| SCORE-07 | P1: Acumular entre rodadas | Tasks | Verified (T3) — entrante tardio coberto em `tests/game.integration.test.ts` |
 | SCORE-08 | P1: Acumular entre rodadas | Tasks | Done (T5) |
 | SCORE-09 | P1: Acumular entre rodadas | Tasks | Done (T5) |
 | SCORE-10 | P1: Ver o placar | Tasks | Done (T6) |

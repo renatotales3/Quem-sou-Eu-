@@ -803,7 +803,7 @@ describe('estado de placar na sala e no jogador (SCORE-02, SCORE-07)', () => {
     expect(roundHost.room.players.every((player) => player.roundPoints === null)).toBe(true);
   });
 
-  it('duas rodadas com números de jogadores diferentes registram roundPlayerCount diferentes (SCORE-02)', async () => {
+  it('duas rodadas com números de jogadores diferentes registram roundPlayerCount diferentes, e quem entra depois começa zerado (SCORE-02, SCORE-07)', async () => {
     const host = await connectClient();
     const guest = await connectClient();
     const created = await createRoom(host, 'Elvis');
@@ -824,6 +824,16 @@ describe('estado de placar na sala e no jogador (SCORE-02, SCORE-07)', () => {
     const joinedThird = await joinRoom(third, created.roomCode, 'Gael');
     expect(joinedThird.ok).toBe(true);
     if (!joinedThird.ok) return;
+
+    // A sala já jogou uma rodada, então os veteranos chegam aqui com total > 0.
+    const veterans = [created.playerId, joined.playerId].map((id) =>
+      joinedThird.room.players.find((player) => player.id === id),
+    );
+    veterans.forEach((veteran) => expect(veteran?.score).toBeGreaterThan(0));
+    // Quem entra depois é registrado com total 0 e sem ganho de rodada (SCORE-07).
+    const lateJoiner = joinedThird.room.players.find((player) => player.id === joinedThird.playerId);
+    expect(lateJoiner?.score).toBe(0);
+    expect(lateJoiner?.roundPoints).toBeNull();
 
     const started2Host = waitForEvent<{ room: RoomView }>(host, 'round:started');
     const started2Guest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
