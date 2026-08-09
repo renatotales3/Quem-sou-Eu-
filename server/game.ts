@@ -14,6 +14,7 @@ import type {
   SocketData,
 } from '../shared/protocol';
 import { normalizeNickname, normalizeRoomCode, normalizeText } from './normalization';
+import { pointsForRank } from './scoring';
 import { characterMatches, characters, type Character, pickCharacters } from './wordlist';
 
 export const MIN_PLAYERS = 2;
@@ -237,6 +238,11 @@ export class GameManager {
     player.solved = true;
     player.rank = rank;
     player.solvedAt = Date.now();
+    // SCORE-01: os pontos usam o N congelado no início da rodada, não o
+    // tamanho atual da sala. O guard de `player.solved` acima garante que a
+    // soma acontece no máximo uma vez por rodada (SCORE-04).
+    player.roundPoints = pointsForRank(rank, room.roundPlayerCount);
+    player.score += player.roundPoints;
     this.touch(room);
 
     socket.emit('guess:result', {

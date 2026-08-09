@@ -836,3 +836,161 @@ describe('estado de placar na sala e no jogador (SCORE-02, SCORE-07)', () => {
     expect(getInternalRoomScoring(created.roomCode)?.roundPlayerCount).toBe(3);
   });
 });
+
+describe('pontos atribuídos no acerto (SCORE-01, SCORE-03, SCORE-04, SCORE-05)', () => {
+  it('numa sala de 4 com todos acertando em ordem, os totais finais são 4, 3, 2 e 1 (SCORE-01)', async () => {
+    const clients = await Promise.all(Array.from({ length: 4 }, () => connectClient()));
+    const created = await createRoom(clients[0]!, 'P1');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const ids = [created.playerId];
+    for (let index = 1; index < 4; index += 1) {
+      const joined = await joinRoom(clients[index]!, created.roomCode, `P${index + 1}`);
+      expect(joined.ok).toBe(true);
+      if (!joined.ok) return;
+      ids.push(joined.playerId);
+    }
+
+    const started = clients.map((client) => waitForEvent<{ room: RoomView }>(client, 'round:started'));
+    clients.forEach((client) => client.emit('player:ready', { ready: true }));
+    const rounds = await Promise.all(started);
+
+    // Ninguém vê o próprio personagem: o de cada jogador vem da visão de outro.
+    const names = ids.map((id, index) => {
+      const observerRound = rounds[index === 0 ? 1 : 0]!;
+      const character = observerRound.room.players.find((player) => player.id === id)?.character;
+      expect(character).toBeDefined();
+      return character!.name;
+    });
+
+    const finished = clients.map((client) => waitForEvent<RoundFinishedPayload>(client, 'round:finished'));
+    for (let index = 0; index < 4; index += 1) {
+      const solved = waitForEvent<{ correct: boolean }>(clients[index]!, 'guess:result');
+      clients[index]!.emit('round:guess', { text: names[index]! });
+      expect((await solved).correct).toBe(true);
+    }
+    const [finishedFirst] = await Promise.all(finished);
+
+    const scores = ids.map((id) => finishedFirst!.room.players.find((player) => player.id === id)?.score);
+    expect(scores).toEqual([4, 3, 2, 1]);
+    const roundPoints = ids.map((id) => finishedFirst!.room.players.find((player) => player.id === id)?.roundPoints);
+    expect(roundPoints).toEqual([4, 3, 2, 1]);
+  });
+
+  it('quem não acertou fica sem ganho de rodada e com o total inalterado (SCORE-03)', async () => {
+    const host = await connectClient();
+    const second = await connectClient();
+    const third = await connectClient();
+    const created = await createRoom(host, 'Hugo');
+    const joinedSecond = await joinRoom(second, created.roomCode, 'Iara');
+    const joinedThird = await joinRoom(third, created.roomCode, 'Joca');
+    expect(created.ok).toBe(true);
+    expect(joinedSecond.ok).toBe(true);
+    expect(joinedThird.ok).toBe(true);
+    if (!created.ok || !joinedSecond.ok || !joinedThird.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedSecond = waitForEvent<{ room: RoomView }>(second, 'round:started');
+    const startedThird = waitForEvent<{ room: RoomView }>(third, 'round:started');
+    host.emit('player:ready', { ready: true });
+    second.emit('player:ready', { ready: true });
+    third.emit('player:ready', { ready: true });
+    const [roundHost, roundSecond] = await Promise.all([startedHost, startedSecond, startedThird]);
+
+    const hostName = roundSecond.room.players.find((player) => player.id === created.playerId)?.character?.name;
+    const secondName = roundHost.room.players.find((player) => player.id === joinedSecond.playerId)?.character?.name;
+    expect(hostName).toBeDefined();
+    expect(secondName).toBeDefined();
+
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostName! });
+    expect((await solveHost).correct).toBe(true);
+
+    const stateAfterSecond = waitForEvent<RoomView>(third, 'room:state', (room) => room.players.filter((player) => player.solved).length === 2);
+    const solveSecond = waitForEvent<{ correct: boolean }>(second, 'guess:result');
+    second.emit('round:guess', { text: secondName! });
+    expect((await solveSecond).correct).toBe(true);
+    const state = await stateAfterSecond;
+
+    const thirdView = state.players.find((player) => player.id === joinedThird.playerId);
+    expect(thirdView?.solved).toBe(false);
+    expect(thirdView?.roundPoints).toBeNull();
+    expect(thirdView?.score).toBe(0);
+    expect(state.players.find((player) => player.id === created.playerId)?.score).toBe(3);
+    expect(state.players.find((player) => player.id === joinedSecond.playerId)?.score).toBe(2);
+  });
+
+  it('segundo acerto do mesmo jogador é rejeitado e não soma pontos de novo (SCORE-04)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Kim');
+    const joined = await joinRoom(guest, created.roomCode, 'Lena');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+    const hostName = roundGuest.room.players.find((player) => player.id === created.playerId)?.character?.name;
+    const guestName = roundHost.room.players.find((player) => player.id === joined.playerId)?.character?.name;
+    expect(hostName).toBeDefined();
+    expect(guestName).toBeDefined();
+
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostName! });
+    expect((await solveHost).correct).toBe(true);
+
+    const repeated = waitForEvent<{ correct: boolean; alreadySolved: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostName! });
+    expect(await repeated).toMatchObject({ correct: true, alreadySolved: true });
+
+    const finishHost = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    const solveGuest = waitForEvent<{ correct: boolean }>(guest, 'guess:result');
+    guest.emit('round:guess', { text: guestName! });
+    expect((await solveGuest).correct).toBe(true);
+    const finished = await finishHost;
+
+    // Somar duas vezes daria 4 ao anfitrião numa sala de 2.
+    expect(finished.room.players.find((player) => player.id === created.playerId)?.score).toBe(2);
+    expect(finished.room.players.find((player) => player.id === created.playerId)?.roundPoints).toBe(2);
+  });
+
+  it('campo de pontuação enviado pelo cliente no palpite é ignorado (SCORE-05)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Mara');
+    const joined = await joinRoom(guest, created.roomCode, 'Nilo');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest]);
+
+    const hostName = roundGuest.room.players.find((player) => player.id === created.playerId)?.character?.name;
+    const guestName = roundHost.room.players.find((player) => player.id === joined.playerId)?.character?.name;
+    expect(hostName).toBeDefined();
+    expect(guestName).toBeDefined();
+
+    const solveHost = waitForEvent<{ correct: boolean }>(host, 'guess:result');
+    host.emit('round:guess', { text: hostName!, score: 999, roundPoints: 999 } as never);
+    expect((await solveHost).correct).toBe(true);
+
+    const finishHost = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    const solveGuest = waitForEvent<{ correct: boolean }>(guest, 'guess:result');
+    guest.emit('round:guess', { text: guestName! });
+    expect((await solveGuest).correct).toBe(true);
+    const finished = await finishHost;
+
+    expect(finished.room.players.find((player) => player.id === created.playerId)?.score).toBe(2);
+    expect(finished.room.players.find((player) => player.id === created.playerId)?.roundPoints).toBe(2);
+    expect(finished.room.players.find((player) => player.id === joined.playerId)?.score).toBe(1);
+  });
+});
