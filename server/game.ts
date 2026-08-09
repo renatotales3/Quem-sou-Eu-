@@ -289,6 +289,8 @@ export class GameManager {
       candidate.rank = null;
       candidate.guesses = [];
       candidate.solvedAt = null;
+      // SCORE-06: só o ganho da rodada zera. `score` atravessa a sessão inteira.
+      candidate.roundPoints = null;
     }
     this.touch(room);
     this.broadcastRoomState(room);
@@ -319,6 +321,7 @@ export class GameManager {
       player.solved = false;
       player.rank = null;
       player.guesses = [];
+      player.roundPoints = null;
       if (player.character) {
         room.usedCharacterIds.add(player.character.id);
       }
@@ -570,6 +573,7 @@ export class GameManager {
       candidate.rank = null;
       candidate.guesses = [];
       candidate.solvedAt = null;
+      candidate.roundPoints = null;
     }
     this.touch(room);
   }

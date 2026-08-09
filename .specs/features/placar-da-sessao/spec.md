@@ -147,23 +147,23 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | SCORE-03 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-04 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-05 | P1: Pontuar por posição | Tasks | Done (T4) |
-| SCORE-06 | P1: Acumular entre rodadas | Tasks | Pending |
+| SCORE-06 | P1: Acumular entre rodadas | Tasks | Done (T5) |
 | SCORE-07 | P1: Acumular entre rodadas | Tasks | Done (T3) |
-| SCORE-08 | P1: Acumular entre rodadas | Tasks | Pending |
-| SCORE-09 | P1: Acumular entre rodadas | Tasks | Pending |
+| SCORE-08 | P1: Acumular entre rodadas | Tasks | Done (T5) |
+| SCORE-09 | P1: Acumular entre rodadas | Tasks | Done (T5) |
 | SCORE-10 | P1: Ver o placar | Tasks | Pending |
 | SCORE-11 | P1: Ver o placar | Tasks | Pending |
 | SCORE-12 | P1: Ver o placar | Tasks | Pending |
 | SCORE-13 | P1: Ver o placar | Tasks | Pending |
 | SCORE-14 | P1: Ver o placar | Tasks | Pending |
-| SCORE-15 | P2: Integridade sob movimentação | Tasks | Pending |
-| SCORE-16 | P2: Integridade sob movimentação | Tasks | Pending |
-| SCORE-17 | P2: Integridade sob movimentação | Tasks | Pending |
-| SCORE-18 | P2: Integridade sob movimentação | Tasks | Pending |
+| SCORE-15 | P2: Integridade sob movimentação | Tasks | Done (T5) |
+| SCORE-16 | P2: Integridade sob movimentação | Tasks | Done (T5) |
+| SCORE-17 | P2: Integridade sob movimentação | Tasks | Done (T5) |
+| SCORE-18 | P2: Integridade sob movimentação | Tasks | Done (T5) |
 
 **ID format:** `SCORE-[NUMBER]`
 
-**Coverage:** 18 total, 0 mapeados para tasks ainda.
+**Coverage:** 18 total, 18 mapeados para tasks. 13 concluídos (SCORE-01..09, SCORE-15..18); 5 pendentes na Phase 3 de interface (SCORE-10..14).
 
 ---
 

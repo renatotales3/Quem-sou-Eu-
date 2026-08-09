@@ -994,3 +994,236 @@ describe('pontos atribuídos no acerto (SCORE-01, SCORE-03, SCORE-04, SCORE-05)'
     expect(finished.room.players.find((player) => player.id === joined.playerId)?.score).toBe(1);
   });
 });
+
+/**
+ * Toca uma rodada inteira com N clientes acertando na ordem em que aparecem no
+ * array, e devolve o `round:finished` do primeiro. Diferente de
+ * `playRoundToFinish`, garante a ordem de acerto — que é o que define `rank` e,
+ * portanto, os pontos.
+ */
+async function playOrderedRound(clients: TestSocket[], ids: string[]): Promise<RoundFinishedPayload> {
+  const started = clients.map((client) => waitForEvent<{ room: RoomView }>(client, 'round:started'));
+  clients.forEach((client) => client.emit('player:ready', { ready: true }));
+  const rounds = await Promise.all(started);
+
+  const names = ids.map((id, index) => {
+    const observer = rounds[index === 0 ? 1 : 0]!;
+    const character = observer.room.players.find((player) => player.id === id)?.character;
+    if (!character) throw new Error('personagem do adversário não foi revelado');
+    return character.name;
+  });
+
+  const finished = clients.map((client) => waitForEvent<RoundFinishedPayload>(client, 'round:finished'));
+  for (let index = 0; index < clients.length; index += 1) {
+    const solved = waitForEvent<{ correct: boolean }>(clients[index]!, 'guess:result');
+    clients[index]!.emit('round:guess', { text: names[index]! });
+    if (!(await solved).correct) throw new Error('palpite correto foi recusado');
+  }
+  const [first] = await Promise.all(finished);
+  return first!;
+}
+
+async function reopenLobby(hostClient: TestSocket, clients: TestSocket[]): Promise<void> {
+  const lobbies = clients.map((client) => waitForEvent<RoomView>(client, 'room:state', (room) => room.phase === 'lobby'));
+  hostClient.emit('round:playAgain');
+  await Promise.all(lobbies);
+}
+
+describe('ciclo de vida do placar da sessão (SCORE-06, SCORE-08, SCORE-09, SCORE-15..18)', () => {
+  it('duas rodadas seguidas numa sala de 3: o total da segunda é a soma das duas (SCORE-06)', async () => {
+    const clients = await Promise.all(Array.from({ length: 3 }, () => connectClient()));
+    const created = await createRoom(clients[0]!, 'Olga');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const ids = [created.playerId];
+    for (let index = 1; index < 3; index += 1) {
+      const joined = await joinRoom(clients[index]!, created.roomCode, `Par${index}`);
+      expect(joined.ok).toBe(true);
+      if (!joined.ok) return;
+      ids.push(joined.playerId);
+    }
+
+    const firstRound = await playOrderedRound(clients, ids);
+    const afterFirst = ids.map((id) => firstRound.room.players.find((player) => player.id === id)?.score);
+    expect(afterFirst).toEqual([3, 2, 1]);
+
+    await reopenLobby(clients[0]!, clients);
+
+    // Segunda rodada com a ordem de acerto invertida: os totais só batem se o
+    // placar da primeira tiver sido preservado e o ganho da rodada, zerado.
+    const reversedClients = [...clients].reverse();
+    const reversedIds = [...ids].reverse();
+    const secondRound = await playOrderedRound(reversedClients, reversedIds);
+
+    const totals = ids.map((id) => secondRound.room.players.find((player) => player.id === id)?.score);
+    const roundGains = ids.map((id) => secondRound.room.players.find((player) => player.id === id)?.roundPoints);
+    expect(roundGains).toEqual([1, 2, 3]);
+    expect(totals).toEqual([3 + 1, 2 + 2, 1 + 3]);
+  });
+
+  it('reconectar com a mesma sessão devolve o total anterior à queda (SCORE-08)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Paulo');
+    const joined = await joinRoom(guest, created.roomCode, 'Quim');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const finished = await playOrderedRound([host, guest], [created.playerId, joined.playerId]);
+    expect(finished.room.players.find((player) => player.id === created.playerId)?.score).toBe(2);
+
+    host.disconnect();
+    const reconnected = createAuthedClient({
+      roomCode: created.roomCode,
+      playerId: created.playerId,
+      sessionToken: created.sessionToken,
+    });
+    const resumed = waitForEvent<RoundFinishedPayload>(reconnected, 'round:finished');
+    reconnected.connect();
+    const resumedPayload = await resumed;
+
+    expect(resumedPayload.room.players.find((player) => player.id === created.playerId)?.score).toBe(2);
+    expect(resumedPayload.room.players.find((player) => player.id === joined.playerId)?.score).toBe(1);
+  });
+
+  it('sair pelo botão remove o jogador e o total dele do RoomView (SCORE-09)', async () => {
+    const clients = await Promise.all(Array.from({ length: 3 }, () => connectClient()));
+    const created = await createRoom(clients[0]!, 'Rosa');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const ids = [created.playerId];
+    for (let index = 1; index < 3; index += 1) {
+      const joined = await joinRoom(clients[index]!, created.roomCode, `Saiu${index}`);
+      expect(joined.ok).toBe(true);
+      if (!joined.ok) return;
+      ids.push(joined.playerId);
+    }
+
+    const finished = await playOrderedRound(clients, ids);
+    expect(finished.room.players.find((player) => player.id === ids[2])?.score).toBe(1);
+
+    const afterLeave = waitForEvent<RoomView>(clients[0]!, 'room:state', (room) => room.players.length === 2);
+    clients[2]!.emit('room:leave');
+    const state = await afterLeave;
+
+    expect(state.players.find((player) => player.id === ids[2])).toBeUndefined();
+    expect(state.players.map((player) => player.id).sort()).toEqual([ids[0]!, ids[1]!].sort());
+  });
+
+  it('quem sai no meio da rodada não altera os pontos já atribuídos, que seguem o N registrado (SCORE-15)', async () => {
+    const clients = await Promise.all(Array.from({ length: 3 }, () => connectClient()));
+    const created = await createRoom(clients[0]!, 'Tuca');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const ids = [created.playerId];
+    for (let index = 1; index < 3; index += 1) {
+      const joined = await joinRoom(clients[index]!, created.roomCode, `Meio${index}`);
+      expect(joined.ok).toBe(true);
+      if (!joined.ok) return;
+      ids.push(joined.playerId);
+    }
+
+    const started = clients.map((client) => waitForEvent<{ room: RoomView }>(client, 'round:started'));
+    clients.forEach((client) => client.emit('player:ready', { ready: true }));
+    const rounds = await Promise.all(started);
+    expect(getInternalRoomScoring(created.roomCode)?.roundPlayerCount).toBe(3);
+
+    const hostName = rounds[1]!.room.players.find((player) => player.id === ids[0])?.character?.name;
+    expect(hostName).toBeDefined();
+    const solveHost = waitForEvent<{ correct: boolean }>(clients[0]!, 'guess:result');
+    clients[0]!.emit('round:guess', { text: hostName! });
+    expect((await solveHost).correct).toBe(true);
+
+    // Sala de 3, primeiro lugar: 3 pontos. Se o N fosse relido depois da saída
+    // (2 jogadores), o total viraria 2.
+    const afterDeparture = waitForEvent<RoomView>(clients[0]!, 'room:state', (room) => room.players.length === 2);
+    clients[2]!.emit('room:leave');
+    const state = await afterDeparture;
+
+    expect(state.players.find((player) => player.id === ids[0])?.score).toBe(3);
+    expect(state.players.find((player) => player.id === ids[1])?.score).toBe(0);
+  });
+
+  it('sala esvaziada é descartada sem deixar placar órfão (SCORE-16)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Ugo');
+    const joined = await joinRoom(guest, created.roomCode, 'Vito');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const finished = await playOrderedRound([host, guest], [created.playerId, joined.playerId]);
+    expect(finished.room.players.find((player) => player.id === created.playerId)?.score).toBe(2);
+    expect(getInternalRoom(created.roomCode)).toBeDefined();
+
+    const afterFirstLeave = waitForEvent<RoomView>(guest, 'room:state', (room) => room.players.length === 1);
+    host.emit('room:leave');
+    await afterFirstLeave;
+    guest.emit('room:leave');
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    expect(getInternalRoom(created.roomCode)).toBeUndefined();
+
+    // E reabrir uma sala não ressuscita placar nenhum: todo mundo entra em 0.
+    const again = await createRoom(host, 'Ugo');
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(again.room.players.every((player) => player.score === 0)).toBe(true);
+  });
+
+  it('troca de anfitrião por saída do anterior mantém todos os totais inalterados (SCORE-17)', async () => {
+    const clients = await Promise.all(Array.from({ length: 3 }, () => connectClient()));
+    const created = await createRoom(clients[0]!, 'Wanda');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const ids = [created.playerId];
+    for (let index = 1; index < 3; index += 1) {
+      const joined = await joinRoom(clients[index]!, created.roomCode, `Host${index}`);
+      expect(joined.ok).toBe(true);
+      if (!joined.ok) return;
+      ids.push(joined.playerId);
+    }
+
+    const finished = await playOrderedRound(clients, ids);
+    expect(finished.room.hostId).toBe(ids[0]);
+    const before = new Map(finished.room.players.map((player) => [player.id, player.score]));
+    expect(before.get(ids[1]!)).toBe(2);
+    expect(before.get(ids[2]!)).toBe(1);
+
+    const afterHostLeaves = waitForEvent<RoomView>(clients[1]!, 'room:state', (room) => room.players.length === 2);
+    clients[0]!.emit('room:leave');
+    const state = await afterHostLeaves;
+
+    expect(state.hostId).not.toBe(ids[0]);
+    expect(state.players.find((player) => player.id === ids[1])?.score).toBe(before.get(ids[1]!));
+    expect(state.players.find((player) => player.id === ids[2])?.score).toBe(before.get(ids[2]!));
+  });
+
+  it('ao longo de 3 rodadas nenhum total fica negativo nem diminui entre rodadas (SCORE-18)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Xuxa');
+    const joined = await joinRoom(guest, created.roomCode, 'Yuri');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    const ids = [created.playerId, joined.playerId];
+    let previous = [0, 0];
+    for (let round = 0; round < 3; round += 1) {
+      const finished = await playOrderedRound([host, guest], ids);
+      const totals = ids.map((id) => finished.room.players.find((player) => player.id === id)?.score ?? -1);
+      totals.forEach((total, index) => {
+        expect(total).toBeGreaterThanOrEqual(0);
+        expect(total).toBeGreaterThanOrEqual(previous[index]!);
+      });
+      previous = totals;
+      if (round < 2) await reopenLobby(host, [host, guest]);
+    }
+
+    // 3 rodadas de uma sala de 2, sempre na mesma ordem de acerto.
+    expect(previous).toEqual([6, 3]);
+  });
+});

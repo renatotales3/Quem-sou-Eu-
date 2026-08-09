@@ -396,7 +396,7 @@ Nenhuma dependência aponta para fase posterior.
 | T2 | Done | `feat(score): add rank-to-points scoring function` |
 | T3 | Done | `feat(score): track session score and round player count in room state` |
 | T4 | Done | `feat(score): award points by solve position` |
-| T5 | Pending | — |
+| T5 | Done | `feat(score): preserve session score across rounds and reconnects` |
 | T6 | Pending | — |
 | T7 | Pending | — |
 | T8 | Pending | — |
