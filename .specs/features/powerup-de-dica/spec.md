@@ -150,7 +150,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | HINT-01 | P1: Ganhar o direito | T1 | Done |
-| HINT-02 | P1: Ganhar o direito | Tasks | Pending |
+| HINT-02 | P1: Ganhar o direito | T4 | Done |
 | HINT-03 | P1: Ganhar o direito | T1 | Done |
 | HINT-04 | P1: Ganhar o direito | Tasks | Pending |
 | HINT-05 | P1: Ganhar o direito | T3 | Done |
@@ -160,7 +160,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-09 | P1: Pedir a dica | Tasks | Pending |
 | HINT-10 | P1: Pedir a dica | T5 | Done |
 | HINT-11 | P1: Pedir a dica | T5 | Done |
-| HINT-12 | P1: Pedir a dica | Tasks | Pending |
+| HINT-12 | P1: Pedir a dica | T6 | Done |
 | HINT-13 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-14 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-15 | P1: Recusar pedido indevido | T4 | Done |
@@ -168,10 +168,10 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-17 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-18 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-19 | P1: Recusar pedido indevido | T5 | Done |
-| HINT-20 | P2: Resistente à movimentação | Tasks | Pending |
-| HINT-21 | P2: Resistente à movimentação | Tasks | Pending |
-| HINT-22 | P2: Resistente à movimentação | Tasks | Pending |
-| HINT-23 | P2: Resistente à movimentação | Tasks | Pending |
+| HINT-20 | P2: Resistente à movimentação | T6 | Done |
+| HINT-21 | P2: Resistente à movimentação | T6 | Done |
+| HINT-22 | P2: Resistente à movimentação | T6 | Done |
+| HINT-23 | P2: Resistente à movimentação | T6 | Done |
 
 **ID format:** `HINT-[NUMBER]`
 

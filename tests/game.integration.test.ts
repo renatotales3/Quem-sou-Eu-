@@ -1925,3 +1925,75 @@ describe('resposta e cancelamento do pedido de dica (HINT-10, HINT-11, HINT-19)'
     expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
   });
 });
+
+describe('cancelamentos automáticos do pedido de dica (HINT-12, HINT-20..HINT-23)', () => {
+  it('a queda do alvo cancela o pedido e devolve o power-up (HINT-20)', async () => {
+    const { host, guest, roomCode, hostId, guestId } = await pendingHintRequest();
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
+
+    await dropAndAwait(host, guest, guestId);
+
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('a saída do alvo pelo botão cancela o pedido e devolve o power-up (HINT-21)', async () => {
+    const { host, guest, roomCode, hostId, guestId } = await pendingHintRequest();
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
+
+    // A saída durante `playing` também aborta a rodada (comportamento anterior),
+    // então o estado observado depois é o do jogador sem pedido e sem gasto.
+    const departed = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.every((player) => player.id !== guestId));
+    guest.emit('room:leave');
+    const view = await departed;
+
+    expect(view.players.find((player) => player.id === hostId)?.hintRequestTargetId).toBeNull();
+    expect(view.players.find((player) => player.id === hostId)?.hintsUsed).toBe(0);
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('quem pediu acertando cancela o pedido sem devolver o power-up (HINT-22)', async () => {
+    const { host, roomCode, hostId, guestRoom } = await pendingHintRequest();
+
+    await solve(host, hostId, guestRoom);
+
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: null });
+  });
+
+  it('hintsUsed nunca fica negativo depois de devolução seguida de cancelamento (HINT-23)', async () => {
+    const { host, guest, roomCode, hostId, guestId } = await pendingHintRequest();
+
+    await dropAndAwait(host, guest, guestId);
+    expect(hintStateOf(roomCode, hostId).hintsUsed).toBe(0);
+
+    host.emit('hint:cancel');
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    expect(hintStateOf(roomCode, hostId).hintsUsed).toBe(0);
+    expect(hintStateOf(roomCode, hostId).hintsUsed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('score e roundPoints ficam idênticos com e sem uso de power-up na rodada (HINT-12)', async () => {
+    const withoutHint = await startStalledRoundSetup();
+    const finishedPlain = waitForEvent<RoundFinishedPayload>(withoutHint.host, 'round:finished');
+    await solve(withoutHint.guest, withoutHint.guestId, withoutHint.hostRoom);
+    await solve(withoutHint.host, withoutHint.hostId, withoutHint.guestRoom);
+    await solve(withoutHint.absent, withoutHint.absentId, withoutHint.hostRoom);
+    const plain = (await finishedPlain).room.players;
+
+    const withHint = await pendingHintRequest();
+    const finishedHinted = waitForEvent<RoundFinishedPayload>(withHint.host, 'round:finished');
+    // O anfitrião tem pedido pendente e um power-up gasto ao acertar.
+    await solve(withHint.host, withHint.hostId, withHint.guestRoom);
+    await solve(withHint.absent, withHint.absentId, withHint.hostRoom);
+    const hinted = (await finishedHinted).room.players;
+
+    const byRank = (players: typeof plain) =>
+      players
+        .slice()
+        .sort((left, right) => (left.rank ?? 0) - (right.rank ?? 0))
+        .map((player) => ({ rank: player.rank, roundPoints: player.roundPoints, score: player.score }));
+
+    expect(byRank(hinted)).toEqual(byRank(plain));
+    expect(hintStateOf(withHint.roomCode, withHint.hostId).hintsUsed).toBe(1);
+  });
+});

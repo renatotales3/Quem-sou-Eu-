@@ -270,6 +270,9 @@ export class GameManager {
     // a escala de pontos que a rodada começou (SCORE-02, SCORE-15).
     player.roundPoints = pointsForRank(rank, room.roundPlayerCount);
     player.score += player.roundPoints;
+    // HINT-22: quem acertou não precisa mais da dica, e o power-up não volta —
+    // devolver o direito a quem já saiu da rodada não teria a quem servir.
+    this.releaseHintRequest(player, false);
     this.touch(room);
 
     socket.emit('guess:result', {
@@ -453,6 +456,17 @@ export class GameManager {
     if (refund) player.hintsUsed = Math.max(0, player.hintsUsed - 1);
   }
 
+  /**
+   * O alvo saiu de cena antes de responder: os pedidos dirigidos a ele caem e o
+   * power-up volta (HINT-20, HINT-21). Perder o direito por queda alheia seria
+   * punir o jogador por algo fora do controle dele.
+   */
+  private releaseHintRequestsTargeting(room: RoomState, targetId: string): void {
+    for (const candidate of room.players.values()) {
+      if (candidate.hintRequestTargetId === targetId) this.releaseHintRequest(candidate, true);
+    }
+  }
+
   private playAgain(socket: GameSocket): void {
     const context = this.getContext(socket);
     if (!context) return;
@@ -546,6 +560,7 @@ export class GameManager {
     const context = this.getContext(socket);
     if (!context) return;
     const { room, player } = context;
+    this.releaseHintRequestsTargeting(room, player.id);
     this.removePlayer(room, player);
     socket.leave(room.code);
     socket.data.roomCode = undefined;
@@ -568,6 +583,7 @@ export class GameManager {
     player.connected = false;
     player.socketId = null;
     player.disconnectedAt = Date.now();
+    this.releaseHintRequestsTargeting(room, player.id);
     if (room.hostId === player.id) {
       const replacement = Array.from(room.players.values()).find((candidate) => candidate.connected);
       if (replacement) room.hostId = replacement.id;

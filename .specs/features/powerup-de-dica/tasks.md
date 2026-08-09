@@ -472,7 +472,7 @@ Nenhuma dependência aponta para fase posterior.
 | T3 | Done | feat(hints): track hint powerup state in the room |
 | T4 | Done | feat(hints): let a stuck player request a hint from a solver |
 | T5 | Done | feat(hints): resolve a hint request by answer or cancel |
-| T6 | Pending | — |
+| T6 | Done | feat(hints): cancel pending hint requests on departure or solve |
 | T7 | Pending | — |
 | T8 | Pending | — |
 | T9 | Pending | — |
