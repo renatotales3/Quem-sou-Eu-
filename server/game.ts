@@ -8,6 +8,7 @@ import type {
   InterServerEvents,
   JoinRoomInput,
   ReadyInput,
+  RemoveAbsentInput,
   RoomActionResult,
   RoomView,
   ServerToClientEvents,
@@ -89,6 +90,7 @@ export class GameManager {
     socket.on('round:guess', (payload) => this.guess(socket, payload));
     socket.on('round:playAgain', () => this.playAgain(socket));
     socket.on('round:endEarly', () => this.endEarly(socket));
+    socket.on('room:removeAbsent', (payload) => this.removeAbsent(socket, payload));
     socket.on('room:leave', () => this.leave(socket));
     socket.on('disconnect', () => this.disconnect(socket));
 
@@ -307,6 +309,46 @@ export class GameManager {
     }
 
     this.finishRound(room);
+  }
+
+  /**
+   * Tira da sala quem caiu e não voltou. Encerrar a rodada travada não bastava:
+   * `everyoneReady` exige `connected && ready` de todos, então o ausente
+   * continuava barrando o início da rodada seguinte — o travamento só andava um
+   * passo, da rodada para o lobby.
+   *
+   * Só alvo desconectado, e só no lobby. As duas restrições existem pelo mesmo
+   * motivo: sem elas isto deixa de ser conserto e vira expulsão. Remover alguém
+   * conectado é moderação de comportamento, decisão de produto que a sala não
+   * tomou; remover durante `playing` cairia em `resetAfterDeparture` e abortaria
+   * a rodada de todo mundo.
+   */
+  private removeAbsent(socket: GameSocket, payload: RemoveAbsentInput): void {
+    const context = this.getContext(socket);
+    if (!context) return;
+    const { room, player } = context;
+    if (room.hostId !== player.id) {
+      this.sendError(socket, 'HOST_ONLY', 'Só quem criou a sala pode remover um jogador ausente.');
+      return;
+    }
+    if (room.phase !== 'lobby') {
+      this.sendError(socket, 'ROOM_NOT_IN_LOBBY', 'Só dá para remover alguém entre as rodadas.');
+      return;
+    }
+    const target = typeof payload?.playerId === 'string' ? room.players.get(payload.playerId) : undefined;
+    if (!target) {
+      this.sendError(socket, 'PLAYER_NOT_FOUND', 'Esse jogador não está mais na sala.');
+      return;
+    }
+    if (target.connected) {
+      this.sendError(socket, 'PLAYER_CONNECTED', 'Esse jogador está conectado — só dá para remover quem caiu.');
+      return;
+    }
+
+    // `removePlayer` é o mesmo caminho da saída pelo botão, então o placar de
+    // sessão do removido é descartado junto do registro (SCORE-09, END-16).
+    this.removePlayer(room, target);
+    this.broadcastRoomState(room);
   }
 
   private playAgain(socket: GameSocket): void {

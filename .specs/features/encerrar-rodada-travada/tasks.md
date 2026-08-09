@@ -360,7 +360,7 @@ Nenhuma dependência aponta para fase posterior.
 | T2 | ✅ Done | `pendente` |
 | T3 | ✅ Done | `pendente` |
 | T4 | ✅ Done | `pendente` |
-| T5 | Pending | — |
+| T5 | ✅ Done | `pendente` |
 | T6 | Pending | — |
 | T7 | Pending | — |
 | T8 | Pending | — |

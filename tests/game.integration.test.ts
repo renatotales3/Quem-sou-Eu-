@@ -72,6 +72,16 @@ function getInternalRoomPhase(roomCode: string): string | undefined {
   return internalRooms.get(roomCode)?.phase;
 }
 
+/**
+ * Quantidade de jogadores na sala (END-18..21). As recusas de
+ * `room:removeAbsent` exigem provar que NINGUÉM saiu; contar direto no estado
+ * é determinístico, sem depender da ausência de um broadcast.
+ */
+function getInternalRoomPlayerCount(roomCode: string): number | undefined {
+  const internalRooms = (manager as unknown as { rooms: Map<string, { players: Map<string, unknown> }> }).rooms;
+  return internalRooms.get(roomCode)?.players.size;
+}
+
 function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, predicate?: (payload: T) => boolean): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -1524,5 +1534,121 @@ describe('encerramento por comando equivale ao encerramento natural', () => {
 
     expect(room.phase).toBe('finished');
     expect(room.players.find((player) => player.id === absentId)?.score).toBe(3);
+  });
+});
+
+/** Leva a sala travada até o lobby: derruba o ausente e encerra por comando. */
+async function stalledRoomBackToLobby(): Promise<Awaited<ReturnType<typeof startStalledRoundSetup>>> {
+  const setup = await startStalledRoundSetup();
+  await dropAndAwait(setup.host, setup.absent, setup.absentId);
+  const finished = waitForEvent<RoundFinishedPayload>(setup.host, 'round:finished');
+  setup.host.emit('round:endEarly');
+  await finished;
+  const lobby = waitForEvent<RoomView>(setup.host, 'room:state', (room) => room.phase === 'lobby');
+  setup.host.emit('round:playAgain');
+  await lobby;
+  return setup;
+}
+
+describe('remoção do jogador ausente pelo anfitrião', () => {
+  it('remove do lobby o jogador desconectado quando o anfitrião comanda (END-15)', async () => {
+    const { host, absentId, roomCode } = await stalledRoomBackToLobby();
+
+    const removed = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.every((player) => player.id !== absentId));
+    host.emit('room:removeAbsent', { playerId: absentId });
+    const room = await removed;
+
+    expect(room.players).toHaveLength(2);
+    expect(room.players.some((player) => player.id === absentId)).toBe(false);
+    expect(getInternalRoomPhase(roomCode)).toBe('lobby');
+  });
+
+  it('descarta o placar do removido: reentrar é entrar zerado (END-16)', async () => {
+    const { host, guest, absent, hostId, guestId, absentId, hostRoom, guestRoom, roomCode } = await startStalledRoundSetup();
+    // O ausente acerta primeiro numa sala de 3, então sai com 3 pontos.
+    await solve(absent, absentId, hostRoom);
+    await solve(host, hostId, guestRoom);
+    await dropAndAwait(host, absent, absentId);
+    await dropAndAwait(host, guest, guestId);
+
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    const beforeRemoval = await finished;
+    expect(beforeRemoval.room.players.find((player) => player.id === absentId)?.score).toBe(3);
+
+    const lobby = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    host.emit('round:playAgain');
+    await lobby;
+    const removed = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.every((player) => player.id !== absentId));
+    host.emit('room:removeAbsent', { playerId: absentId });
+    await removed;
+
+    const returning = await connectClient();
+    const rejoined = await joinRoom(returning, roomCode, 'Caio');
+    expect(rejoined.ok).toBe(true);
+    if (!rejoined.ok) return;
+    expect(rejoined.room.players.find((player) => player.id === rejoined.playerId)?.score).toBe(0);
+  });
+
+  it('destrava a rodada seguinte: removido o ausente, os restantes começam (END-17)', async () => {
+    const { host, guest, absentId } = await stalledRoomBackToLobby();
+
+    const removed = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.every((player) => player.id !== absentId));
+    host.emit('room:removeAbsent', { playerId: absentId });
+    await removed;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [next] = await Promise.all([startedHost, startedGuest]);
+
+    expect(next.room.phase).toBe('playing');
+    expect(next.room.players).toHaveLength(2);
+  });
+
+  it('recusa com HOST_ONLY quem não é anfitrião e não remove ninguém (END-18)', async () => {
+    const { guest, absentId, roomCode } = await stalledRoomBackToLobby();
+
+    const refusal = waitForEvent<{ code: string }>(guest, 'error');
+    guest.emit('room:removeAbsent', { playerId: absentId });
+    const payload = await refusal;
+
+    expect(payload.code).toBe('HOST_ONLY');
+    expect(getInternalRoomPlayerCount(roomCode)).toBe(3);
+  });
+
+  it('recusa com PLAYER_CONNECTED quando o alvo está conectado (END-19)', async () => {
+    const { host, guestId, roomCode } = await stalledRoomBackToLobby();
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('room:removeAbsent', { playerId: guestId });
+    const payload = await refusal;
+
+    expect(payload.code).toBe('PLAYER_CONNECTED');
+    expect(getInternalRoomPlayerCount(roomCode)).toBe(3);
+  });
+
+  it('recusa com PLAYER_NOT_FOUND quando o alvo não existe na sala (END-20)', async () => {
+    const { host, roomCode } = await stalledRoomBackToLobby();
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('room:removeAbsent', { playerId: 'jogador-que-nunca-existiu' });
+    const payload = await refusal;
+
+    expect(payload.code).toBe('PLAYER_NOT_FOUND');
+    expect(getInternalRoomPlayerCount(roomCode)).toBe(3);
+  });
+
+  it('recusa com ROOM_NOT_IN_LOBBY quando a rodada está em andamento (END-21)', async () => {
+    const { host, absent, absentId, roomCode } = await startStalledRoundSetup();
+    await dropAndAwait(host, absent, absentId);
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('room:removeAbsent', { playerId: absentId });
+    const payload = await refusal;
+
+    expect(payload.code).toBe('ROOM_NOT_IN_LOBBY');
+    expect(getInternalRoomPlayerCount(roomCode)).toBe(3);
   });
 });

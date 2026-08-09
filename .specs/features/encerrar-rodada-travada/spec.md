@@ -159,13 +159,13 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | END-09 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-10 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-11 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-15 | P1: Remover o jogador ausente | Implementing | In Tasks |
-| END-16 | P1: Remover o jogador ausente | Tasks | Pending |
-| END-17 | P1: Remover o jogador ausente | Tasks | Pending |
-| END-18 | P1: Remover o jogador ausente | Tasks | Pending |
-| END-19 | P1: Remover o jogador ausente | Tasks | Pending |
-| END-20 | P1: Remover o jogador ausente | Tasks | Pending |
-| END-21 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-15 | P1: Remover o jogador ausente | Implementing | Implementing |
+| END-16 | P1: Remover o jogador ausente | Implementing | Implementing |
+| END-17 | P1: Remover o jogador ausente | Implementing | Implementing |
+| END-18 | P1: Remover o jogador ausente | Implementing | Implementing |
+| END-19 | P1: Remover o jogador ausente | Implementing | Implementing |
+| END-20 | P1: Remover o jogador ausente | Implementing | Implementing |
+| END-21 | P1: Remover o jogador ausente | Implementing | Implementing |
 | END-22 | P1: Remover o jogador ausente | Tasks | Pending |
 | END-12 | P2: Sala segue jogável | Implementing | Implementing |
 | END-13 | P2: Sala segue jogável | Implementing | Implementing |
