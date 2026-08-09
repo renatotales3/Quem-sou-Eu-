@@ -473,7 +473,7 @@ Nenhuma dependência aponta para fase posterior.
 | T4 | Done | feat(hints): let a stuck player request a hint from a solver |
 | T5 | Done | feat(hints): resolve a hint request by answer or cancel |
 | T6 | Done | feat(hints): cancel pending hint requests on departure or solve |
-| T7 | Pending | — |
+| T7 | Done | feat(hints): show the hint powerup on the playing screen |
 | T8 | Pending | — |
 | T9 | Pending | — |
 | T10 | Pending | — |

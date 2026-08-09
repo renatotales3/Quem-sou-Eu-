@@ -152,9 +152,9 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-01 | P1: Ganhar o direito | T1 | Done |
 | HINT-02 | P1: Ganhar o direito | T4 | Done |
 | HINT-03 | P1: Ganhar o direito | T1 | Done |
-| HINT-04 | P1: Ganhar o direito | Tasks | Pending |
+| HINT-04 | P1: Ganhar o direito | T7 | Done |
 | HINT-05 | P1: Ganhar o direito | T3 | Done |
-| HINT-06 | P1: Ganhar o direito | Tasks | Pending |
+| HINT-06 | P1: Ganhar o direito | T7 | Done |
 | HINT-07 | P1: Pedir a dica | T4 | Done |
 | HINT-08 | P1: Pedir a dica | Tasks | Pending |
 | HINT-09 | P1: Pedir a dica | Tasks | Pending |

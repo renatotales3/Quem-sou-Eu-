@@ -8,6 +8,7 @@ import type {
   RoomView,
   RoundFinishedPayload,
 } from '../shared/protocol';
+import { availableHintPowerups } from '../shared/hints';
 import { formatDuration } from '../shared/time';
 import { NotesPanel } from './NotesPanel';
 import { clearSession, readSession, saveSession, serverMayHibernate, socket, wakeServer, type SessionData } from './socket';
@@ -149,6 +150,12 @@ function App(): JSX.Element {
   // O rótulo não diz quem caiu: a rodada não expõe identidade de desconectado.
   const roundIsStalled = Boolean(room?.players.some((player) => !player.connected && !player.solved));
   const elapsedMs = useRoundClock(room);
+  // HINT-04/HINT-06: o disponível é derivado do mesmo cálculo do servidor
+  // (`shared/hints.ts`) sobre o relógio dele (AD-003). Para quem já acertou o
+  // tempo congela em `solveMs` — sem isso a contagem dele continuaria subindo
+  // nos marcos seguintes, que é exatamente o que HINT-04 proíbe.
+  const hintElapsedMs = me?.solved ? me.solveMs : elapsedMs;
+  const hintsAvailable = me && hintElapsedMs !== null ? availableHintPowerups(hintElapsedMs, me.hintsUsed) : 0;
 
   function emitRoomAction(mode: HomeMode, nextNickname: string, code: string): void {
     const handleResult = (result: RoomActionResult): void => {
@@ -411,6 +418,12 @@ function App(): JSX.Element {
             <div className="stalled-round-control">
               <button className="text-button end-round-button" type="button" onClick={endRoundEarly}>Encerrar rodada</button>
               <p>A rodada não vai fechar sozinha. Encerre para revelar e seguir para a próxima.</p>
+            </div>
+          )}
+          {!me?.solved && hintsAvailable > 0 && (
+            <div className="hint-powerup">
+              <span className="hint-powerup-count" aria-hidden="true">{hintsAvailable}</span>
+              <p><strong>Power-up de dica</strong>{hintsAvailable > 1 ? ` · ${hintsAvailable} disponíveis` : ' · 1 disponível'}<br />A rodada travou. Peça uma dica a quem já descobriu.</p>
             </div>
           )}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
