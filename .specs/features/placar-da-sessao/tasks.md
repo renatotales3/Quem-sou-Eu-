@@ -399,5 +399,5 @@ Nenhuma dependência aponta para fase posterior.
 | T5 | Done | `feat(score): preserve session score across rounds and reconnects` |
 | T6 | Done | `feat(score): show session standings in the lobby panel` |
 | T7 | Done | `feat(score): show session total on the playing screen` |
-| T8 | Pending | — |
+| T8 | Done | `feat(score): show session standings on the reveal screen` |
 | T9 | Pending | — |

@@ -365,6 +365,12 @@ function App(): JSX.Element {
               <div className="ranking-list">
                 {finalRanking.map((player, index) => <div className="ranking-row" key={player.playerId}><span className={`rank-number rank-${index + 1}`}>{player.rank ?? '—'}</span><span className="ranking-name">{player.nickname}{player.playerId === room.you.id ? <small> você</small> : null}</span><span className="rank-time">{player.solveMs === null ? '—' : formatDuration(player.solveMs)}</span><span className="rank-label">{index === 0 ? 'primeiro' : index === 1 ? 'segundo' : index === 2 ? 'terceiro' : 'resolvido'}</span></div>)}
               </div>
+              <div className="session-standings">
+                <div className="standings-heading"><span className="micro-label">Placar da sessão</span><span>rodada {String(room.round).padStart(2, '0')}</span></div>
+                <div className="standings-list">
+                  {sortBySessionScore(room.players).map((player) => <div className="standings-row" key={player.id}><span className="standings-name">{player.nickname}{player.id === room.you.id ? <small> você</small> : null}</span><span className="standings-gain">+{player.roundPoints ?? 0} na rodada</span><strong className="standings-total">{player.score}</strong></div>)}
+                </div>
+              </div>
             </div>
             <div className="reveal-card paper-card">
               <div className="panel-heading"><div><span className="micro-label">A fita completa</span><h2>Quem era quem</h2></div><span className="panel-mark">ALL IN</span></div>
