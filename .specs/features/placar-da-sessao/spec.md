@@ -152,7 +152,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | SCORE-08 | P1: Acumular entre rodadas | Tasks | Done (T5) |
 | SCORE-09 | P1: Acumular entre rodadas | Tasks | Done (T5) |
 | SCORE-10 | P1: Ver o placar | Tasks | Done (T6) |
-| SCORE-11 | P1: Ver o placar | Tasks | Pending |
+| SCORE-11 | P1: Ver o placar | Tasks | Done (T7) |
 | SCORE-12 | P1: Ver o placar | Tasks | Pending |
 | SCORE-13 | P1: Ver o placar | Tasks | Pending |
 | SCORE-14 | P1: Ver o placar | Tasks | Pending |

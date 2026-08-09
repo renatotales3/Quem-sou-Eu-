@@ -385,7 +385,7 @@ function App(): JSX.Element {
         <div className="game-main">
           <div className="game-intro-row">
             <div><p className="eyebrow">Rodada {String(room.round).padStart(2, '0')} · olhe para os outros</p><h1 id="game-title">Você vê todo mundo.<br /><span>Menos você.</span></h1></div>
-            <div className="solve-meter"><strong>{solvedCount}</strong><span>de {room.players.length}<br />resolvidos</span></div>
+            <div className="game-meters"><div className="solve-meter"><strong>{solvedCount}</strong><span>de {room.players.length}<br />resolvidos</span></div>{room.round > 1 && me && <div className="session-meter" aria-label={`Seu total na sessão: ${me.score} pontos`}><strong>{me.score}</strong><span>pontos<br />na sessão</span></div>}</div>
           </div>
           {notice && <InlineNotice tone="neutral">{notice}</InlineNotice>}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
