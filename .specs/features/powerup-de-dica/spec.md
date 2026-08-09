@@ -40,6 +40,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | Origem do tempo | `roundStartedAt` do servidor, como manda AD-003 | O relógio da máquina do jogador pode estar errado em horas; dois jogadores veriam power-ups em momentos diferentes. | y |
 | Quem recebe power-up | Apenas jogadores que ainda não acertaram | Quem já acertou não tem o que perguntar. | n |
 | Estado entre rodadas | Power-ups e pedidos zerados no início de cada rodada | O direito é da rodada, não da sessão — coerente com o item de escopo acima. | y |
+| Redação de HINT-04 | A AC declara a guarda de quem já acertou, não o congelamento da concessão | A redação original ("parar de conceder power-ups nas liberações seguintes") descreve um efeito que o desenho derivado torna inobservável: a concessão é calculada sob demanda e o pedido de quem já acertou é recusado antes por `ALREADY_SOLVED`. A garantia real e verificável é a guarda, cuja evidência é a mesma de HINT-16. | y |
 
 **Open questions:** none — tudo resolvido ou registrado acima.
 
@@ -58,7 +59,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 1. WHEN a rodada completa 30, 40 e 50 minutos THEN o servidor SHALL conceder um power-up de dica a cada jogador que ainda não acertou naquele instante. <!-- HINT-01 -->
 2. The system SHALL derivar o tempo decorrido de `roundStartedAt` do servidor, nunca do relógio do cliente. <!-- HINT-02 -->
 3. WHILE o jogador não usa os power-ups recebidos, o servidor SHALL acumulá-los até o máximo de 3. <!-- HINT-03 -->
-4. WHEN um jogador acerta THEN o servidor SHALL parar de conceder power-ups a ele nas liberações seguintes. <!-- HINT-04 -->
+4. IF o jogador já acertou na rodada corrente THEN o servidor SHALL impedir que ele obtenha ou gaste power-up em qualquer liberação posterior, pela mesma guarda de HINT-16 — a evidência desta AC é compartilhada com HINT-16. <!-- HINT-04 -->
 5. WHEN uma rodada começa THEN o servidor SHALL zerar os power-ups e os pedidos pendentes de todos os jogadores. <!-- HINT-05 -->
 6. WHILE o jogador tem ao menos um power-up e ainda não acertou, a interface SHALL exibir o power-up com a quantidade disponível. <!-- HINT-06 -->
 
@@ -141,7 +142,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | Data lifecycle / expiry | HINT-05 (zerado a cada rodada), HINT-22 (cancelamento ao acertar) |
 | Observability | N/A — o projeto não tem infraestrutura de log, métrica ou tracing |
 | External-dependency failure | N/A — a feature não faz chamada externa |
-| State-transition integrity | HINT-04 (parar de conceder após acertar), HINT-18 (só na fase `playing`), HINT-10 e HINT-11 (pendente → encerrado) |
+| State-transition integrity | HINT-04 (quem acertou sai do ciclo de dica), HINT-18 (só na fase `playing`), HINT-10 e HINT-11 (pendente → encerrado) |
 
 ---
 
@@ -152,7 +153,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-01 | P1: Ganhar o direito | T1 | Done |
 | HINT-02 | P1: Ganhar o direito | T4 | Done |
 | HINT-03 | P1: Ganhar o direito | T1 | Done |
-| HINT-04 | P1: Ganhar o direito | T7 | Done |
+| HINT-04 | P1: Ganhar o direito | T4 | Verified (evidência compartilhada com HINT-16) |
 | HINT-05 | P1: Ganhar o direito | T3 | Done |
 | HINT-06 | P1: Ganhar o direito | T7 | Done |
 | HINT-07 | P1: Pedir a dica | T4 | Done |

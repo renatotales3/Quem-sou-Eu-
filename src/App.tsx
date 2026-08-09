@@ -151,12 +151,10 @@ function App(): JSX.Element {
   // O rótulo não diz quem caiu: a rodada não expõe identidade de desconectado.
   const roundIsStalled = Boolean(room?.players.some((player) => !player.connected && !player.solved));
   const elapsedMs = useRoundClock(room);
-  // HINT-04/HINT-06: o disponível é derivado do mesmo cálculo do servidor
-  // (`shared/hints.ts`) sobre o relógio dele (AD-003). Para quem já acertou o
-  // tempo congela em `solveMs` — sem isso a contagem dele continuaria subindo
-  // nos marcos seguintes, que é exatamente o que HINT-04 proíbe.
-  const hintElapsedMs = me?.solved ? me.solveMs : elapsedMs;
-  const hintsAvailable = me && hintElapsedMs !== null ? availableHintPowerups(hintElapsedMs, me.hintsUsed) : 0;
+  // HINT-06: o disponível é derivado do mesmo cálculo do servidor
+  // (`shared/hints.ts`) sobre o relógio dele (AD-003). O bloco só é lido por
+  // quem ainda não acertou, então o tempo decorrido corrente basta.
+  const hintsAvailable = me && elapsedMs !== null ? availableHintPowerups(elapsedMs, me.hintsUsed) : 0;
   // HINT-07/HINT-14: só quem já acertou tem o que dizer, então só ele entra na
   // lista de alvos. O servidor recusa o resto; a lista evita o pedido inútil.
   const hintTargets = useMemo(() => room?.players.filter((player) => player.solved && player.id !== room.you.id) ?? [], [room]);
