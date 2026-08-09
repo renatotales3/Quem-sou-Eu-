@@ -477,4 +477,4 @@ Nenhuma dependência aponta para fase posterior.
 | T8 | Done | feat(hints): pick which solver to ask for a hint |
 | T9 | Done | feat(hints): highlight the card of a player asking for a hint |
 | T10 | Done | feat(hints): add the answer and cancel controls for a hint request |
-| T11 | Pending | — |
+| T11 | Done | style(hints): style the hint powerup and request highlight |

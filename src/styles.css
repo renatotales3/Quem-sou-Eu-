@@ -242,6 +242,35 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .end-round-button:hover { border-color: var(--coral); color: var(--night); background: var(--coral); }
 
+/* Power-up de dica e pedido: tudo no fluxo da coluna principal, pelo mesmo
+   motivo do controle acima — nada de posicionamento fixo, que cobriria o campo
+   de palpite ou o botão do bloco de notas. */
+.hint-powerup, .hint-pending, .hint-answer-request { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 26px; border: 1px solid var(--line); padding: 14px 16px; }
+
+.hint-powerup { border-color: var(--lavender); }
+
+.hint-powerup p, .hint-pending p, .hint-answer-request p { margin: 0; flex: 1 1 200px; min-width: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+.hint-powerup p strong, .hint-answer-request p strong { color: var(--ink); }
+
+.hint-powerup-count { flex: 0 0 auto; display: grid; place-items: center; width: 34px; height: 34px; color: var(--night); background: var(--lavender); font: 17px var(--mono); font-variant-numeric: tabular-nums; }
+
+.hint-powerup-button, .hint-answer-button { flex: 0 0 auto; border-color: var(--lavender); color: var(--lavender); }
+
+.hint-powerup-button:hover, .hint-answer-button:hover { border-color: var(--lavender); color: var(--night); background: var(--lavender); }
+
+.hint-cancel-button { flex: 0 0 auto; border-color: var(--coral); color: var(--coral); }
+
+.hint-cancel-button:hover { border-color: var(--coral); color: var(--night); background: var(--coral); }
+
+.hint-picker { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+
+.hint-target-button { border-color: var(--line); color: var(--ink); }
+
+.hint-target-button:hover { border-color: var(--acid); color: var(--night); background: var(--acid); }
+
+.hint-picker-empty { flex: 1 1 100%; }
+
 .ticker { display: flex; align-items: center; gap: 10px; margin-top: 26px; color: var(--muted); font-size: 12px; }
 
 .ticker-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 5px rgba(255, 116, 95, 0.12); }
@@ -294,6 +323,12 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .character-info em { color: rgba(21, 21, 37, 0.62); font: 9px var(--mono); font-style: normal; text-transform: uppercase; }
 
 .character-solved { filter: saturate(0.65); }
+
+/* HINT-08: o destaque de quem pede dica é um contorno, não um filtro — some
+   junto com o pedido e não se confunde com o `.character-solved` dessaturado. */
+.character-asking { outline: 3px solid var(--lavender); outline-offset: -3px; }
+
+.character-asking .character-status { opacity: 1; color: var(--night); background: var(--lavender); padding: 2px 6px; }
 
 .guess-panel { padding: 27px; transform: rotate(1deg); }
 
