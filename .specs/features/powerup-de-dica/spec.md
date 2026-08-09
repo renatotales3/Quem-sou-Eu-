@@ -171,7 +171,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-20 | P2: Resistente à movimentação | T6 | Done |
 | HINT-21 | P2: Resistente à movimentação | T6 | Verified |
 | HINT-22 | P2: Resistente à movimentação | T6 | Done |
-| HINT-23 | P2: Resistente à movimentação | T6 | Done |
+| HINT-23 | P2: Resistente à movimentação | T6 | Verified |
 
 **ID format:** `HINT-[NUMBER]`
 

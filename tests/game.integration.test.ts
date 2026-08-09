@@ -1969,17 +1969,25 @@ describe('cancelamentos automáticos do pedido de dica (HINT-12, HINT-20..HINT-2
     expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: null });
   });
 
-  it('hintsUsed nunca fica negativo depois de devolução seguida de cancelamento (HINT-23)', async () => {
-    const { host, guest, roomCode, hostId, guestId } = await pendingHintRequest();
+  it('hintsUsed nunca fica negativo sob cancelamentos repetidos (HINT-23)', async () => {
+    const { host, roomCode, hostId, guestId } = await pendingHintRequest();
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
 
-    await dropAndAwait(host, guest, guestId);
-    expect(hintStateOf(roomCode, hostId).hintsUsed).toBe(0);
-
+    const firstCancel = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === null);
     host.emit('hint:cancel');
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await firstCancel;
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
 
-    expect(hintStateOf(roomCode, hostId).hintsUsed).toBe(0);
-    expect(hintStateOf(roomCode, hostId).hintsUsed).toBeGreaterThanOrEqual(0);
+    // Segundo cancelamento com pedido pendente e o gasto já em zero: o caminho
+    // que a guarda `!player.hintRequestTargetId` deixa passar e que decrementa
+    // de fato. Sem o piso em zero, `hintsUsed` iria a -1.
+    seedHintState(roomCode, hostId, 0, guestId);
+    const secondCancel = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === null);
+    host.emit('hint:cancel');
+    const view = await secondCancel;
+
+    expect(view.players.find((player) => player.id === hostId)?.hintsUsed).toBe(0);
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
   });
 
   it('score e roundPoints ficam idênticos com e sem uso de power-up na rodada (HINT-12)', async () => {
