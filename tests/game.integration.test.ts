@@ -61,6 +61,17 @@ function getInternalRoomScoring(roomCode: string): { roundPlayerCount: number } 
   return internalRooms.get(roomCode);
 }
 
+/**
+ * Acesso de teste à fase da sala (END-07..10). As recusas de `round:endEarly`
+ * exigem provar que a fase NÃO mudou; esperar a ausência de um evento por um
+ * prazo arbitrário provaria menos e ainda deixaria o teste lento e instável.
+ * Ler a fase direto é determinístico, pelo mesmo cast de `getInternalRoom`.
+ */
+function getInternalRoomPhase(roomCode: string): string | undefined {
+  const internalRooms = (manager as unknown as { rooms: Map<string, { phase: string }> }).rooms;
+  return internalRooms.get(roomCode)?.phase;
+}
+
 function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, predicate?: (payload: T) => boolean): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -409,9 +420,15 @@ describe('pool de personagens sem repetição na mesma sala', () => {
     expect(schedulers).toEqual(['setInterval(']);
     expect(source).toContain('setInterval(() => this.cleanupRooms(), 60_000)');
 
-    // E finishRound é alcançável de um único ponto: o acerto do palpite.
+    // E finishRound é alcançável só pelos dois caminhos previstos: o acerto do
+    // último palpite e o comando do anfitrião para destravar rodada com jogador
+    // ausente (END-01). Fixar a identidade dos call sites, e não só a
+    // quantidade, é o que mantém a guarda: um terceiro caminho quebra o teste,
+    // e trocar um destes dois por um callback de agendador também.
     const callSites = source.split('\n').filter((line) => /this\.finishRound\(/.test(line));
-    expect(callSites).toHaveLength(1);
+    expect(callSites).toHaveLength(2);
+    expect(source).toMatch(/everyoneSolved[\s\S]{0,120}this\.finishRound\(/);
+    expect(source).toMatch(/private endEarly[\s\S]*?this\.finishRound\(/);
   });
 
   it('descarta o registro de personagens usados junto com a sala (POOL-07)', async () => {
@@ -1235,5 +1252,169 @@ describe('ciclo de vida do placar da sessão (SCORE-06, SCORE-08, SCORE-09, SCOR
 
     // 3 rodadas de uma sala de 2, sempre na mesma ordem de acerto.
     expect(previous).toEqual([6, 3]);
+  });
+});
+
+/**
+ * Monta uma sala de 3 na fase `playing` e devolve tudo que os testes de
+ * encerramento precisam. Cada teste decide quem derruba e quem acerta.
+ */
+async function startStalledRoundSetup(): Promise<{
+  host: TestSocket;
+  guest: TestSocket;
+  absent: TestSocket;
+  roomCode: string;
+  hostId: string;
+  guestId: string;
+  absentId: string;
+  hostRoom: RoomView;
+}> {
+  const host = await connectClient();
+  const guest = await connectClient();
+  const absent = await connectClient();
+  const created = await createRoom(host, 'Ana');
+  if (!created.ok) throw new Error('sala não foi criada');
+  const joinedGuest = await joinRoom(guest, created.roomCode, 'Bia');
+  const joinedAbsent = await joinRoom(absent, created.roomCode, 'Caio');
+  if (!joinedGuest.ok || !joinedAbsent.ok) throw new Error('jogador não entrou na sala');
+
+  const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+  const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+  const startedAbsent = waitForEvent<{ room: RoomView }>(absent, 'round:started');
+  host.emit('player:ready', { ready: true });
+  guest.emit('player:ready', { ready: true });
+  absent.emit('player:ready', { ready: true });
+  const [roundHost] = await Promise.all([startedHost, startedGuest, startedAbsent]);
+
+  return {
+    host,
+    guest,
+    absent,
+    roomCode: created.roomCode,
+    hostId: created.playerId,
+    guestId: joinedGuest.playerId,
+    absentId: joinedAbsent.playerId,
+    hostRoom: roundHost.room,
+  };
+}
+
+/** Derruba um cliente e só resolve quando o servidor já propagou a queda. */
+async function dropAndAwait(watcher: TestSocket, dropped: TestSocket, droppedId: string): Promise<void> {
+  const propagated = waitForEvent<RoomView>(
+    watcher,
+    'room:state',
+    (room) => room.players.find((player) => player.id === droppedId)?.connected === false,
+  );
+  dropped.disconnect();
+  await propagated;
+}
+
+/** Faz um jogador acertar o próprio personagem, descoberto pela visão do outro. */
+async function solve(client: TestSocket, playerId: string, viewFromOther: RoomView): Promise<void> {
+  const character = viewFromOther.players.find((player) => player.id === playerId)?.character;
+  if (!character) throw new Error('personagem do jogador não foi revelado ao adversário');
+  const result = waitForEvent<{ correct: boolean }>(client, 'guess:result');
+  client.emit('round:guess', { text: character.name });
+  await result;
+}
+
+describe('encerramento de rodada travada por jogador ausente', () => {
+  it('encerra a rodada quando o anfitrião comanda e há alguém desconectado sem acertar (END-01)', async () => {
+    const { host, guest, absent, roomCode, absentId } = await startStalledRoundSetup();
+    await dropAndAwait(host, absent, absentId);
+
+    const finishedHost = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    const finishedGuest = waitForEvent<RoundFinishedPayload>(guest, 'round:finished');
+    host.emit('round:endEarly');
+    const [payloadHost] = await Promise.all([finishedHost, finishedGuest]);
+
+    expect(payloadHost.room.phase).toBe('finished');
+    expect(getInternalRoomPhase(roomCode)).toBe('finished');
+  });
+
+  it('recusa com HOST_ONLY quem não é anfitrião e mantém a rodada em andamento (END-07)', async () => {
+    const { host, guest, absent, roomCode, absentId } = await startStalledRoundSetup();
+    await dropAndAwait(host, absent, absentId);
+
+    const refusal = waitForEvent<{ code: string }>(guest, 'error');
+    guest.emit('round:endEarly');
+    const payload = await refusal;
+
+    expect(payload.code).toBe('HOST_ONLY');
+    expect(getInternalRoomPhase(roomCode)).toBe('playing');
+  });
+
+  it('recusa com ROUND_NOT_STUCK quando todo mundo está conectado (END-08)', async () => {
+    const { host, roomCode } = await startStalledRoundSetup();
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('round:endEarly');
+    const payload = await refusal;
+
+    expect(payload.code).toBe('ROUND_NOT_STUCK');
+    expect(getInternalRoomPhase(roomCode)).toBe('playing');
+  });
+
+  it('recusa com ROUND_NOT_STUCK quando o desconectado já tinha acertado (END-09)', async () => {
+    const { host, guest, absent, roomCode, absentId, hostRoom } = await startStalledRoundSetup();
+    await solve(absent, absentId, hostRoom);
+    await dropAndAwait(host, absent, absentId);
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('round:endEarly');
+    const payload = await refusal;
+
+    expect(payload.code).toBe('ROUND_NOT_STUCK');
+    expect(getInternalRoomPhase(roomCode)).toBe('playing');
+    expect(guest).toBeDefined();
+  });
+
+  it('recusa com ROUND_NOT_RUNNING fora da fase playing (END-10)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Ana');
+    if (!created.ok) return;
+    const joined = await joinRoom(guest, created.roomCode, 'Bia');
+    expect(joined.ok).toBe(true);
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('round:endEarly');
+    const payload = await refusal;
+
+    expect(payload.code).toBe('ROUND_NOT_RUNNING');
+    expect(getInternalRoomPhase(created.roomCode)).toBe('lobby');
+  });
+
+  it('recusa a segunda emissão seguida, porque a sala já saiu de playing (END-10)', async () => {
+    const { host, absent, roomCode, absentId } = await startStalledRoundSetup();
+    await dropAndAwait(host, absent, absentId);
+
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    await finished;
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('round:endEarly');
+    const payload = await refusal;
+
+    expect(payload.code).toBe('ROUND_NOT_RUNNING');
+    expect(getInternalRoomPhase(roomCode)).toBe('finished');
+  });
+
+  it('ignora o comando vindo de socket sem sessão, sem alterar estado (END-11)', async () => {
+    const { host, absent, roomCode, absentId } = await startStalledRoundSetup();
+    await dropAndAwait(host, absent, absentId);
+
+    const stranger = await connectClient();
+    stranger.emit('round:endEarly');
+    // O socket sem sessão é ignorado em silêncio, então não há evento de
+    // resposta para esperar. Um `room:join` com ack logo depois serve de
+    // barreira: o Socket.IO processa os eventos de uma conexão em ordem, então
+    // quando o ack chega o `endEarly` anterior já foi tratado — se fosse agir,
+    // teria agido. O código inexistente mantém a barreira sem efeito colateral.
+    const barrier = await joinRoom(stranger, 'ZZZZZZ', 'Intruso');
+    expect(barrier.ok).toBe(false);
+
+    expect(getInternalRoomPhase(roomCode)).toBe('playing');
   });
 });

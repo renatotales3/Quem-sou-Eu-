@@ -88,6 +88,7 @@ export class GameManager {
     socket.on('player:ready', (payload) => this.setReady(socket, payload));
     socket.on('round:guess', (payload) => this.guess(socket, payload));
     socket.on('round:playAgain', () => this.playAgain(socket));
+    socket.on('round:endEarly', () => this.endEarly(socket));
     socket.on('room:leave', () => this.leave(socket));
     socket.on('disconnect', () => this.disconnect(socket));
 
@@ -275,6 +276,37 @@ export class GameManager {
     if (everyoneSolved) {
       this.finishRound(room);
     }
+  }
+
+  /**
+   * Saída manual para a rodada travada. `finishRound` só dispara quando todos
+   * acertam, então um jogador que cai antes de descobrir a própria identidade
+   * congela a sala para sempre — não há encerramento por tempo.
+   *
+   * A guarda de travamento (existe alguém desconectado que ainda não acertou) é
+   * o que separa conserto de sabotagem: sem ela o anfitrião poderia cortar uma
+   * rodada saudável e revelar o personagem de quem ainda está jogando. Por isso
+   * a condição é a da própria falha, não "quando o anfitrião quiser".
+   */
+  private endEarly(socket: GameSocket): void {
+    const context = this.getContext(socket);
+    if (!context) return;
+    const { room, player } = context;
+    if (room.hostId !== player.id) {
+      this.sendError(socket, 'HOST_ONLY', 'Só quem criou a sala pode encerrar a rodada.');
+      return;
+    }
+    if (room.phase !== 'playing') {
+      this.sendError(socket, 'ROUND_NOT_RUNNING', 'Não há rodada em andamento para encerrar.');
+      return;
+    }
+    const stalled = Array.from(room.players.values()).some((candidate) => !candidate.connected && !candidate.solved);
+    if (!stalled) {
+      this.sendError(socket, 'ROUND_NOT_STUCK', 'A rodada não está travada: todo mundo que falta ainda está na sala.');
+      return;
+    }
+
+    this.finishRound(room);
   }
 
   private playAgain(socket: GameSocket): void {

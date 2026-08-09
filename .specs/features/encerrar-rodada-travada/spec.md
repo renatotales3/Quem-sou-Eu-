@@ -122,17 +122,17 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| END-01 | P1: Encerrar a rodada travada | Implementing | In Tasks |
+| END-01 | P1: Encerrar a rodada travada | Implementing | Implementing |
 | END-02 | P1: Encerrar a rodada travada | Tasks | Pending |
 | END-03 | P1: Encerrar a rodada travada | Tasks | Pending |
 | END-04 | P1: Encerrar a rodada travada | Tasks | Pending |
 | END-05 | P1: Encerrar a rodada travada | Tasks | Pending |
 | END-06 | P1: Encerrar a rodada travada | Tasks | Pending |
-| END-07 | P1: Recusar encerramento indevido | Tasks | Pending |
-| END-08 | P1: Recusar encerramento indevido | Tasks | Pending |
-| END-09 | P1: Recusar encerramento indevido | Tasks | Pending |
-| END-10 | P1: Recusar encerramento indevido | Tasks | Pending |
-| END-11 | P1: Recusar encerramento indevido | Tasks | Pending |
+| END-07 | P1: Recusar encerramento indevido | Implementing | Implementing |
+| END-08 | P1: Recusar encerramento indevido | Implementing | Implementing |
+| END-09 | P1: Recusar encerramento indevido | Implementing | Implementing |
+| END-10 | P1: Recusar encerramento indevido | Implementing | Implementing |
+| END-11 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-12 | P2: Sala segue jogável | Tasks | Pending |
 | END-13 | P2: Sala segue jogável | Tasks | Pending |
 | END-14 | P2: Sala segue jogável | Tasks | Pending |
