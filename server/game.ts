@@ -383,6 +383,9 @@ export class GameManager {
       candidate.solvedAt = null;
       // SCORE-06: só o ganho da rodada zera. `score` atravessa a sessão inteira.
       candidate.roundPoints = null;
+      // HINT-05: o direito de pedir dica é da rodada, não da sessão.
+      candidate.hintsUsed = 0;
+      candidate.hintRequestTargetId = null;
     }
     this.touch(room);
     this.broadcastRoomState(room);
@@ -414,6 +417,9 @@ export class GameManager {
       player.rank = null;
       player.guesses = [];
       player.roundPoints = null;
+      // HINT-05: cada rodada começa sem power-up gasto e sem pedido pendente.
+      player.hintsUsed = 0;
+      player.hintRequestTargetId = null;
       if (player.character) {
         room.usedCharacterIds.add(player.character.id);
       }
@@ -670,6 +676,9 @@ export class GameManager {
       candidate.guesses = [];
       candidate.solvedAt = null;
       candidate.roundPoints = null;
+      // HINT-05: a rodada abortada leva junto os power-ups e os pedidos dela.
+      candidate.hintsUsed = 0;
+      candidate.hintRequestTargetId = null;
     }
     this.touch(room);
   }

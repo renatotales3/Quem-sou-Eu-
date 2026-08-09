@@ -469,7 +469,7 @@ Nenhuma dependência aponta para fase posterior.
 | --- | --- | --- |
 | T1 | Done | feat(hints): add time-derived hint powerup grants |
 | T2 | Done | feat(hints): expose hint powerup state in the shared protocol |
-| T3 | Pending | — |
+| T3 | Done | feat(hints): track hint powerup state in the room |
 | T4 | Pending | — |
 | T5 | Pending | — |
 | T6 | Pending | — |

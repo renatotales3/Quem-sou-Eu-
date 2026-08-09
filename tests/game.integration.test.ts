@@ -82,6 +82,32 @@ function getInternalRoomPlayerCount(roomCode: string): number | undefined {
   return internalRooms.get(roomCode)?.players.size;
 }
 
+/**
+ * Acesso de teste ao estado de dica da sala. `hintsUsed` e
+ * `hintRequestTargetId` são expostos pelo protocolo, mas os testes de reset
+ * precisam SEMEAR o estado antes de exercitar o reset, e o protocolo só tem
+ * caminho de escrita a partir dos 30 minutos de rodada. Escrever direto no
+ * estado, pelo mesmo cast de `getInternalRoom`, é o que torna o teste
+ * determinístico sem esperar meia hora.
+ */
+function getInternalRoomHints(
+  roomCode: string,
+): Map<string, { hintsUsed: number; hintRequestTargetId: string | null }> | undefined {
+  const internalRooms = (manager as unknown as {
+    rooms: Map<string, { players: Map<string, { hintsUsed: number; hintRequestTargetId: string | null }> }>;
+  }).rooms;
+  return internalRooms.get(roomCode)?.players;
+}
+
+/** Semeia power-ups gastos e um pedido pendente, para exercitar os resets. */
+function seedHintState(roomCode: string, playerId: string, hintsUsed: number, targetId: string | null): void {
+  const players = getInternalRoomHints(roomCode);
+  const player = players?.get(playerId);
+  if (!player) throw new Error('jogador não está na sala');
+  player.hintsUsed = hintsUsed;
+  player.hintRequestTargetId = targetId;
+}
+
 function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, predicate?: (payload: T) => boolean): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -1654,5 +1680,75 @@ describe('remoção do jogador ausente pelo anfitrião', () => {
 
     expect(payload.code).toBe('ROOM_NOT_IN_LOBBY');
     expect(getInternalRoomPlayerCount(roomCode)).toBe(3);
+  });
+});
+
+describe('estado de dica na sala (HINT-05)', () => {
+  it('jogador recém-criado entra com hintsUsed 0 e hintRequestTargetId nulo', async () => {
+    const host = await connectClient();
+    const created = await createRoom(host, 'Ana');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const guest = await connectClient();
+    const joined = await joinRoom(guest, created.roomCode, 'Bia');
+    expect(joined.ok).toBe(true);
+    if (!joined.ok) return;
+
+    const me = joined.room.players.find((player) => player.id === joined.playerId);
+    expect(me?.hintsUsed).toBe(0);
+    expect(me?.hintRequestTargetId).toBeNull();
+  });
+
+  it('playAgain e a rodada seguinte zeram hintsUsed e hintRequestTargetId de todos (HINT-05)', async () => {
+    const { host, guest, absent, roomCode, hostId, guestId, absentId } = await startStalledRoundSetup();
+    seedHintState(roomCode, hostId, 2, guestId);
+    seedHintState(roomCode, guestId, 1, hostId);
+
+    await dropAndAwait(host, absent, absentId);
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    await finished;
+    const backToLobby = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    host.emit('round:playAgain');
+    const lobby = await backToLobby;
+
+    for (const player of lobby.players) {
+      expect(player.hintsUsed).toBe(0);
+      expect(player.hintRequestTargetId).toBeNull();
+    }
+
+    seedHintState(roomCode, hostId, 3, guestId);
+    const removed = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.every((player) => player.id !== absentId));
+    host.emit('room:removeAbsent', { playerId: absentId });
+    await removed;
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [next] = await Promise.all([startedHost, startedGuest]);
+
+    for (const player of next.room.players) {
+      expect(player.hintsUsed).toBe(0);
+      expect(player.hintRequestTargetId).toBeNull();
+    }
+  });
+
+  it('a rodada abortada por saída de jogador zera hintsUsed e hintRequestTargetId (HINT-05)', async () => {
+    const { host, guest, absent, roomCode, hostId, guestId, absentId } = await startStalledRoundSetup();
+    seedHintState(roomCode, hostId, 2, guestId);
+    seedHintState(roomCode, guestId, 1, hostId);
+
+    const aborted = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    absent.emit('room:leave');
+    const lobby = await aborted;
+
+    expect(lobby.players.every((player) => player.id !== absentId)).toBe(true);
+    for (const player of lobby.players) {
+      expect(player.hintsUsed).toBe(0);
+      expect(player.hintRequestTargetId).toBeNull();
+    }
+    expect(guest.connected).toBe(true);
   });
 });
