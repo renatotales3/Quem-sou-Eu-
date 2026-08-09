@@ -152,8 +152,8 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | END-02 | P1: Encerrar a rodada travada | Implementing | Implementing |
 | END-03 | P1: Encerrar a rodada travada | Implementing | Implementing |
 | END-04 | P1: Encerrar a rodada travada | Implementing | Implementing |
-| END-05 | P1: Encerrar a rodada travada | Tasks | Pending |
-| END-06 | P1: Encerrar a rodada travada | Tasks | Pending |
+| END-05 | P1: Encerrar a rodada travada | Implementing | Implementing |
+| END-06 | P1: Encerrar a rodada travada | Implementing | Implementing |
 | END-07 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-08 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-09 | P1: Recusar encerramento indevido | Implementing | Implementing |

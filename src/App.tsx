@@ -143,6 +143,10 @@ function App(): JSX.Element {
   const otherPlayers = useMemo(() => room?.players.filter((player) => player.id !== room.you.id) ?? [], [room]);
   const solvedCount = room?.players.filter((player) => player.solved).length ?? 0;
   const isHost = Boolean(room && room.hostId === room.you.id);
+  // END-05/END-06: o comando de encerrar só existe quando a rodada está de fato
+  // travada — alguém desconectado e ainda sem acertar — e só para o anfitrião.
+  // O rótulo não diz quem caiu: a rodada não expõe identidade de desconectado.
+  const roundIsStalled = Boolean(room?.players.some((player) => !player.connected && !player.solved));
   const elapsedMs = useRoundClock(room);
 
   function emitRoomAction(mode: HomeMode, nextNickname: string, code: string): void {
@@ -232,6 +236,10 @@ function App(): JSX.Element {
 
   function playAgain(): void {
     socket.emit('round:playAgain');
+  }
+
+  function endRoundEarly(): void {
+    socket.emit('round:endEarly');
   }
 
   if (!room) {
@@ -394,6 +402,12 @@ function App(): JSX.Element {
             <div className="game-meters"><div className="solve-meter"><strong>{solvedCount}</strong><span>de {room.players.length}<br />resolvidos</span></div>{room.round > 1 && me && <div className="session-meter" aria-label={`Seu total na sessão: ${me.score} pontos`}><strong>{me.score}</strong><span>pontos<br />na sessão</span></div>}</div>
           </div>
           {notice && <InlineNotice tone="neutral">{notice}</InlineNotice>}
+          {isHost && roundIsStalled && (
+            <div className="stalled-round-control">
+              <button className="text-button end-round-button" type="button" onClick={endRoundEarly}>Encerrar rodada</button>
+              <p>A rodada não vai fechar sozinha. Encerre para revelar e seguir para a próxima.</p>
+            </div>
+          )}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
           <div className="identity-board">
             <div className="secret-card" data-testid="secret-card">
