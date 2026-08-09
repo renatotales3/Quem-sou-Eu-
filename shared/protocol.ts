@@ -69,6 +69,16 @@ export interface GuessInput {
   text: string;
 }
 
+/**
+ * Único payload do protocolo que identifica um terceiro: todos os outros
+ * eventos agem sobre quem os emite. É o anfitrião tirando da sala alguém que
+ * caiu e não voltou — sem isso, `everyoneReady` nunca fecha e a sala não
+ * consegue começar a rodada seguinte.
+ */
+export interface RemoveAbsentInput {
+  playerId: string;
+}
+
 export interface RoomActionSuccess {
   ok: true;
   roomCode: string;
@@ -135,6 +145,7 @@ export interface ClientToServerEvents {
   // comando é a saída manual: o anfitrião encerra a rodada travada e a sala
   // segue para a próxima sem precisar ser dissolvida.
   'round:endEarly': () => void;
+  'room:removeAbsent': (payload: RemoveAbsentInput) => void;
   'room:leave': () => void;
 }
 

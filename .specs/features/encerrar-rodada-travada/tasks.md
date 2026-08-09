@@ -342,8 +342,11 @@ Nenhuma dependência aponta para fase posterior.
 | T1 | Contrato compartilhado (só tipos) | none | none | ✅ OK |
 | T2 | Estado e eventos do servidor | integration | integration | ✅ OK |
 | T3 | Estado e eventos do servidor | integration | integration | ✅ OK |
-| T4 | Componente React | none | none | ✅ OK |
-| T5 | Estilos | none | none | ✅ OK |
+| T4 | Contrato compartilhado (só tipos) | none | none | ✅ OK |
+| T5 | Estado e eventos do servidor | integration | integration | ✅ OK |
+| T6 | Componente React | none | none | ✅ OK |
+| T7 | Componente React | none | none | ✅ OK |
+| T8 | Estilos | none | none | ✅ OK |
 
 `Tests: none` em T1 é válido porque a task só declara um tipo — o comportamento do evento é provado nos testes de integração de T2, que falham se a declaração não existir. `Tests: none` em T4/T5 segue a camada `none` da matriz.
 
@@ -356,7 +359,7 @@ Nenhuma dependência aponta para fase posterior.
 | T1 | ✅ Done | `pendente` |
 | T2 | ✅ Done | `pendente` |
 | T3 | ✅ Done | `pendente` |
-| T4 | Pending | — |
+| T4 | ✅ Done | `pendente` |
 | T5 | Pending | — |
 | T6 | Pending | — |
 | T7 | Pending | — |

@@ -159,7 +159,7 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | END-09 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-10 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-11 | P1: Recusar encerramento indevido | Implementing | Implementing |
-| END-15 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-15 | P1: Remover o jogador ausente | Implementing | In Tasks |
 | END-16 | P1: Remover o jogador ausente | Tasks | Pending |
 | END-17 | P1: Remover o jogador ausente | Tasks | Pending |
 | END-18 | P1: Remover o jogador ausente | Tasks | Pending |
