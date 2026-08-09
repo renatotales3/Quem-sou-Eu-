@@ -143,7 +143,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | SCORE-01 | P1: Pontuar por posição | Tasks | Done (T4) |
-| SCORE-02 | P1: Pontuar por posição | Tasks | Done (T3) |
+| SCORE-02 | P1: Pontuar por posição | Tasks | Verified (T3) — invariante do N congelado documentado em `server/game.ts` |
 | SCORE-03 | P1: Pontuar por posição | Tasks | Verified (T4) — redação alinhada ao contrato `roundPoints: null` |
 | SCORE-04 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-05 | P1: Pontuar por posição | Tasks | Done (T4) |
@@ -156,7 +156,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | SCORE-12 | P1: Ver o placar | Tasks | Done (T8) |
 | SCORE-13 | P1: Ver o placar | Tasks | Done (T6, T7) |
 | SCORE-14 | P1: Ver o placar | Tasks | Done (T6, T8) |
-| SCORE-15 | P2: Integridade sob movimentação | Tasks | Done (T5) |
+| SCORE-15 | P2: Integridade sob movimentação | Tasks | Verified (T5) — invariante do N congelado documentado em `server/game.ts` |
 | SCORE-16 | P2: Integridade sob movimentação | Tasks | Done (T5) |
 | SCORE-17 | P2: Integridade sob movimentação | Tasks | Done (T5) |
 | SCORE-18 | P2: Integridade sob movimentação | Tasks | Done (T5) |

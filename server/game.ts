@@ -241,6 +241,16 @@ export class GameManager {
     // SCORE-01: os pontos usam o N congelado no início da rodada, não o
     // tamanho atual da sala. O guard de `player.solved` acima garante que a
     // soma acontece no máximo uma vez por rodada (SCORE-04).
+    //
+    // Hoje `roundPlayerCount` e `room.players.size` são sempre iguais aqui, e
+    // por isso nenhum teste consegue distinguir as duas leituras: o roster não
+    // encolhe durante `playing`. `players.delete` só acontece em `removePlayer`,
+    // chamado apenas por `leave`, e `leave` durante `playing` dispara
+    // `resetAfterDeparture`, que volta a sala para `lobby` e aborta a rodada;
+    // uma queda de conexão marca `connected: false` sem remover o jogador. Ler o
+    // valor congelado é defesa contra uma mudança futura que permita a rodada
+    // seguir com o roster menor: aí as duas leituras divergem e só esta mantém
+    // a escala de pontos que a rodada começou (SCORE-02, SCORE-15).
     player.roundPoints = pointsForRank(rank, room.roundPlayerCount);
     player.score += player.roundPoints;
     this.touch(room);
