@@ -128,11 +128,11 @@ Durante a rodada o jogador acumula respostas faladas na call ("não sou homem", 
 | NOTES-03 | P1: Anotar deduções | Tasks | Pending |
 | NOTES-04 | P1: Anotar deduções | Tasks | Pending |
 | NOTES-05 | P1: Anotar deduções | T1 | Done |
-| NOTES-06 | P1: Reload e reset por rodada | Tasks | Pending |
+| NOTES-06 | P1: Reload e reset por rodada | T2 | Done |
 | NOTES-07 | P1: Reload e reset por rodada | Tasks | Pending |
 | NOTES-08 | P1: Reload e reset por rodada | Tasks | Pending |
-| NOTES-09 | P2: Confiável e acessível | Tasks | Pending |
-| NOTES-10 | P2: Confiável e acessível | Tasks | Pending |
+| NOTES-09 | P2: Confiável e acessível | T2 | Done |
+| NOTES-10 | P2: Confiável e acessível | T2 | Done |
 | NOTES-11 | P2: Confiável e acessível | Tasks | Pending |
 | NOTES-12 | P2: Confiável e acessível | Tasks | Pending |
 | NOTES-13 | P2: Confiável e acessível | Tasks | Pending |
