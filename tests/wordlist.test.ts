@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { characterMatches, characters, englishOriginals, pickCharacters, totalSeedCount } from '../server/wordlist';
 import { characterImages } from '../server/character-images';
 import { normalizeText } from '../server/normalization';
+import { MIN_GUESS_LENGTH } from '../server/game';
 
 describe('wordlist', () => {
   it('tem uma lista grande e IDs únicos', () => {
@@ -265,5 +266,26 @@ describe('catálogo de imagens', () => {
       .filter(([, image]) => new URL(image.url).hostname === 'image.tmdb.org')
       .map(([key]) => key);
     expect(comTmdb).toEqual([]);
+  });
+
+  it('todo nome e alias do catálogo é aceitável como palpite (MIN_GUESS_LENGTH)', () => {
+    // O handler de palpite recusa texto abaixo de MIN_GUESS_LENGTH depois de
+    // normalizado. Um personagem cujo nome caia abaixo desse piso vira
+    // insolúvel: o jogador digita o nome certo, leva INVALID_GUESS e a rodada
+    // trava, porque `everyoneSolved` nunca fecha. Foi o que aconteceu com "L"
+    // (character-0104) enquanto o piso era 2 — bug de produção que só aparecia
+    // quando o sorteio entregava aquele personagem, e que na suíte se
+    // disfarçava de flake intermitente de timeout.
+    //
+    // Este teste amarra a regra de validação ao acervo: adicionar um nome curto
+    // demais quebra aqui, em vez de virar personagem impossível em produção.
+    const rejeitados = characters.flatMap((character) => {
+      const candidatos = [character.name, ...(character.aliases ?? [])];
+      return candidatos
+        .filter((candidato) => normalizeText(candidato).length < MIN_GUESS_LENGTH)
+        .map((candidato) => `${character.id}: "${candidato}"`);
+    });
+
+    expect(rejeitados).toEqual([]);
   });
 });

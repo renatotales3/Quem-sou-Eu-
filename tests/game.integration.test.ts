@@ -2015,3 +2015,32 @@ describe('cancelamentos automáticos do pedido de dica (HINT-12, HINT-20..HINT-2
     expect(hintStateOf(withHint.roomCode, withHint.hostId).hintsUsed).toBe(1);
   });
 });
+
+describe('palpite de uma letra (MIN_GUESS_LENGTH)', () => {
+  it('aceita um palpite de um caractere em vez de recusar por tamanho', async () => {
+    // Regressão de produção: o catálogo tem "L" (character-0104) e o piso do
+    // palpite era 2, então esse personagem era impossível de acertar — o
+    // jogador digitava o nome certo e recebia INVALID_GUESS para sempre.
+    // Aqui o palpite de uma letra está ERRADO de propósito: o que se prova é
+    // que ele é AVALIADO (volta `guess:result`), não recusado por tamanho.
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Ana');
+    if (!created.ok) return;
+    const joined = await joinRoom(guest, created.roomCode, 'Bia');
+    expect(joined.ok).toBe(true);
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    await Promise.all([startedHost, startedGuest]);
+
+    const resultado = waitForEvent<{ correct: boolean; attempts: number }>(host, 'guess:result');
+    host.emit('round:guess', { text: 'L' });
+    const payload = await resultado;
+
+    expect(payload.correct).toBe(false);
+    expect(payload.attempts).toBe(1);
+  });
+});

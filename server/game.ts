@@ -28,6 +28,16 @@ const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DEFAULT_ROOM_TTL_MINUTES = 30;
 const MAX_GUESS_LENGTH = 100;
 
+/**
+ * Quem manda neste piso é o catálogo, não o gosto por entrada limpa. O acervo
+ * tem "L" (`character-0104`), de uma letra só: com piso 2 esse personagem era
+ * impossível de acertar — o jogador digitava o nome certo e recebia
+ * INVALID_GUESS para sempre, travando a rodada de todo mundo. O teste de
+ * invariante em `tests/wordlist.test.ts` amarra os dois lados, para que um nome
+ * curto novo no catálogo quebre a suíte em vez de virar personagem insolúvel.
+ */
+export const MIN_GUESS_LENGTH = 1;
+
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 type GameIo = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 
@@ -232,8 +242,8 @@ export class GameManager {
     }
 
     const text = String(payload?.text ?? '').trim().slice(0, MAX_GUESS_LENGTH);
-    if (!text || normalizeText(text).length < 2) {
-      this.sendError(socket, 'INVALID_GUESS', 'Digite um palpite com pelo menos 2 caracteres.');
+    if (!text || normalizeText(text).length < MIN_GUESS_LENGTH) {
+      this.sendError(socket, 'INVALID_GUESS', 'Digite um palpite antes de enviar.');
       return;
     }
 
