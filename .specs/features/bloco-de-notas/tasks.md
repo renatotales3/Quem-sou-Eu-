@@ -260,6 +260,6 @@ Nenhuma dependência aponta para fase posterior.
 | --- | --- | --- |
 | T1 | Done | feat(notes): derive per-room per-round storage key |
 | T2 | Done | feat(notes): read, save and clear notes with storage fallbacks |
-| T3 | Pending | — |
+| T3 | Done | feat(notes): add floating notes panel component |
 | T4 | Pending | — |
 | T5 | Pending | — |

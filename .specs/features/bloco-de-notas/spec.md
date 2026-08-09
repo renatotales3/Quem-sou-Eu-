@@ -125,16 +125,16 @@ Durante a rodada o jogador acumula respostas faladas na call ("não sou homem", 
 | --- | --- | --- | --- |
 | NOTES-01 | P1: Anotar deduções | Tasks | Pending |
 | NOTES-02 | P1: Anotar deduções | Tasks | Pending |
-| NOTES-03 | P1: Anotar deduções | Tasks | Pending |
-| NOTES-04 | P1: Anotar deduções | Tasks | Pending |
+| NOTES-03 | P1: Anotar deduções | T3 | Done |
+| NOTES-04 | P1: Anotar deduções | T3 | Done |
 | NOTES-05 | P1: Anotar deduções | T1 | Done |
 | NOTES-06 | P1: Reload e reset por rodada | T2 | Done |
-| NOTES-07 | P1: Reload e reset por rodada | Tasks | Pending |
-| NOTES-08 | P1: Reload e reset por rodada | Tasks | Pending |
+| NOTES-07 | P1: Reload e reset por rodada | T3 | Done |
+| NOTES-08 | P1: Reload e reset por rodada | T3 | Done |
 | NOTES-09 | P2: Confiável e acessível | T2 | Done |
 | NOTES-10 | P2: Confiável e acessível | T2 | Done |
-| NOTES-11 | P2: Confiável e acessível | Tasks | Pending |
-| NOTES-12 | P2: Confiável e acessível | Tasks | Pending |
+| NOTES-11 | P2: Confiável e acessível | T3 | Done |
+| NOTES-12 | P2: Confiável e acessível | T3 | Done |
 | NOTES-13 | P2: Confiável e acessível | Tasks | Pending |
 | NOTES-14 | P1: Privacidade | Tasks | Pending |
 | NOTES-15 | P1: Privacidade | T1 | Done |
