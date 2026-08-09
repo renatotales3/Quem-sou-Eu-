@@ -40,6 +40,10 @@ interface PlayerState {
   guesses: string[];
   disconnectedAt: number | null;
   solvedAt: number | null;
+  /** Total acumulado da sessão. Só cresce; nunca é zerado por nova rodada. */
+  score: number;
+  /** Ganho da rodada corrente; null enquanto o jogador não acertou. */
+  roundPoints: number | null;
 }
 
 interface RoomState {
@@ -52,6 +56,12 @@ interface RoomState {
   updatedAt: number;
   usedCharacterIds: Set<string>;
   roundStartedAt: number | null;
+  /**
+   * Número de jogadores registrado quando a rodada começou (SCORE-02).
+   * Congelado para toda a rodada: quem sai no meio não muda a escala de
+   * pontos dos acertos seguintes (SCORE-15).
+   */
+  roundPlayerCount: number;
 }
 
 interface SessionAuth {
@@ -115,6 +125,7 @@ export class GameManager {
       updatedAt: Date.now(),
       usedCharacterIds: new Set(),
       roundStartedAt: null,
+      roundPlayerCount: 0,
     };
 
     this.rooms.set(code, room);
@@ -283,6 +294,7 @@ export class GameManager {
     room.round += 1;
     room.roundStartedAt = Date.now();
     const players = Array.from(room.players.values());
+    room.roundPlayerCount = players.length;
 
     const availableCount = characters.length - room.usedCharacterIds.size;
     if (availableCount < players.length) {
@@ -430,11 +442,8 @@ export class GameManager {
           solved: player.solved,
           rank: player.rank,
           solveMs: this.deriveSolveMs(room, player),
-          // SPEC_DEVIATION: T1 declara `score`/`roundPoints` em PlayerView e o
-          // compilador exige que o produtor satisfaça o contrato no mesmo
-          // commit. O estado real por trás desses campos entra em T3.
-          score: 0,
-          roundPoints: null,
+          score: player.score,
+          roundPoints: player.roundPoints,
         };
 
         if (player.character && (room.phase === 'finished' || (room.phase === 'playing' && player.id !== viewerId))) {
@@ -497,6 +506,8 @@ export class GameManager {
       guesses: [],
       disconnectedAt: null,
       solvedAt: null,
+      score: 0,
+      roundPoints: null,
     };
   }
 

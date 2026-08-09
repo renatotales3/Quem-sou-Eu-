@@ -143,12 +143,12 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | SCORE-01 | P1: Pontuar por posição | Tasks | In progress (T2) |
-| SCORE-02 | P1: Pontuar por posição | Tasks | Pending |
+| SCORE-02 | P1: Pontuar por posição | Tasks | Done (T3) |
 | SCORE-03 | P1: Pontuar por posição | Tasks | Pending |
 | SCORE-04 | P1: Pontuar por posição | Tasks | Pending |
 | SCORE-05 | P1: Pontuar por posição | Tasks | In progress (T1) |
 | SCORE-06 | P1: Acumular entre rodadas | Tasks | Pending |
-| SCORE-07 | P1: Acumular entre rodadas | Tasks | Pending |
+| SCORE-07 | P1: Acumular entre rodadas | Tasks | Done (T3) |
 | SCORE-08 | P1: Acumular entre rodadas | Tasks | Pending |
 | SCORE-09 | P1: Acumular entre rodadas | Tasks | Pending |
 | SCORE-10 | P1: Ver o placar | Tasks | Pending |

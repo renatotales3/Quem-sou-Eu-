@@ -50,6 +50,17 @@ function getInternalRoomTiming(
   return internalRooms.get(roomCode);
 }
 
+/**
+ * Acesso de teste ao `roundPlayerCount` da sala (SCORE-02). O N congelado no
+ * início da rodada é estado interno de propósito — o protocolo expõe só o
+ * efeito dele (`score`), nunca o valor —, então observá-lo usa o mesmo cast de
+ * `getInternalRoom`.
+ */
+function getInternalRoomScoring(roomCode: string): { roundPlayerCount: number } | undefined {
+  const internalRooms = (manager as unknown as { rooms: Map<string, { roundPlayerCount: number }> }).rooms;
+  return internalRooms.get(roomCode);
+}
+
 function waitForEvent<T>(socket: TestSocket, event: keyof ServerToClientEvents, predicate?: (payload: T) => boolean): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -746,5 +757,82 @@ describe('tempo exposto por socket (TIME-04, TIME-05, TIME-06)', () => {
     expect(hostRankingEntry?.solveMs).toBeGreaterThanOrEqual(KNOWN_DELAY_MS);
     expect(guestRankingEntry?.solveMs).not.toBeNull();
     expect(guestRankingEntry?.solveMs).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('estado de placar na sala e no jogador (SCORE-02, SCORE-07)', () => {
+  it('jogador recém-criado entra com score 0 e roundPoints null no RoomView (SCORE-07)', async () => {
+    const host = await connectClient();
+    const created = await createRoom(host, 'Alba');
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const hostInCreate = created.room.players.find((player) => player.id === created.playerId);
+    expect(hostInCreate?.score).toBe(0);
+    expect(hostInCreate?.roundPoints).toBeNull();
+
+    const guest = await connectClient();
+    const joined = await joinRoom(guest, created.roomCode, 'Bento');
+    expect(joined.ok).toBe(true);
+    if (!joined.ok) return;
+
+    const guestInJoin = joined.room.players.find((player) => player.id === joined.playerId);
+    expect(guestInJoin?.score).toBe(0);
+    expect(guestInJoin?.roundPoints).toBeNull();
+  });
+
+  it('startRound congela o número de jogadores da sala naquele instante (SCORE-02)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Cauê');
+    const joined = await joinRoom(guest, created.roomCode, 'Dara');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    expect(getInternalRoomScoring(created.roomCode)?.roundPlayerCount).toBe(0);
+
+    const startedHost = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const startedGuest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    const [roundHost] = await Promise.all([startedHost, startedGuest]);
+
+    expect(getInternalRoomScoring(created.roomCode)?.roundPlayerCount).toBe(2);
+    // roundPoints segue null para quem ainda não acertou.
+    expect(roundHost.room.players.every((player) => player.roundPoints === null)).toBe(true);
+  });
+
+  it('duas rodadas com números de jogadores diferentes registram roundPlayerCount diferentes (SCORE-02)', async () => {
+    const host = await connectClient();
+    const guest = await connectClient();
+    const created = await createRoom(host, 'Elvis');
+    const joined = await joinRoom(guest, created.roomCode, 'Fátima');
+    expect(created.ok).toBe(true);
+    expect(joined.ok).toBe(true);
+    if (!created.ok || !joined.ok) return;
+
+    await playRoundToFinish(host, guest, created.playerId, joined.playerId);
+    expect(getInternalRoomScoring(created.roomCode)?.roundPlayerCount).toBe(2);
+
+    const lobbyHost = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    const lobbyGuest = waitForEvent<RoomView>(guest, 'room:state', (room) => room.phase === 'lobby');
+    host.emit('round:playAgain');
+    await Promise.all([lobbyHost, lobbyGuest]);
+
+    const third = await connectClient();
+    const joinedThird = await joinRoom(third, created.roomCode, 'Gael');
+    expect(joinedThird.ok).toBe(true);
+    if (!joinedThird.ok) return;
+
+    const started2Host = waitForEvent<{ room: RoomView }>(host, 'round:started');
+    const started2Guest = waitForEvent<{ room: RoomView }>(guest, 'round:started');
+    const started2Third = waitForEvent<{ room: RoomView }>(third, 'round:started');
+    host.emit('player:ready', { ready: true });
+    guest.emit('player:ready', { ready: true });
+    third.emit('player:ready', { ready: true });
+    await Promise.all([started2Host, started2Guest, started2Third]);
+
+    expect(getInternalRoomScoring(created.roomCode)?.roundPlayerCount).toBe(3);
   });
 });

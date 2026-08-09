@@ -394,7 +394,7 @@ Nenhuma dependência aponta para fase posterior.
 | --- | --- | --- |
 | T1 | Done | `feat(score): expose session score fields in the shared protocol` |
 | T2 | Done | `feat(score): add rank-to-points scoring function` |
-| T3 | Pending | — |
+| T3 | Done | `feat(score): track session score and round player count in room state` |
 | T4 | Pending | — |
 | T5 | Pending | — |
 | T6 | Pending | — |
