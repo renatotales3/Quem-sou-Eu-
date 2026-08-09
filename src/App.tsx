@@ -339,7 +339,7 @@ function App(): JSX.Element {
               <span className="panel-mark">{room.round === 0 ? 'R00' : `R${String(room.round).padStart(2, '0')}`}</span>
             </div>
             <div className="player-list">
-              {room.players.map((player) => <PlayerRow key={player.id} player={player} you={player.id === room.you.id} />)}
+              {(room.round === 0 ? room.players : sortBySessionScore(room.players)).map((player) => <PlayerRow key={player.id} player={player} you={player.id === room.you.id} showScore={room.round > 0} />)}
             </div>
             <p className="panel-footnote">O anfitrião muda automaticamente se alguém sair.</p>
           </aside>
@@ -461,8 +461,16 @@ function RoomHeader({ room, connection, onLeave, elapsedMs }: { room: RoomView; 
   return <header className="topbar room-topbar"><Logo /><div className="room-meta"><span className="room-meta-label">sala</span><strong>{room.code}</strong><span className="room-round">R{String(room.round).padStart(2, '0')}</span>{elapsedMs !== null && <span className="round-clock" aria-label="Tempo decorrido da rodada">{formatDuration(elapsedMs)}</span>}</div><div className="topbar-actions"><ConnectionPill state={connection} /><button className="text-button" type="button" onClick={onLeave}>Sair</button></div></header>;
 }
 
-function PlayerRow({ player, you }: { player: RoomView['players'][number]; you: boolean }): JSX.Element {
-  return <div className={`player-row ${player.ready ? 'player-ready' : ''} ${!player.connected ? 'player-away' : ''}`}><span className="player-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span><div className="player-name"><strong>{player.nickname}{you ? <small> você</small> : null}</strong><span>{player.isHost ? 'anfitrião' : player.connected ? player.ready ? 'pronto' : 'pensando' : 'reconectando'}</span></div><span className="status-ring" aria-label={player.ready ? 'pronto' : 'não pronto'}>{player.ready ? '✓' : ''}</span></div>;
+function PlayerRow({ player, you, showScore }: { player: RoomView['players'][number]; you: boolean; showScore: boolean }): JSX.Element {
+  return <div className={`player-row ${player.ready ? 'player-ready' : ''} ${!player.connected ? 'player-away' : ''}`}><span className="player-avatar">{player.nickname.slice(0, 1).toUpperCase()}</span><div className="player-name"><strong>{player.nickname}{you ? <small> você</small> : null}</strong><span>{player.isHost ? 'anfitrião' : player.connected ? player.ready ? 'pronto' : 'pensando' : 'reconectando'}</span></div>{showScore && <span className="player-score" aria-label={`${player.score} pontos na sessão`}><strong>{player.score}</strong><span>pts</span></span>}<span className="status-ring" aria-label={player.ready ? 'pronto' : 'não pronto'}>{player.ready ? '✓' : ''}</span></div>;
+}
+
+/**
+ * Ordem do placar acumulado (SCORE-14): total decrescente, desempate pelo
+ * apelido em ordem alfabética.
+ */
+function sortBySessionScore(players: RoomView['players']): RoomView['players'] {
+  return [...players].sort((a, b) => b.score - a.score || a.nickname.localeCompare(b.nickname, 'pt-BR'));
 }
 
 function CharacterCard({ player, index }: { player: RoomView['players'][number]; index: number }): JSX.Element {
