@@ -35,7 +35,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | Queda de conexão | Preserva o placar | O jogador continua em `room.players` com `connected: false`; a sessão já sobrevive à reconexão. | y |
 | Entrada no meio da sessão | Começa com 0 | Simples e legível no placar — fica claro quem chegou depois. | y |
 | Momento da soma | No instante do acerto, junto da atribuição de `rank` | Permite que o total apareça atualizado durante a rodada, que é um dos lugares de exibição pedidos. A ordem de acerto já é pública (evento `player:solved`), então somar ao vivo não revela nada novo. | n |
-| Superfície no protocolo | `PlayerView` ganha `score: number` (total da sessão) e `roundPoints: number \| null` (ganho na rodada corrente) | Ambos derivam de estado que só o servidor tem. `roundPoints` é `null` enquanto o jogador não acertou, o que distingue "ainda não acertou" de "acertou e levou 0" — caso que não existe hoje mas que uma mudança de fórmula criaria. | n |
+| Superfície no protocolo | `PlayerView` ganha `score: number` (total da sessão) e `roundPoints: number \| null` (ganho na rodada corrente) | Ambos derivam de estado que só o servidor tem. `roundPoints` é `null` enquanto o jogador não acertou, o que distingue "ainda não acertou" de "acertou e levou 0" — caso que não existe hoje mas que uma mudança de fórmula criaria. | y |
 | Exibição durante a rodada | Total da sessão junto do medidor de resolvidos, sem o ganho da rodada | O ganho individual só faz sentido depois que a posição está definida; durante a rodada o que interessa é a disputa acumulada. | n |
 
 **Open questions:** none — tudo resolvido ou registrado acima.
@@ -54,7 +54,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 
 1. WHEN um jogador acerta o próprio personagem THEN o servidor SHALL somar ao total dele `N - rank + 1` pontos, onde `rank` é a posição de acerto e `N` é o número de jogadores registrado no início da rodada. <!-- SCORE-01 -->
 2. WHEN a rodada começa THEN o servidor SHALL registrar o número de jogadores da sala naquele instante e usar esse valor para toda a rodada. <!-- SCORE-02 -->
-3. WHILE a rodada corre, o servidor SHALL manter em 0 o ganho da rodada de todo jogador que ainda não acertou. <!-- SCORE-03 -->
+3. WHILE a rodada corre, o servidor SHALL manter `roundPoints` em `null` para todo jogador que ainda não acertou, indicando ausência de ganho. A interface apresenta essa ausência como 0. <!-- SCORE-03 -->
 4. IF um jogador tentar acertar de novo depois de já ter acertado THEN o servidor SHALL rejeitar a tentativa sem somar pontos outra vez. <!-- SCORE-04 -->
 5. The system SHALL calcular todo ponto no servidor, sem aceitar valor de pontuação vindo do cliente em nenhum evento. <!-- SCORE-05 -->
 
@@ -144,7 +144,7 @@ Cada rodada de "Quem Sou Eu?" termina, revela o ranking daquela rodada e some. U
 | --- | --- | --- | --- |
 | SCORE-01 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-02 | P1: Pontuar por posição | Tasks | Done (T3) |
-| SCORE-03 | P1: Pontuar por posição | Tasks | Done (T4) |
+| SCORE-03 | P1: Pontuar por posição | Tasks | Verified (T4) — redação alinhada ao contrato `roundPoints: null` |
 | SCORE-04 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-05 | P1: Pontuar por posição | Tasks | Done (T4) |
 | SCORE-06 | P1: Acumular entre rodadas | Tasks | Done (T5) |
