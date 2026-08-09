@@ -123,7 +123,7 @@ Durante a rodada o jogador acumula respostas faladas na call ("não sou homem", 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| NOTES-01 | P1: Anotar deduções | Tasks | Pending |
+| NOTES-01 | P1: Anotar deduções | T5 | Done |
 | NOTES-02 | P1: Anotar deduções | T4 | Done |
 | NOTES-03 | P1: Anotar deduções | T3 | Done |
 | NOTES-04 | P1: Anotar deduções | T3 | Done |
@@ -135,13 +135,13 @@ Durante a rodada o jogador acumula respostas faladas na call ("não sou homem", 
 | NOTES-10 | P2: Confiável e acessível | T2 | Done |
 | NOTES-11 | P2: Confiável e acessível | T3 | Done |
 | NOTES-12 | P2: Confiável e acessível | T3 | Done |
-| NOTES-13 | P2: Confiável e acessível | Tasks | Pending |
+| NOTES-13 | P2: Confiável e acessível | T5 | Done |
 | NOTES-14 | P1: Privacidade | T4 | Done |
 | NOTES-15 | P1: Privacidade | T1 | Done |
 
 **ID format:** `NOTES-[NUMBER]`
 
-**Coverage:** 15 total, 0 mapeados para tasks ainda.
+**Coverage:** 15 total, 15 mapeados para tasks e concluídos.
 
 ---
 

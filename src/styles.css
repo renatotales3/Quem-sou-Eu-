@@ -384,6 +384,26 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 @keyframes blink { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 
+.notes-dock { position: fixed; right: clamp(17px, 4vw, 34px); bottom: clamp(17px, 4vw, 34px); z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+
+.notes-toggle { align-self: flex-end; width: 52px; height: 52px; border: 0; display: grid; place-items: center; color: var(--night); background: var(--acid); font-size: 22px; line-height: 1; box-shadow: 6px 6px 0 rgba(21, 21, 37, 0.35); transition: transform 180ms ease, background 180ms ease; }
+
+.notes-toggle:hover { transform: translate(-2px, -2px); background: var(--sky); }
+
+.notes-panel { width: min(320px, calc(100vw - 34px)); max-height: min(60vh, 420px); overflow-y: auto; padding: 18px; }
+
+.notes-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+
+.notes-panel-head h2 { margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: -0.05em; line-height: 0.95; }
+
+.notes-clear { border: 1px solid rgba(21, 21, 37, 0.25); padding: 7px 10px; color: var(--night); background: transparent; font: 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.notes-clear:hover { color: var(--paper); background: var(--night); }
+
+.notes-textarea { width: 100%; min-height: 150px; margin-top: 9px; border: 1px solid rgba(21, 21, 37, 0.25); padding: 11px 14px; color: var(--night); background: rgba(255, 255, 255, 0.35); font: 14px/1.5 var(--mono); resize: vertical; outline: none; }
+
+.notes-textarea::placeholder { color: #9690a0; }
+
 @media (max-width: 900px) {
   .home-layout, .lobby-layout, .game-layout { grid-template-columns: minmax(0, 1fr); }
   .home-layout { margin-top: 70px; }
@@ -426,6 +446,9 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .reveal-grid { margin-top: 40px; }
   .reveal-row { grid-template-columns: 30px minmax(0, 1fr); }
   .reveal-row em { grid-column: 2; text-align: left; }
+  /* O botão de enviar palpite fica encostado na direita em telas estreitas, então o bloco desce para a esquerda. */
+  .notes-dock { right: auto; left: 17px; align-items: flex-start; }
+  .notes-toggle { align-self: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
