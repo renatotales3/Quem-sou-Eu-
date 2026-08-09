@@ -474,7 +474,7 @@ Nenhuma dependência aponta para fase posterior.
 | T5 | Done | feat(hints): resolve a hint request by answer or cancel |
 | T6 | Done | feat(hints): cancel pending hint requests on departure or solve |
 | T7 | Done | feat(hints): show the hint powerup on the playing screen |
-| T8 | Pending | — |
+| T8 | Done | feat(hints): pick which solver to ask for a hint |
 | T9 | Pending | — |
 | T10 | Pending | — |
 | T11 | Pending | — |

@@ -33,6 +33,7 @@ function App(): JSX.Element {
   const [lastSolved, setLastSolved] = useState<PlayerSolvedPayload | null>(null);
   const [finalRanking, setFinalRanking] = useState<RoundFinishedPayload['ranking']>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [hintPickerOpen, setHintPickerOpen] = useState(false);
 
   useEffect(() => {
     const session = readSession();
@@ -156,6 +157,9 @@ function App(): JSX.Element {
   // nos marcos seguintes, que é exatamente o que HINT-04 proíbe.
   const hintElapsedMs = me?.solved ? me.solveMs : elapsedMs;
   const hintsAvailable = me && hintElapsedMs !== null ? availableHintPowerups(hintElapsedMs, me.hintsUsed) : 0;
+  // HINT-07/HINT-14: só quem já acertou tem o que dizer, então só ele entra na
+  // lista de alvos. O servidor recusa o resto; a lista evita o pedido inútil.
+  const hintTargets = useMemo(() => room?.players.filter((player) => player.solved && player.id !== room.you.id) ?? [], [room]);
 
   function emitRoomAction(mode: HomeMode, nextNickname: string, code: string): void {
     const handleResult = (result: RoomActionResult): void => {
@@ -248,6 +252,11 @@ function App(): JSX.Element {
 
   function endRoundEarly(): void {
     socket.emit('round:endEarly');
+  }
+
+  function requestHint(targetId: string): void {
+    socket.emit('hint:request', { targetId });
+    setHintPickerOpen(false);
   }
 
   function removeAbsent(playerId: string): void {
@@ -424,6 +433,10 @@ function App(): JSX.Element {
             <div className="hint-powerup">
               <span className="hint-powerup-count" aria-hidden="true">{hintsAvailable}</span>
               <p><strong>Power-up de dica</strong>{hintsAvailable > 1 ? ` · ${hintsAvailable} disponíveis` : ' · 1 disponível'}<br />A rodada travou. Peça uma dica a quem já descobriu.</p>
+              <button className="text-button hint-powerup-button" type="button" aria-expanded={hintPickerOpen} onClick={() => setHintPickerOpen((open) => !open)}>{hintPickerOpen ? 'Fechar' : 'Pedir dica'}</button>
+              {hintPickerOpen && (hintTargets.length === 0
+                ? <p className="hint-picker-empty">Ninguém descobriu ainda nesta rodada. Sem alguém do outro lado, não há de quem pedir.</p>
+                : <div className="hint-picker" role="group" aria-label="Escolha de quem pedir a dica">{hintTargets.map((player) => <button className="ghost-button hint-target-button" key={player.id} type="button" onClick={() => requestHint(player.id)}>Pedir a {player.nickname}</button>)}</div>)}
             </div>
           )}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
