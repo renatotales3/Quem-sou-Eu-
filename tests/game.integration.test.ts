@@ -1267,7 +1267,11 @@ async function startStalledRoundSetup(): Promise<{
   hostId: string;
   guestId: string;
   absentId: string;
+  absentSessionToken: string;
+  /** Visão do anfitrião: revela os personagens do convidado e do ausente. */
   hostRoom: RoomView;
+  /** Visão do convidado: é a única que revela o personagem do anfitrião. */
+  guestRoom: RoomView;
 }> {
   const host = await connectClient();
   const guest = await connectClient();
@@ -1284,7 +1288,7 @@ async function startStalledRoundSetup(): Promise<{
   host.emit('player:ready', { ready: true });
   guest.emit('player:ready', { ready: true });
   absent.emit('player:ready', { ready: true });
-  const [roundHost] = await Promise.all([startedHost, startedGuest, startedAbsent]);
+  const [roundHost, roundGuest] = await Promise.all([startedHost, startedGuest, startedAbsent]);
 
   return {
     host,
@@ -1294,7 +1298,9 @@ async function startStalledRoundSetup(): Promise<{
     hostId: created.playerId,
     guestId: joinedGuest.playerId,
     absentId: joinedAbsent.playerId,
+    absentSessionToken: joinedAbsent.sessionToken,
     hostRoom: roundHost.room,
+    guestRoom: roundGuest.room,
   };
 }
 
@@ -1416,5 +1422,107 @@ describe('encerramento de rodada travada por jogador ausente', () => {
     expect(barrier.ok).toBe(false);
 
     expect(getInternalRoomPhase(roomCode)).toBe('playing');
+  });
+});
+
+describe('encerramento por comando equivale ao encerramento natural', () => {
+  it('entrega round:finished a todos os conectados com o ranking do encerramento natural (END-02)', async () => {
+    const { host, guest, absent, hostId, guestId, absentId, hostRoom, guestRoom } = await startStalledRoundSetup();
+    await solve(host, hostId, guestRoom);
+    await solve(guest, guestId, hostRoom);
+    await dropAndAwait(host, absent, absentId);
+
+    const finishedHost = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    const finishedGuest = waitForEvent<RoundFinishedPayload>(guest, 'round:finished');
+    host.emit('round:endEarly');
+    const [payloadHost, payloadGuest] = await Promise.all([finishedHost, finishedGuest]);
+
+    // Mesmo contrato do encerramento natural: ranking ordenado por posição,
+    // quem não acertou por último com rank nulo, e idêntico para todo mundo.
+    expect(payloadHost.ranking.map((entry) => entry.playerId)).toEqual([hostId, guestId, absentId]);
+    expect(payloadHost.ranking.map((entry) => entry.rank)).toEqual([1, 2, null]);
+    expect(payloadGuest.ranking).toEqual(payloadHost.ranking);
+  });
+
+  it('preserva rank, roundPoints e score de quem já tinha acertado (END-03)', async () => {
+    const { host, guest, absent, hostId, guestId, absentId, hostRoom, guestRoom } = await startStalledRoundSetup();
+    await solve(host, hostId, guestRoom);
+    await solve(guest, guestId, hostRoom);
+    await dropAndAwait(host, absent, absentId);
+
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    const payload = await finished;
+
+    // Sala de 3: 1º leva 3, 2º leva 2 (pointsForRank = N - rank + 1).
+    const hostView = payload.room.players.find((player) => player.id === hostId);
+    const guestView = payload.room.players.find((player) => player.id === guestId);
+    expect(hostView?.rank).toBe(1);
+    expect(hostView?.roundPoints).toBe(3);
+    expect(hostView?.score).toBe(3);
+    expect(guestView?.rank).toBe(2);
+    expect(guestView?.roundPoints).toBe(2);
+    expect(guestView?.score).toBe(2);
+  });
+
+  it('mantém rank e roundPoints nulos e score inalterado para quem não acertou (END-04)', async () => {
+    const { host, guest, absent, hostId, guestId, absentId, hostRoom, guestRoom } = await startStalledRoundSetup();
+    await solve(host, hostId, guestRoom);
+    await solve(guest, guestId, hostRoom);
+    await dropAndAwait(host, absent, absentId);
+
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    const payload = await finished;
+
+    const absentView = payload.room.players.find((player) => player.id === absentId);
+    expect(absentView?.rank).toBeNull();
+    expect(absentView?.roundPoints).toBeNull();
+    expect(absentView?.score).toBe(0);
+    expect(guestId).toBeDefined();
+  });
+
+  it('deixa o anfitrião abrir a próxima rodada pelo fluxo normal (END-12)', async () => {
+    const { host, guest, absent, absentId, roomCode } = await startStalledRoundSetup();
+    await dropAndAwait(host, absent, absentId);
+
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    await finished;
+
+    const backToLobby = waitForEvent<RoomView>(host, 'room:state', (room) => room.phase === 'lobby');
+    host.emit('round:playAgain');
+    const lobby = await backToLobby;
+    expect(getInternalRoomPhase(roomCode)).toBe('lobby');
+    // A AC cobre o `playAgain` funcionar sem erro depois do encerramento por
+    // comando. Começar a rodada seguinte é outra coisa: `everyoneReady` exige
+    // `connected && ready` de TODOS, então o ausente ainda barra o start — está
+    // fora desta AC e registrado como limitação conhecida da correção.
+    expect(lobby.players.map((player) => player.ready)).toEqual([false, false, false]);
+    expect(guest).toBeDefined();
+  });
+
+  it('devolve ao ausente o estado corrente com o score que ele tinha ao reconectar (END-13)', async () => {
+    const { host, guest, absent, hostId, guestId, absentId, absentSessionToken, hostRoom, guestRoom, roomCode } = await startStalledRoundSetup();
+    // O ausente acerta primeiro (3 pontos numa sala de 3), depois cai. O score
+    // dele precisa sobreviver ao encerramento por comando dos outros.
+    await solve(absent, absentId, hostRoom);
+    await solve(host, hostId, guestRoom);
+    await dropAndAwait(host, absent, absentId);
+    // Com o desconectado já resolvido, quem trava a rodada é o guest: derrubá-lo
+    // é o que satisfaz a guarda sem alterar o placar do ausente.
+    await dropAndAwait(host, guest, guestId);
+
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    await finished;
+
+    const reconnected = createAuthedClient({ roomCode, playerId: absentId, sessionToken: absentSessionToken });
+    const state = waitForEvent<RoomView>(reconnected, 'room:state');
+    reconnected.connect();
+    const room = await state;
+
+    expect(room.phase).toBe('finished');
+    expect(room.players.find((player) => player.id === absentId)?.score).toBe(3);
   });
 });

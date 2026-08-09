@@ -261,6 +261,6 @@ Nenhuma dependência aponta para fase posterior.
 | --- | --- | --- |
 | T1 | ✅ Done | `pendente` |
 | T2 | ✅ Done | `pendente` |
-| T3 | Pending | — |
+| T3 | ✅ Done | `pendente` |
 | T4 | Pending | — |
 | T5 | Pending | — |
