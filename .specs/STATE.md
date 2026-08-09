@@ -26,6 +26,14 @@
 - **Date**: 2026-08-04
 - **Status**: active
 
+### AD-004
+- **Decision**: O crédito de autor, fonte e licença das imagens deixa de ser exibido na interface. Removido do card da rodada (`character-credit`) e da tela de revelação (`reveal-credit`), junto de `creditLabel`, `ComicVineLink` e das regras de estilo correspondentes. Não há seção de créditos substituta.
+- **Reason**: Decisão do dono do projeto por motivo visual — o bloco de três linhas em fonte mono dentro do card pesava demais. A alternativa de manter o crédito só na tela de revelação foi apresentada e recusada.
+- **Trade-off**: Aceito com o risco declarado. As imagens do Wikimedia Commons sob CC BY e CC BY-SA **exigem** atribuição, e os termos da API do Comic Vine exigem link de volta ao site sempre que os dados aparecem na interface. Sem crédito exibido em lugar nenhum, o jogo passa a usar essas imagens fora das condições da licença. Isso também revoga na prática IMG-06 da spec `fotos-personagens` ("WHEN uma imagem aprovada exigir atribuição THEN a interface SHALL exibir autor e licença de forma acessível") — a spec fica desatualizada em relação ao código até que alguém a corrija. Os metadados de autor e licença continuam gravados em `server/character-images.ts`, então repor a exibição é barato se a decisão mudar.
+- **Scope**: `src/App.tsx`, `src/styles.css`, e a spec `.specs/features/fotos-personagens/spec.md` (IMG-06 agora divergente).
+- **Date**: 2026-08-09
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: melhorias-jogo (`.specs/features/melhorias-jogo/`) — **concluída**
