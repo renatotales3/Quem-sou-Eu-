@@ -468,7 +468,7 @@ Nenhuma dependência aponta para fase posterior.
 | Task | Status | Commit |
 | --- | --- | --- |
 | T1 | Done | feat(hints): add time-derived hint powerup grants |
-| T2 | Pending | — |
+| T2 | Done | feat(hints): expose hint powerup state in the shared protocol |
 | T3 | Pending | — |
 | T4 | Pending | — |
 | T5 | Pending | — |

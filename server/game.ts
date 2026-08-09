@@ -46,6 +46,14 @@ interface PlayerState {
   score: number;
   /** Ganho da rodada corrente; null enquanto o jogador não acertou. */
   roundPoints: number | null;
+  /**
+   * Power-ups de dica gastos na rodada. O servidor guarda só o gasto; o
+   * disponível é derivado do tempo por `availableHintPowerups` no instante em
+   * que o pedido é autorizado (ver shared/hints.ts).
+   */
+  hintsUsed: number;
+  /** Alvo do pedido de dica pendente; null quando não há pedido. */
+  hintRequestTargetId: string | null;
 }
 
 interface RoomState {
@@ -537,6 +545,8 @@ export class GameManager {
           solveMs: this.deriveSolveMs(room, player),
           score: player.score,
           roundPoints: player.roundPoints,
+          hintsUsed: player.hintsUsed,
+          hintRequestTargetId: player.hintRequestTargetId,
         };
 
         if (player.character && (room.phase === 'finished' || (room.phase === 'playing' && player.id !== viewerId))) {
@@ -601,6 +611,8 @@ export class GameManager {
       solvedAt: null,
       score: 0,
       roundPoints: null,
+      hintsUsed: 0,
+      hintRequestTargetId: null,
     };
   }
 

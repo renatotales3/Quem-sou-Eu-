@@ -35,6 +35,16 @@ export interface PlayerView {
    * atual não produz mas que uma mudança de fórmula criaria.
    */
   roundPoints: number | null;
+  /**
+   * Power-ups de dica já gastos na rodada. O contrato expõe o usado, e não o
+   * disponível, porque o disponível depende do relógio: ele é derivado dos dois
+   * lados por `availableHintPowerups` de `shared/hints.ts`, a partir de
+   * `roundStartedAt` e `serverNow`. Mandar o disponível congelaria no instante
+   * do broadcast e ficaria errado assim que a rodada cruzasse o marco seguinte.
+   */
+  hintsUsed: number;
+  /** Id do jogador a quem este jogador pediu dica; null sem pedido pendente. */
+  hintRequestTargetId: string | null;
 }
 
 export interface RoomView {
@@ -77,6 +87,16 @@ export interface GuessInput {
  */
 export interface RemoveAbsentInput {
   playerId: string;
+}
+
+/** Alvo do pedido de dica: alguém que já acertou nesta rodada (HINT-07). */
+export interface HintRequestInput {
+  targetId: string;
+}
+
+/** Quem pediu a dica, informado pelo alvo ao marcar que respondeu (HINT-10). */
+export interface HintAnswerInput {
+  askerId: string;
 }
 
 export interface RoomActionSuccess {
@@ -147,6 +167,11 @@ export interface ClientToServerEvents {
   'round:endEarly': () => void;
   'room:removeAbsent': (payload: RemoveAbsentInput) => void;
   'room:leave': () => void;
+  // Power-up de dica: quem está preso gasta um power-up apontando para alguém
+  // que já acertou, o alvo marca que respondeu, e quem pediu pode desistir.
+  'hint:request': (payload: HintRequestInput) => void;
+  'hint:answer': (payload: HintAnswerInput) => void;
+  'hint:cancel': () => void;
 }
 
 export interface ServerToClientEvents {
