@@ -99,6 +99,18 @@ function getInternalRoomHints(
   return internalRooms.get(roomCode)?.players;
 }
 
+/**
+ * Recua `roundStartedAt` da sala para simular uma rodada que já dura `minutes`
+ * minutos. `vi.useFakeTimers` não serve aqui: a suíte sobe um Socket.IO real e
+ * congelar o relógio do processo quebraria os timeouts de rede.
+ */
+function rewindRoundStart(roomCode: string, minutes: number): void {
+  const internalRooms = (manager as unknown as { rooms: Map<string, { roundStartedAt: number | null }> }).rooms;
+  const room = internalRooms.get(roomCode);
+  if (!room || room.roundStartedAt === null) throw new Error('sala sem rodada em andamento');
+  room.roundStartedAt -= minutes * 60_000;
+}
+
 /** Semeia power-ups gastos e um pedido pendente, para exercitar os resets. */
 function seedHintState(roomCode: string, playerId: string, hintsUsed: number, targetId: string | null): void {
   const players = getInternalRoomHints(roomCode);
@@ -1750,5 +1762,112 @@ describe('estado de dica na sala (HINT-05)', () => {
       expect(player.hintRequestTargetId).toBeNull();
     }
     expect(guest.connected).toBe(true);
+  });
+});
+
+/**
+ * Sala em `playing` com o convidado já resolvido e a rodada recuada para 31
+ * minutos: o cenário mínimo em que o anfitrião tem power-up e alguém de quem
+ * pedir. `hintTargetId` é o convidado (resolvido); `hintInvalidTargetId` é o
+ * ausente, que não acertou.
+ */
+async function hintReadyRoom(minutes = 31): Promise<Awaited<ReturnType<typeof startStalledRoundSetup>>> {
+  const setup = await startStalledRoundSetup();
+  const solved = waitForEvent<RoomView>(setup.host, 'room:state', (room) => room.players.find((player) => player.id === setup.guestId)?.solved === true);
+  await solve(setup.guest, setup.guestId, setup.hostRoom);
+  await solved;
+  if (minutes > 0) rewindRoundStart(setup.roomCode, minutes);
+  return setup;
+}
+
+function hintStateOf(roomCode: string, playerId: string): { hintsUsed: number; hintRequestTargetId: string | null } {
+  const state = getInternalRoomHints(roomCode)?.get(playerId);
+  if (!state) throw new Error('jogador não está na sala');
+  return { hintsUsed: state.hintsUsed, hintRequestTargetId: state.hintRequestTargetId };
+}
+
+describe('pedido de dica: caminho válido e recusas (HINT-07, HINT-13..HINT-18)', () => {
+  it('registra o alvo e consome um power-up quando há solucionador e power-up disponível (HINT-07)', async () => {
+    const { host, hostId, guestId } = await hintReadyRoom();
+
+    const requested = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === guestId);
+    host.emit('hint:request', { targetId: guestId });
+    const view = await requested;
+
+    const asker = view.players.find((player) => player.id === hostId);
+    expect(asker?.hintsUsed).toBe(1);
+    expect(asker?.hintRequestTargetId).toBe(guestId);
+  });
+
+  it('recusa com NO_SOLVER_YET quando ninguém acertou na rodada, sem consumir power-up (HINT-13)', async () => {
+    const { host, roomCode, hostId, guestId } = await startStalledRoundSetup();
+    rewindRoundStart(roomCode, 31);
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('hint:request', { targetId: guestId });
+
+    expect((await refusal).code).toBe('NO_SOLVER_YET');
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('recusa com INVALID_HINT_TARGET quando o alvo não acertou, sem consumir power-up (HINT-14)', async () => {
+    const { host, roomCode, hostId, absentId } = await hintReadyRoom();
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('hint:request', { targetId: absentId });
+
+    expect((await refusal).code).toBe('INVALID_HINT_TARGET');
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('recusa com NO_HINT_AVAILABLE antes dos 30 minutos de rodada (HINT-15)', async () => {
+    const { host, roomCode, hostId, guestId } = await hintReadyRoom(0);
+    rewindRoundStart(roomCode, 29);
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('hint:request', { targetId: guestId });
+
+    expect((await refusal).code).toBe('NO_HINT_AVAILABLE');
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('recusa com ALREADY_SOLVED quem já acertou (HINT-16)', async () => {
+    const { guest, roomCode, hostId, guestId } = await hintReadyRoom();
+
+    const refusal = waitForEvent<{ code: string }>(guest, 'error');
+    guest.emit('hint:request', { targetId: hostId });
+
+    expect((await refusal).code).toBe('ALREADY_SOLVED');
+    expect(hintStateOf(roomCode, guestId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
+  });
+
+  it('recusa com HINT_ALREADY_PENDING o segundo pedido com um já pendente (HINT-17)', async () => {
+    const { host, roomCode, hostId, guestId } = await hintReadyRoom(41);
+
+    const requested = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.find((player) => player.id === hostId)?.hintRequestTargetId === guestId);
+    host.emit('hint:request', { targetId: guestId });
+    await requested;
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('hint:request', { targetId: guestId });
+
+    expect((await refusal).code).toBe('HINT_ALREADY_PENDING');
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
+  });
+
+  it('recusa com ROUND_NOT_RUNNING fora da fase playing (HINT-18)', async () => {
+    const host = await connectClient();
+    const created = await createRoom(host, 'Ana');
+    if (!created.ok) throw new Error('sala não foi criada');
+    const guest = await connectClient();
+    const joined = await joinRoom(guest, created.roomCode, 'Bia');
+    if (!joined.ok) throw new Error('convidado não entrou');
+
+    const refusal = waitForEvent<{ code: string }>(host, 'error');
+    host.emit('hint:request', { targetId: joined.playerId });
+
+    expect((await refusal).code).toBe('ROUND_NOT_RUNNING');
+    expect(getInternalRoomPhase(created.roomCode)).toBe('lobby');
+    expect(hintStateOf(created.roomCode, created.playerId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });
   });
 });

@@ -5,6 +5,7 @@ import type {
   CreateRoomInput,
   GameErrorPayload,
   GuessInput,
+  HintRequestInput,
   InterServerEvents,
   JoinRoomInput,
   ReadyInput,
@@ -14,6 +15,7 @@ import type {
   ServerToClientEvents,
   SocketData,
 } from '../shared/protocol';
+import { availableHintPowerups } from '../shared/hints';
 import { normalizeNickname, normalizeRoomCode, normalizeText } from './normalization';
 import { pointsForRank } from './scoring';
 import { characterMatches, characters, type Character, pickCharacters } from './wordlist';
@@ -100,6 +102,7 @@ export class GameManager {
     socket.on('round:endEarly', () => this.endEarly(socket));
     socket.on('room:removeAbsent', (payload) => this.removeAbsent(socket, payload));
     socket.on('room:leave', () => this.leave(socket));
+    socket.on('hint:request', (payload) => this.requestHint(socket, payload));
     socket.on('disconnect', () => this.disconnect(socket));
 
     this.resumeFromHandshake(socket);
@@ -356,6 +359,51 @@ export class GameManager {
     // `removePlayer` é o mesmo caminho da saída pelo botão, então o placar de
     // sessão do removido é descartado junto do registro (SCORE-09, END-16).
     this.removePlayer(room, target);
+    this.broadcastRoomState(room);
+  }
+
+  /**
+   * Gasta um power-up de dica apontando para alguém que já acertou (HINT-07).
+   *
+   * O disponível não é armazenado: ele sai de `availableHintPowerups` sobre o
+   * tempo decorrido da rodada, calculado agora. É o que permite conceder
+   * power-up por tempo sem nenhum agendador tocando a rodada — e é também o que
+   * faz HINT-04 sair de graça, porque quem já acertou nunca chega até aqui.
+   */
+  private requestHint(socket: GameSocket, payload: HintRequestInput): void {
+    const context = this.getContext(socket);
+    if (!context) return;
+    const { room, player } = context;
+    if (room.phase !== 'playing' || room.roundStartedAt === null) {
+      this.sendError(socket, 'ROUND_NOT_RUNNING', 'Não há rodada em andamento para pedir dica.');
+      return;
+    }
+    if (player.solved) {
+      this.sendError(socket, 'ALREADY_SOLVED', 'Você já acertou: não precisa mais de dica.');
+      return;
+    }
+    if (player.hintRequestTargetId) {
+      this.sendError(socket, 'HINT_ALREADY_PENDING', 'Você já tem um pedido de dica em aberto.');
+      return;
+    }
+    const someoneSolved = Array.from(room.players.values()).some((candidate) => candidate.solved);
+    if (!someoneSolved) {
+      this.sendError(socket, 'NO_SOLVER_YET', 'Ninguém acertou ainda: não há de quem pedir dica.');
+      return;
+    }
+    const target = typeof payload?.targetId === 'string' ? room.players.get(payload.targetId) : undefined;
+    if (!target || !target.solved || target.id === player.id) {
+      this.sendError(socket, 'INVALID_HINT_TARGET', 'Só dá para pedir dica a quem já acertou.');
+      return;
+    }
+    if (availableHintPowerups(Date.now() - room.roundStartedAt, player.hintsUsed) <= 0) {
+      this.sendError(socket, 'NO_HINT_AVAILABLE', 'Você ainda não tem power-up de dica disponível.');
+      return;
+    }
+
+    player.hintsUsed += 1;
+    player.hintRequestTargetId = target.id;
+    this.touch(room);
     this.broadcastRoomState(room);
   }
 
