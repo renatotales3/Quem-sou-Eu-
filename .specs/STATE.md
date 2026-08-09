@@ -36,13 +36,19 @@
 
 ## Handoff
 
-- **Feature**: encerrar-rodada-travada (`.specs/features/encerrar-rodada-travada/`) — **concluída**
-- **Phase / Task**: 3 fases, 8 tasks (T1..T8); 1 rodada de Verifier; veredito PASS, 0 lacunas, 7/7 mutantes mortos
-- **Completed**: T1 `1cd01ef`, T2 `537f498`, T3 `662e3c8`, T4 `f056276`, T5 `bc698fe`, T6 `b4ea22e`, T7 `221adf4`, T8 `25f9cc6`; spec+tasks `e980641` e extensão `6ac5186`
+- **Feature**: quatro features concluídas e mescladas em `main` nesta sessão (2026-08-09)
+  - `bloco-de-notas` — bloco de notas privado do jogador. 5 tasks, Verifier PASS.
+  - `placar-da-sessao` — pontos por posição acumulados na sessão. 9 tasks + 3 correções, Verifier PASS na 2ª rodada.
+  - `encerrar-rodada-travada` — anfitrião encerra rodada travada e remove jogador ausente. 8 tasks, Verifier PASS.
+  - Mais dois ajustes sem spec formal: ocultar desconexão durante a rodada e remover o crédito de imagem dos cards (AD-004).
+- **Phase / Task**: nada em andamento
 - **In-progress** (file:line): none
-- **Next step**: UAT interativo de todas as ACs de render acumuladas — END-05/06/22 (comandos do anfitrião), SCORE-10..14 (placar) e NOTES-01..04/12/13/14 (bloco de notas). Depois, push e ordem de merge das quatro branches.
+- **Next step**: **UAT interativo pendente de todas as ACs de render** — nenhuma delas tem teste automatizado, porque o projeto não tem jsdom nem testing-library. São elas: NOTES-01/02/03/04/12/13/14 (bloco de notas), SCORE-10..14 (placar nas três telas) e END-05/06/22 (comandos do anfitrião).
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: fix/encerrar-rodada-travada (local; parte de feat/placar-da-sessao → fix/ocultar-desconexao-na-rodada → main)
-- **Conflito de merge previsto**: `feat/bloco-de-notas` saiu de `main` e não conhece nenhuma mudança das outras três branches. Vai conflitar em `src/App.tsx` e `src/styles.css`. Mesclar por último, ou rebasear sobre esta linha antes.
-- **Escopo ampliado durante a execução**: a feature nasceu só com o botão de encerrar; o teste de END-12 expôs que `everyoneReady` também trava o início da rodada seguinte, e o dono do projeto aprovou a história de remoção do ausente (END-15..22) para fechar o bug de verdade.
+- **Branch**: `main`, com as quatro branches mescladas e enviadas para origin
+- **Follow-ups conhecidos, fora de escopo**:
+  - `tests/game.integration.test.ts` tem flake de timeout de socket sob carga paralela — reexecutar antes de tratar como falha.
+  - `createGameManager` aceita 1 parâmetro mas o teste passa 2; `tests/` não está em nenhum tsconfig, então o typecheck nunca cobre os testes.
+  - Mutante equivalente conhecido em `server/game.ts:241-253`: trocar `roundPlayerCount` por `players.size` não quebra teste nenhum hoje, porque o roster não encolhe durante `playing`. Se isso mudar, o congelamento passa a precisar de teste.
+  - AD-004 deixou `IMG-06` da spec `fotos-personagens` divergente do código: a spec ainda exige exibir atribuição, a interface não exibe mais.
