@@ -471,7 +471,7 @@ function CharacterCard({ player, index }: { player: RoomView['players'][number];
   const showImage = Boolean(image) && !imageFailed;
   return (
     <article className={`character-card character-color-${index % 4} ${player.solved ? 'character-solved' : ''} ${showImage ? 'character-has-photo' : ''}`}>
-      <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : player.connected ? 'na testa' : 'offline'}</span></div>
+      <div className="character-card-top"><span className="card-number">0{index + 1}</span><span className="character-status">{player.solved ? 'descobriu' : 'na testa'}</span></div>
       {showImage ? <img className="character-photo" src={image!.url} alt={`Foto de ${player.character!.name}`} loading="lazy" onError={() => setImageFailed(true)} /> : <div className="character-avatar" aria-hidden="true">{player.nickname.slice(0, 1).toUpperCase()}</div>}
       <div className="character-info"><strong>{player.nickname}</strong>{player.character ? <><span>{player.character.name}</span><em>{player.character.category}</em></> : <span>personagem reservado</span>}</div>
       {showImage && <p className="character-credit">{creditLabel(image!)}</p>}
