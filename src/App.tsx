@@ -9,6 +9,7 @@ import type {
   RoundFinishedPayload,
 } from '../shared/protocol';
 import { formatDuration } from '../shared/time';
+import { NotesPanel } from './NotesPanel';
 import { clearSession, readSession, saveSession, serverMayHibernate, socket, wakeServer, type SessionData } from './socket';
 
 type HomeMode = 'create' | 'join';
@@ -409,6 +410,7 @@ function App(): JSX.Element {
           <div className="history-block"><div className="history-heading"><span className="micro-label">Seu histórico</span><span>{room.guessHistory.length} palpites</span></div>{room.guessHistory.length === 0 ? <p className="history-empty">Seus palpites aparecem aqui — só para você.</p> : <ol className="guess-history">{room.guessHistory.map((item, index) => <li key={`${item}-${index}`}><span>{String(index + 1).padStart(2, '0')}</span>{item}</li>)}</ol>}</div>
         </aside>
       </section>
+      <NotesPanel roomCode={room.code} round={room.round} />
     </main>
   );
 }
