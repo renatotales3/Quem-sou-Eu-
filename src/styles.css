@@ -423,6 +423,11 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .notes-panel-head h2 { margin: 0; font-family: var(--display); font-size: 22px; letter-spacing: -0.05em; line-height: 0.95; }
 
+/* O verde de `.micro-label` é feito para o fundo escuro do jogo e some sobre o
+   papel do card. Mesma correção já aplicada em .panel-heading, .guess-panel-head,
+   .history-heading e .standings-heading. */
+.notes-panel-head .micro-label { margin-bottom: 8px; color: var(--muted-dark); }
+
 .notes-clear { border: 1px solid rgba(21, 21, 37, 0.25); padding: 7px 10px; color: var(--night); background: transparent; font: 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
 
 .notes-clear:hover { color: var(--paper); background: var(--night); }
