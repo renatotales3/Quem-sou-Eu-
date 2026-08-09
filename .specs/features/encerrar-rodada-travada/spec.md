@@ -10,6 +10,7 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 - [ ] O encerramento manual produz exatamente a mesma revelação e o mesmo ranking do encerramento natural.
 - [ ] Nenhum jogador presente perde pontos já conquistados por causa do encerramento.
 - [ ] Um jogador conectado que ainda está jogando não pode ser cortado pelo anfitrião.
+- [ ] A sala volta a jogar depois do encerramento, sem depender do retorno de quem sumiu.
 
 ## Out of Scope
 
@@ -17,7 +18,7 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | --- | --- |
 | Encerramento automático por tempo de desconexão | Decisão do dono do projeto: o controle é humano, sem heurística de prazo. Fica registrado como alternativa recusada. |
 | Exclusão automática de quem cai | Mesma decisão — um blip de conexão não deve revelar o personagem de todo mundo. |
-| Expulsar jogador da sala | É outra capacidade (moderação), com outras consequências; encerrar a rodada não remove ninguém. |
+| Remover jogador CONECTADO da sala | Expulsar quem está jogando é moderação de comportamento, outra decisão de produto. Aqui só o ausente pode ser removido. |
 | Votação entre jogadores para encerrar | Um comando do anfitrião resolve; votação exige estado e interface novos para o mesmo efeito. |
 | Corrigir o `finishRound` para não depender de todos | O gatilho natural continua igual; esta feature adiciona um segundo caminho, não substitui o primeiro. |
 
@@ -35,6 +36,10 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | Posição de quem não acertou | `rank` nulo, como hoje | `finishRound` já ordena nulos por último (`server/game.ts:348`). | y |
 | Nome do evento | `round:endEarly`, sem payload | Segue o estilo dos eventos existentes sem payload (`round:playAgain`, `room:leave`). | n |
 | Estado após o encerramento | Fase `finished`, idêntica ao encerramento natural | Permite ao anfitrião abrir a próxima rodada pelo `playAgain` que já existe, sem caminho novo. | y |
+| Fase em que a remoção é permitida | Apenas `lobby` | É onde o travamento se manifesta (`everyoneReady`). Permitir durante `playing` recriaria o caminho de `resetAfterDeparture`, que aborta a rodada dos outros — efeito bem maior que o problema. | n |
+| Alvo da remoção | Um jogador por comando, identificado por id | Remover todos os desconectados de uma vez tiraria também quem caiu há dois segundos e está voltando. | n |
+| Placar do removido | Descartado junto do registro | Coerente com SCORE-09: sair da sala já apaga o placar. Reentrar é entrar zerado. | y |
+| Nome do evento de remoção | `room:removeAbsent`, com payload `{ playerId }` | Único evento do protocolo que precisa identificar um terceiro; os demais agem sobre quem emite. | n |
 
 **Open questions:** none — tudo resolvido ou registrado acima.
 
@@ -76,6 +81,27 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 5. IF `round:endEarly` for emitido por um socket sem sessão válida THEN o servidor SHALL ignorar o evento sem alterar estado. <!-- END-11 -->
 
 **Independent Test**: Com todos conectados, o anfitrião emite o comando e recebe `ROUND_NOT_STUCK`; a rodada continua.
+
+---
+
+### P1: Remover o jogador ausente da sala ⭐ MVP
+
+**User Story**: Como anfitrião, quero tirar da sala um jogador que caiu e não voltou, para que o grupo consiga começar a próxima rodada sem esperar por alguém que não está mais lá.
+
+**Why P1**: Encerrar a rodada sozinho não destrava a sala. `everyoneReady` (`server/game.ts:180`) exige `connected && ready` de **todos**, então o ausente continua barrando o início da rodada seguinte. Sem esta história, a correção só adia o travamento em um passo.
+
+**Acceptance Criteria**:
+
+1. WHEN o anfitrião comanda a remoção de um jogador desconectado estando a sala na fase `lobby` THEN o servidor SHALL remover esse jogador da sala. <!-- END-15 -->
+2. WHEN o servidor remove o jogador ausente THEN ele SHALL descartar o `score` de sessão dele junto do registro, como já acontece na saída pelo botão. <!-- END-16 -->
+3. WHEN o jogador ausente é removido e os demais estão prontos THEN o servidor SHALL permitir que a rodada seguinte comece normalmente. <!-- END-17 -->
+4. IF um jogador que não é o anfitrião comandar a remoção THEN o servidor SHALL recusar com o erro `HOST_ONLY` e não remover ninguém. <!-- END-18 -->
+5. IF o alvo da remoção estiver conectado THEN o servidor SHALL recusar com o erro `PLAYER_CONNECTED` e não remover ninguém. <!-- END-19 -->
+6. IF o alvo da remoção não existir na sala THEN o servidor SHALL recusar com o erro `PLAYER_NOT_FOUND`. <!-- END-20 -->
+7. IF o comando for emitido fora da fase `lobby` THEN o servidor SHALL recusar com o erro `ROOM_NOT_IN_LOBBY`. <!-- END-21 -->
+8. WHILE a sala está na fase `lobby` e existe ao menos um jogador desconectado, a interface SHALL exibir ao anfitrião um comando de remover cada jogador desconectado. <!-- END-22 -->
+
+**Independent Test**: Numa sala de 3, derrubar um jogador, encerrar a rodada, remover o ausente e confirmar que a rodada seguinte começa com os dois restantes.
 
 ---
 
@@ -133,13 +159,21 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 | END-09 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-10 | P1: Recusar encerramento indevido | Implementing | Implementing |
 | END-11 | P1: Recusar encerramento indevido | Implementing | Implementing |
+| END-15 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-16 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-17 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-18 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-19 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-20 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-21 | P1: Remover o jogador ausente | Tasks | Pending |
+| END-22 | P1: Remover o jogador ausente | Tasks | Pending |
 | END-12 | P2: Sala segue jogável | Implementing | Implementing |
 | END-13 | P2: Sala segue jogável | Implementing | Implementing |
 | END-14 | P2: Sala segue jogável | Implementing | Implementing |
 
 **ID format:** `END-[NUMBER]`
 
-**Coverage:** 14 total, 0 mapeados para tasks ainda.
+**Coverage:** 22 total.
 
 ---
 

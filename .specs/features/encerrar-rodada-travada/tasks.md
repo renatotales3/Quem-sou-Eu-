@@ -45,10 +45,16 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 T1 → T2 → T3
 ```
 
-### Phase 2: Interface
+### Phase 2: Remoção do ausente
 
 ```
 T3 → T4 → T5
+```
+
+### Phase 3: Interface
+
+```
+T5 → T6 → T7 → T8
 ```
 
 ---
@@ -145,11 +151,71 @@ T3 → T4 → T5
 
 ---
 
-### T4: Botão de encerrar para o anfitrião
+### T4: Declarar o evento de remoção no protocolo
+
+**What**: Adicionar `'room:removeAbsent': (payload: RemoveAbsentInput) => void` a `ClientToServerEvents` e o tipo `RemoveAbsentInput { playerId: string }` em `shared/protocol.ts`.
+**Where**: `shared/protocol.ts`
+**Depends on**: T3
+**Reuses**: o padrão de tipo de entrada de `GuessInput` e `ReadyInput` no mesmo arquivo
+**Requirement**: END-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `RemoveAbsentInput` exportado com o campo `playerId: string`
+- [ ] `ClientToServerEvents['room:removeAbsent']` declarado recebendo esse payload
+- [ ] Nenhum outro evento alterado
+- [ ] Gate check passa: `npm run typecheck && npm test`
+- [ ] Test count: 86 testes continuam passando
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `feat(room): declare the absent-player removal event`
+
+---
+
+### T5: Handler de remoção do jogador ausente
+
+**What**: Implementar em `server/game.ts` o handler de `room:removeAbsent`: registrar o listener, recusar quem não é anfitrião (`HOST_ONLY`), recusar fora da fase `lobby` (`ROOM_NOT_IN_LOBBY`), recusar alvo inexistente (`PLAYER_NOT_FOUND`), recusar alvo conectado (`PLAYER_CONNECTED`) e, no caminho válido, remover o jogador e transmitir o novo estado — com os testes de integração de cada recusa, do caminho feliz, do descarte de placar e do desbloqueio da rodada seguinte.
+**Where**: `server/game.ts`
+**Depends on**: T4
+**Reuses**: `removePlayer` (`server/game.ts:568`), já usado por `leave`, e o molde de guard de `endEarly`
+**Requirement**: END-15, END-16, END-17, END-18, END-19, END-20, END-21
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Anfitrião remove jogador desconectado no lobby: ele some do `RoomView` (END-15)
+- [ ] O `score` do removido some junto; se reentrar, entra com 0 (END-16)
+- [ ] Removido o ausente, os dois restantes marcam pronto e a rodada começa (END-17)
+- [ ] Não anfitrião recebe `HOST_ONLY` e ninguém é removido (END-18)
+- [ ] Alvo conectado recebe `PLAYER_CONNECTED` e ninguém é removido (END-19)
+- [ ] Alvo inexistente recebe `PLAYER_NOT_FOUND` (END-20)
+- [ ] Emissão fora do lobby recebe `ROOM_NOT_IN_LOBBY` (END-21)
+- [ ] Gate check passa: `npm run typecheck && npm test`
+- [ ] Test count: 86 existentes + 7 novos passam
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `feat(room): let the host remove a disconnected player in the lobby`
+
+---
+
+### T6: Botão de encerrar para o anfitrião
 
 **What**: Em `src/App.tsx`, exibir na tela da partida um botão de encerrar rodada, visível apenas para o anfitrião e apenas quando existe ao menos um jogador desconectado que ainda não acertou, emitindo `round:endEarly`.
 **Where**: `src/App.tsx`
-**Depends on**: T3
+**Depends on**: T5
 **Reuses**: o botão `primary-button` de `playAgain` no retorno de `finished` como molde de comando do anfitrião
 **Requirement**: END-05, END-06
 
@@ -174,11 +240,38 @@ T3 → T4 → T5
 
 ---
 
-### T5: Estilo do botão de encerrar
+### T7: Comando de remover o ausente no lobby
 
-**What**: Adicionar a `src/styles.css` a regra do botão de encerrar rodada, usando os tokens e classes já existentes, sem competir visualmente com o campo de palpite.
+**What**: Em `src/App.tsx`, exibir no painel de participantes do lobby, apenas para o anfitrião e apenas nas linhas de jogadores desconectados, um comando que emite `room:removeAbsent` com o id daquele jogador.
+**Where**: `src/App.tsx`
+**Depends on**: T6
+**Reuses**: o `PlayerRow` do painel do lobby, que já distingue jogador desconectado pela classe `player-away`
+**Requirement**: END-22
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O comando aparece para o anfitrião em cada linha de jogador desconectado (END-22)
+- [ ] O comando não aparece para quem não é anfitrião, nem em linha de jogador conectado, nem na própria linha do anfitrião
+- [ ] Gate check passa: `npm run typecheck && npm test`
+- [ ] Test count: suíte inteira continua passando
+
+**Tests**: none
+**Gate**: build
+
+**Commit**: `feat(room): add the host control to remove an absent player`
+
+---
+
+### T8: Estilo dos comandos do anfitrião
+
+**What**: Adicionar a `src/styles.css` as regras do botão de encerrar rodada e do comando de remover ausente, usando os tokens e classes já existentes.
 **Where**: `src/styles.css`
-**Depends on**: T4
+**Depends on**: T7
 **Reuses**: os padrões de `.primary-button`, `.ghost-button` e `.waiting-chip` já definidos no arquivo
 **Requirement**: END-05
 
@@ -198,7 +291,7 @@ T3 → T4 → T5
 **Tests**: none
 **Gate**: build
 
-**Commit**: `style(round): style the stalled-round host control`
+**Commit**: `style(round): style the stalled-round host controls`
 
 ---
 
@@ -209,9 +302,10 @@ Phase 1 → Phase 2
 
 Phase 1:  T1 ------→ T2 ------→ T3
 Phase 2:  T3 ------→ T4 ------→ T5
+Phase 3:  T5 ------→ T6 ------→ T7 ------→ T8
 ```
 
-5 tasks cabem num único batch (~7 por worker), então a execução é inline no janela principal, sem batch workers. O Verifier roda normalmente ao final, como sub-agente independente.
+8 tasks cabem num único batch (~7 por worker), então a execução é inline no janela principal, sem batch workers. O Verifier roda normalmente ao final, como sub-agente independente.
 
 ---
 
@@ -264,3 +358,6 @@ Nenhuma dependência aponta para fase posterior.
 | T3 | ✅ Done | `pendente` |
 | T4 | Pending | — |
 | T5 | Pending | — |
+| T6 | Pending | — |
+| T7 | Pending | — |
+| T8 | Pending | — |
