@@ -427,7 +427,11 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .notes-clear:hover { color: var(--paper); background: var(--night); }
 
-.notes-textarea { width: 100%; min-height: 150px; margin-top: 9px; border: 1px solid rgba(21, 21, 37, 0.25); padding: 11px 14px; color: var(--night); background: rgba(255, 255, 255, 0.35); font: 14px/1.5 var(--mono); resize: vertical; outline: none; }
+/* A altura é escrita inline pelo NotesPanel a cada tecla, a partir do
+   scrollHeight. Aqui ficam só os limites: `min-height` é o tamanho de partida,
+   `max-height` é o teto onde o crescimento para e a rolagem assume, e
+   `resize: none` tira a alça do canto — quem dimensiona a caixa é o texto. */
+.notes-textarea { width: 100%; min-height: 150px; max-height: 40vh; overflow-y: auto; margin-top: 9px; border: 1px solid rgba(21, 21, 37, 0.25); padding: 11px 14px; color: var(--night); background: rgba(255, 255, 255, 0.35); font: 14px/1.5 var(--mono); resize: none; outline: none; }
 
 .notes-textarea::placeholder { color: #9690a0; }
 
