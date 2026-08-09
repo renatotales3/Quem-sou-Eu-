@@ -1937,15 +1937,25 @@ describe('cancelamentos automáticos do pedido de dica (HINT-12, HINT-20..HINT-2
   });
 
   it('a saída do alvo pelo botão cancela o pedido e devolve o power-up (HINT-21)', async () => {
-    const { host, guest, roomCode, hostId, guestId } = await pendingHintRequest();
+    const { host, guest, absent, roomCode, hostId, guestId, absentId } = await pendingHintRequest();
     expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
 
-    // A saída durante `playing` também aborta a rodada (comportamento anterior),
-    // então o estado observado depois é o do jogador sem pedido e sem gasto.
+    // A saída durante `playing` também dispara `resetAfterDeparture`, que zera o
+    // estado de dica de todo mundo — o estado final ficaria idêntico com ou sem
+    // devolução. Encerrar a rodada antes tira o reset do caminho: em `finished`
+    // só a devolução de `leave` pode mexer no `hintsUsed` de quem pediu.
+    await dropAndAwait(host, absent, absentId);
+    const finished = waitForEvent<RoundFinishedPayload>(host, 'round:finished');
+    host.emit('round:endEarly');
+    await finished;
+    expect(getInternalRoomPhase(roomCode)).toBe('finished');
+    expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 1, hintRequestTargetId: guestId });
+
     const departed = waitForEvent<RoomView>(host, 'room:state', (room) => room.players.every((player) => player.id !== guestId));
     guest.emit('room:leave');
     const view = await departed;
 
+    expect(getInternalRoomPhase(roomCode)).toBe('finished');
     expect(view.players.find((player) => player.id === hostId)?.hintRequestTargetId).toBeNull();
     expect(view.players.find((player) => player.id === hostId)?.hintsUsed).toBe(0);
     expect(hintStateOf(roomCode, hostId)).toEqual({ hintsUsed: 0, hintRequestTargetId: null });

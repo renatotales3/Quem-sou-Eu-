@@ -169,7 +169,7 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 | HINT-18 | P1: Recusar pedido indevido | T4 | Done |
 | HINT-19 | P1: Recusar pedido indevido | T5 | Done |
 | HINT-20 | P2: Resistente à movimentação | T6 | Done |
-| HINT-21 | P2: Resistente à movimentação | T6 | Done |
+| HINT-21 | P2: Resistente à movimentação | T6 | Verified |
 | HINT-22 | P2: Resistente à movimentação | T6 | Done |
 | HINT-23 | P2: Resistente à movimentação | T6 | Done |
 
