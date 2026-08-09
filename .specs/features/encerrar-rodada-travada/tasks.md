@@ -259,7 +259,7 @@ Nenhuma dependência aponta para fase posterior.
 
 | Task | Status | Commit |
 | --- | --- | --- |
-| T1 | Pending | — |
+| T1 | ✅ Done | `pendente` |
 | T2 | Pending | — |
 | T3 | Pending | — |
 | T4 | Pending | — |

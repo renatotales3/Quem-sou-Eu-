@@ -122,7 +122,7 @@ A rodada só termina quando **todos** os jogadores da sala acertam: `everyoneSol
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| END-01 | P1: Encerrar a rodada travada | Tasks | Pending |
+| END-01 | P1: Encerrar a rodada travada | Implementing | In Tasks |
 | END-02 | P1: Encerrar a rodada travada | Tasks | Pending |
 | END-03 | P1: Encerrar a rodada travada | Tasks | Pending |
 | END-04 | P1: Encerrar a rodada travada | Tasks | Pending |

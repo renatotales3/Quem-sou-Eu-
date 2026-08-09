@@ -130,6 +130,11 @@ export interface ClientToServerEvents {
   'player:ready': (payload: ReadyInput) => void;
   'round:guess': (payload: GuessInput) => void;
   'round:playAgain': () => void;
+  // A rodada só termina sozinha quando todo mundo acerta, então um jogador que
+  // cai antes de descobrir a própria identidade a congela para sempre. Este
+  // comando é a saída manual: o anfitrião encerra a rodada travada e a sala
+  // segue para a próxima sem precisar ser dissolvida.
+  'round:endEarly': () => void;
   'room:leave': () => void;
 }
 
