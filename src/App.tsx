@@ -160,6 +160,10 @@ function App(): JSX.Element {
   // HINT-07/HINT-14: só quem já acertou tem o que dizer, então só ele entra na
   // lista de alvos. O servidor recusa o resto; a lista evita o pedido inútil.
   const hintTargets = useMemo(() => room?.players.filter((player) => player.solved && player.id !== room.you.id) ?? [], [room]);
+  // HINT-09: o comando de responder é de quem foi escolhido, um por pedido
+  // dirigido a ele — dois jogadores podem estar pedindo ao mesmo tempo.
+  const hintAskers = useMemo(() => room?.players.filter((player) => player.hintRequestTargetId === room.you.id) ?? [], [room]);
+  const hintTargetOfMine = useMemo(() => room?.players.find((player) => player.id === me?.hintRequestTargetId) ?? null, [room, me]);
 
   function emitRoomAction(mode: HomeMode, nextNickname: string, code: string): void {
     const handleResult = (result: RoomActionResult): void => {
@@ -257,6 +261,14 @@ function App(): JSX.Element {
   function requestHint(targetId: string): void {
     socket.emit('hint:request', { targetId });
     setHintPickerOpen(false);
+  }
+
+  function answerHint(askerId: string): void {
+    socket.emit('hint:answer', { askerId });
+  }
+
+  function cancelHint(): void {
+    socket.emit('hint:cancel');
   }
 
   function removeAbsent(playerId: string): void {
@@ -439,6 +451,18 @@ function App(): JSX.Element {
                 : <div className="hint-picker" role="group" aria-label="Escolha de quem pedir a dica">{hintTargets.map((player) => <button className="ghost-button hint-target-button" key={player.id} type="button" onClick={() => requestHint(player.id)}>Pedir a {player.nickname}</button>)}</div>)}
             </div>
           )}
+          {me?.hintRequestTargetId !== null && me !== null && (
+            <div className="hint-pending">
+              <p>Você pediu dica{hintTargetOfMine ? ` a ${hintTargetOfMine.nickname}` : ''}. Espere a resposta na call.</p>
+              <button className="text-button hint-cancel-button" type="button" onClick={cancelHint}>Cancelar pedido</button>
+            </div>
+          )}
+          {hintAskers.map((asker) => (
+            <div className="hint-answer-request" key={asker.id}>
+              <p><strong>{asker.nickname}</strong> pediu uma dica a você. Ajude na call sem entregar o nome.</p>
+              <button className="text-button hint-answer-button" type="button" onClick={() => answerHint(asker.id)}>Marcar que respondi</button>
+            </div>
+          ))}
           {lastSolved && !me?.solved && <div className="ticker" role="status"><span className="ticker-pulse" aria-hidden="true" />{lastSolved.nickname} acabou de descobrir. A fila anda.</div>}
           <div className="identity-board">
             <div className="secret-card" data-testid="secret-card">
