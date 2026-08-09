@@ -149,9 +149,9 @@ Uma rodada sem limite de tempo pode travar: quem já acertou fica esperando, e q
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| HINT-01 | P1: Ganhar o direito | Tasks | Pending |
+| HINT-01 | P1: Ganhar o direito | T1 | Done |
 | HINT-02 | P1: Ganhar o direito | Tasks | Pending |
-| HINT-03 | P1: Ganhar o direito | Tasks | Pending |
+| HINT-03 | P1: Ganhar o direito | T1 | Done |
 | HINT-04 | P1: Ganhar o direito | Tasks | Pending |
 | HINT-05 | P1: Ganhar o direito | Tasks | Pending |
 | HINT-06 | P1: Ganhar o direito | Tasks | Pending |
